@@ -1,5 +1,5 @@
 export default function Tomatotest() {
     return (
-        <div>Hello Next.js!</div>
+        <h1>Hello Next.js!</h1>
     )
 }
