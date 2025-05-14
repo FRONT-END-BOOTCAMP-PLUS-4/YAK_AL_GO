@@ -8,21 +8,225 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Member {
-  id           String       @id @default(uuid())
-  email        String       @unique
-  username     String       @unique
-  phone        String?
-  createdAt    DateTime     @default(now()) @map("created_at")
-  updatedAt    DateTime     @updatedAt @map("updated_at")
-  deletedAt    DateTime?    @map("deleted_at")
-  password     String
-  profileImage String?      @map("profile_image")
+model QnaTag {
+  id    Int @id @default(autoincrement())
+  tagId Int
+  qnaId Int
 
-  // Relations
- 
-  
-  // rcmd_menus   rcmd_menus[]
+  tag Tag @relation(fields: [tagId], references: [id])
+  qna Qna @relation(fields: [qnaId], references: [id])
 
-  @@map("members")
+  @@map("qna_tags")
+}
+
+model Qna {
+  id        Int       @id @default(autoincrement())
+  title     String    @db.VarChar(255)
+  content   String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  userId    String
+
+  user    User     @relation(fields: [userId], references: [id])
+  answers Answer[]
+  qnaTags QnaTag[]
+
+  @@map("qnas")
+}
+
+model UserMedi {
+  id        Int       @id @default(autoincrement())
+  startDate DateTime? @map("start_date")
+  endDate   DateTime? @map("end_date")
+  userId    String
+  itemSeq   String
+
+  user      User       @relation(fields: [userId], references: [id])
+  medicine  Medicine   @relation(fields: [itemSeq], references: [itemSeq])
+  mediTimes MediTime[]
+
+  @@map("user_medis")
+}
+
+model UserHealth {
+  id       Int    @id @default(autoincrement())
+  userId   String
+  healthId Int
+
+  user   User   @relation(fields: [userId], references: [id])
+  health Health @relation(fields: [healthId], references: [id])
+
+  @@map("user_healths")
+}
+
+model Medicine {
+  itemSeq        String    @id @map("item_seq")
+  itemName       String    @map("item_name") @db.VarChar(255)
+  entpName       String?   @map("entp_name") @db.VarChar(255)
+  itemPermitDate DateTime? @map("item_permit_date")
+  etcOtcCode     String?   @map("etc_otc_code") @db.VarChar(50)
+  classNo        String?   @map("class_no") @db.VarChar(100)
+  chart          String?   @map("chart")
+  barCode        String?   @map("bar_code") @db.VarChar(50)
+  materialName   String?   @map("material_name")
+  eeDocId        String?   @map("ee_doc_id") @db.VarChar(255)
+
+  userMedis   UserMedi[]
+  inventories Inventory[]
+
+  @@map("medicines")
+}
+
+model MediTime {
+  id         Int @id @default(autoincrement())
+  mediTime   Int @map("medi_time")
+  userMediId Int
+
+  userMedi UserMedi @relation(fields: [userMediId], references: [id])
+
+  @@map("medi_times")
+}
+
+model User {
+  id         String    @id @default(uuid())
+  email      String?   @db.VarChar(255)
+  photo      String?   @db.VarChar(255)
+  name       String?   @db.VarChar(100)
+  birthyear  Int?
+  gender     String?   @db.VarChar(10)
+  memberType Int       @map("member_type")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  deletedAt  DateTime? @map("deleted_at")
+  hpid       String?
+
+  pharmacy   Pharmacy?    @relation(fields: [hpid], references: [hpid])
+  posts      Post[]
+  qnas       Qna[]
+  answers    Answer[]
+  comments   Comment[]
+  userMedis  UserMedi[]
+  userHealth UserHealth[]
+
+  @@map("users")
+}
+
+model Post {
+  id        Int       @id @default(autoincrement())
+  title     String    @db.VarChar(255)
+  content   String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  userId    String
+
+  user     User      @relation(fields: [userId], references: [id])
+  comments Comment[]
+  postTags PostTag[]
+
+  @@map("posts")
+}
+
+model Answer {
+  id         Int       @id @default(autoincrement())
+  content    String
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @default(now()) @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+  isAccepted Boolean   @default(false) @map("is_accepted")
+  userId     String
+  qnaId      Int
+
+  user User @relation(fields: [userId], references: [id])
+  qna  Qna  @relation(fields: [qnaId], references: [id])
+
+  @@map("answers")
+}
+
+model Pharmacy {
+  hpid       String   @id
+  dutyAddr   String?  @map("duty_addr") @db.VarChar(255)
+  dutyMapimg String?  @map("duty_mapimg") @db.VarChar(255)
+  dutyName   String   @map("duty_name") @db.VarChar(255)
+  dutyTel1   String?  @map("duty_tel1") @db.VarChar(50)
+  dutyTime1c String?  @map("duty_time1c") @db.VarChar(10)
+  dutyTime1s String?  @map("duty_time1s") @db.VarChar(10)
+  dutyTime2c String?  @map("duty_time2c") @db.VarChar(10)
+  dutyTime2s String?  @map("duty_time2s") @db.VarChar(10)
+  dutyTime3c String?  @map("duty_time3c") @db.VarChar(10)
+  dutyTime3s String?  @map("duty_time3s") @db.VarChar(10)
+  dutyTime4c String?  @map("duty_time4c") @db.VarChar(10)
+  dutyTime4s String?  @map("duty_time4s") @db.VarChar(10)
+  dutyTime5c String?  @map("duty_time5c") @db.VarChar(10)
+  dutyTime5s String?  @map("duty_time5s") @db.VarChar(10)
+  dutyTime6c String?  @map("duty_time6c") @db.VarChar(10)
+  dutyTime6s String?  @map("duty_time6s") @db.VarChar(10)
+  dutyTime7c String?  @map("duty_time7c") @db.VarChar(10)
+  dutyTime7s String?  @map("duty_time7s") @db.VarChar(10)
+  postCdn1   String?  @map("post_cdn1") @db.VarChar(10)
+  postCdn2   String?  @map("post_cdn2") @db.VarChar(10)
+  wgs84Lat   Decimal? @map("wgs84_lat") @db.Decimal(10, 7)
+  wgs84Lon   Decimal? @map("wgs84_lon") @db.Decimal(10, 7)
+
+  users       User[]
+  inventories Inventory[]
+
+  @@map("pharmacies")
+}
+
+model PostTag {
+  id     Int @id @default(autoincrement())
+  tagId  Int
+  postId Int
+
+  tag  Tag  @relation(fields: [tagId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@map("post_tags")
+}
+
+model Tag {
+  id      Int    @id @default(autoincrement())
+  tagName String @map("tag_name") @db.VarChar(100)
+
+  postTags PostTag[]
+  qnaTags  QnaTag[]
+
+  @@map("tags")
+}
+
+model Health {
+  id         Int    @id @default(autoincrement())
+  healthName String @map("health_name") @db.VarChar(100)
+
+  userHealth UserHealth[]
+
+  @@map("healths")
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  content   String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  userId    String
+  postId    Int
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@map("comments")
+}
+
+model Inventory {
+  id       Int    @id @default(autoincrement())
+  quantity Int
+  itemSeq  String
+  hpid     String
+
+  medicine Medicine @relation(fields: [itemSeq], references: [itemSeq])
+  pharmacy Pharmacy @relation(fields: [hpid], references: [hpid])
+
+  @@map("inventories")
 }
