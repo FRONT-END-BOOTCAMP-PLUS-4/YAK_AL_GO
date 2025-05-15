@@ -9,8 +9,9 @@ export class Post {
     public createdAt?: Date,
     public updatedAt?: Date,
     public deletedAt?: Date | null,
-    public userId?: string,
-    public postTags?: Tag[],
+    public user?: string,
+    public postTags?: string[],
+    public commentCount?: number,
     public comments?: Comment[]
   ) {}
 }
