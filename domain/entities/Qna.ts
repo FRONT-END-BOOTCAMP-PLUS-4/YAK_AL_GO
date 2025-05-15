@@ -11,6 +11,7 @@ export class Qna {
     public deletedAt?: Date | null,
     public userId?: string,
     public qnaTags?: Tag[],
+    public answerCount?: number,
     public answers?: Answer[]
   ) {}
 }
