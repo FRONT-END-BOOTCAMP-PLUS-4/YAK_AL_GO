@@ -1,7 +1,7 @@
-import { PostRepository } from '../../app/domain/repositories/PostRepository';
-import { TagRepository } from '../../app/domain/repositories/TagRepository';
-import { CreatePostRequestDto } from './dto/CreatePostRequestDto';
-import { Post } from '../../app/domain/entities/Post';
+import { CreatePostRequestDto } from 'application/usecases/dto/CreatePostRequestDto';
+import { Post } from 'domain/entities/Post';
+import { PostRepository } from 'domain/repositories/PostRepository';
+import { TagRepository } from 'domain/repositories/TagRepository';
 
 export class CreatePostUsecase {
   constructor(private postRepository: PostRepository, private tagRepository: TagRepository) {}
