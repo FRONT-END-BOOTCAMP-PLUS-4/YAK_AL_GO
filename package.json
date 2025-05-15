@@ -4,7 +4,8 @@
   "description": "약 정보 제공 서비스",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev"
+    "dev": "next dev",
+    "postinstall": "prisma generate"
   },
   "repository": {
     "type": "git",
