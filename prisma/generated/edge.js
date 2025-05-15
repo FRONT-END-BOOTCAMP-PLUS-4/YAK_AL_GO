@@ -278,7 +278,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\softgate\\Desktop\\likelion\\YAK_AL_GO\\prisma\\generated",
+      "value": "/Users/joohwan/Desktop/joohwan/Project/멋사/YAK_AL_GO/prisma/generated",
       "fromEnvVar": null
     },
     "config": {
@@ -287,12 +287,12 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "darwin-arm64",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\softgate\\Desktop\\likelion\\YAK_AL_GO\\prisma\\schema.prisma",
+    "sourceFilePath": "/Users/joohwan/Desktop/joohwan/Project/멋사/YAK_AL_GO/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -306,12 +306,11 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": null
+        "value": "postgresql://spinachsw:!softgate@@new-cafe.com:5433/spinachswdb?schema=public"
       }
     }
   },
