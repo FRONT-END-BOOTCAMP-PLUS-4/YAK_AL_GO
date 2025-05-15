@@ -306,11 +306,12 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": "postgresql://spinachsw:!softgate@@new-cafe.com:5433/spinachswdb?schema=public"
+        "value": null
       }
     }
   },

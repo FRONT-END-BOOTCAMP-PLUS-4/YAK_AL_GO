@@ -2,9 +2,11 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@prisma/generated": ["./prisma/generated"]
+      "@prisma/generated": ["./prisma/generated"],
+      "@/*": ["./src/*"]
     },
-    "target": "ES2017",
+    "target": "ESNext",
+    "moduleResolution": "Bundler",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -13,7 +15,7 @@
     "incremental": true,
     "module": "esnext",
     "esModuleInterop": true,
-    "moduleResolution": "node",
+
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
