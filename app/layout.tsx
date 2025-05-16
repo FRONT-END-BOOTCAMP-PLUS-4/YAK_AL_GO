@@ -1,4 +1,5 @@
 import ReactQueryProviders from '../lib/providers/QueryProvider';
+import './globals.css';
 
 export const metadata = {
   title: 'Next.js',
