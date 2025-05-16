@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/prisma/generated/
 /.pnp
 .pnp.*
 .yarn/*
@@ -39,6 +40,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# prisma
-prisma/generated/*

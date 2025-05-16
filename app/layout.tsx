@@ -1,5 +1,4 @@
 import ReactQueryProviders from '../lib/providers/QueryProvider';
-import { Provider } from '@/components/ui/provider';
 
 export const metadata = {
   title: 'Next.js',
@@ -10,9 +9,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <ReactQueryProviders>
-          <Provider>{children}</Provider>
-        </ReactQueryProviders>
+        <ReactQueryProviders>{children}</ReactQueryProviders>
       </body>
     </html>
   );
