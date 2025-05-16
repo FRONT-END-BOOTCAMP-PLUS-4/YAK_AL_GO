@@ -19,33 +19,31 @@
   "homepage": "https://github.com/FRONT-END-BOOTCAMP-PLUS-4/YAK_AL_GO#readme",
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "@tailwindcss/postcss": "^4.1.7",
     "@types/node": "^22.15.16",
     "@types/react": "^19.1.3",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
     "prisma": "^6.7.0",
+    "tailwindcss": "^4.1.7",
     "typescript": "5.8.3"
   },
   "dependencies": {
-<<<<<<< HEAD
-    "@chakra-ui/react": "^3.17.0",
-=======
->>>>>>> 801303d ([refactor/#17] chakraui, emotion 등 제거)
     "@prisma/client": "^6.7.0",
-<<<<<<< HEAD
-    "@tanstack/react-query": "^5.76.1",
-    "@types/jest": "^29.5.14",
-    "@types/react-dom": "^19.1.4",
-    "next": "^15.3.2"
-=======
     "@prisma/extension-accelerate": "^1.3.0",
-    "@tailwindcss/postcss": "^4.1.7",
+    "@radix-ui/react-label": "^2.1.6",
+    "@radix-ui/react-slot": "^1.2.2",
+    "@radix-ui/react-tabs": "^1.1.11",
     "@tanstack/react-query": "^5.76.1",
     "@types/jest": "^29.5.14",
     "@types/react-dom": "^19.1.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.510.0",
     "next": "^15.3.2",
     "next-themes": "^0.4.6",
-    "postcss": "^8.5.3",
     "react-icons": "^5.5.0",
     "tailwindcss": "^4.1.7"
->>>>>>> 8d39020 ([refactor/#17] tailwindcss 추가 완료)
+
   }
 }
