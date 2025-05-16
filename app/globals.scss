@@ -120,7 +120,6 @@
 }
 
 html {
-  font-size: 62.5%; // 1rem = 10px
   max-width: 100vw;
   overflow-x: hidden;
 }
@@ -173,26 +172,17 @@ input[type="password"],
 input[type="email"] {
   display: block;
   width: 100%;
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
   box-sizing: border-box;
 }
 
-input[type="file"] {
-  position: absolute;
-  width: 0;
-  height: 0;
-  padding: 0;
-  overflow: hidden;
-  border: 0;
-}
-
-label {
-  display: block;
-}
-
-textarea {
-  display: block;
-  width: 100%;
-  padding: var(--input-padding);
+.main-container {
+  max-width: var(--container-width);
+  margin: 64px auto;
+  min-height: calc(100vh - 84px);
+  padding: 0 var(--container-padding);
   box-sizing: border-box;
 }
 
