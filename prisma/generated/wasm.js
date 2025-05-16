@@ -120,146 +120,16 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
-exports.Prisma.QnaTagScalarFieldEnum = {
-  id: 'id',
-  tagId: 'tagId',
-  qnaId: 'qnaId'
-};
-
-exports.Prisma.QnaScalarFieldEnum = {
-  id: 'id',
-  title: 'title',
-  content: 'content',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  userId: 'userId'
-};
-
-exports.Prisma.UserMediScalarFieldEnum = {
-  id: 'id',
-  startDate: 'startDate',
-  endDate: 'endDate',
-  userId: 'userId',
-  itemSeq: 'itemSeq'
-};
-
-exports.Prisma.UserHealthScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  healthId: 'healthId'
-};
-
-exports.Prisma.MedicineScalarFieldEnum = {
-  itemSeq: 'itemSeq',
-  itemName: 'itemName',
-  entpName: 'entpName',
-  itemPermitDate: 'itemPermitDate',
-  etcOtcCode: 'etcOtcCode',
-  classNo: 'classNo',
-  chart: 'chart',
-  barCode: 'barCode',
-  materialName: 'materialName',
-  eeDocId: 'eeDocId'
-};
-
-exports.Prisma.MediTimeScalarFieldEnum = {
-  id: 'id',
-  mediTime: 'mediTime',
-  userMediId: 'userMediId'
-};
-
-exports.Prisma.UserScalarFieldEnum = {
+exports.Prisma.MemberScalarFieldEnum = {
   id: 'id',
   email: 'email',
-  photo: 'photo',
-  name: 'name',
-  birthyear: 'birthyear',
-  gender: 'gender',
-  memberType: 'memberType',
-  createdAt: 'createdAt',
-  deletedAt: 'deletedAt',
-  hpid: 'hpid'
-};
-
-exports.Prisma.PostScalarFieldEnum = {
-  id: 'id',
-  title: 'title',
-  content: 'content',
+  username: 'username',
+  phone: 'phone',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt',
-  userId: 'userId'
-};
-
-exports.Prisma.AnswerScalarFieldEnum = {
-  id: 'id',
-  content: 'content',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  isAccepted: 'isAccepted',
-  userId: 'userId',
-  qnaId: 'qnaId'
-};
-
-exports.Prisma.PharmacyScalarFieldEnum = {
-  hpid: 'hpid',
-  dutyAddr: 'dutyAddr',
-  dutyMapimg: 'dutyMapimg',
-  dutyName: 'dutyName',
-  dutyTel1: 'dutyTel1',
-  dutyTime1c: 'dutyTime1c',
-  dutyTime1s: 'dutyTime1s',
-  dutyTime2c: 'dutyTime2c',
-  dutyTime2s: 'dutyTime2s',
-  dutyTime3c: 'dutyTime3c',
-  dutyTime3s: 'dutyTime3s',
-  dutyTime4c: 'dutyTime4c',
-  dutyTime4s: 'dutyTime4s',
-  dutyTime5c: 'dutyTime5c',
-  dutyTime5s: 'dutyTime5s',
-  dutyTime6c: 'dutyTime6c',
-  dutyTime6s: 'dutyTime6s',
-  dutyTime7c: 'dutyTime7c',
-  dutyTime7s: 'dutyTime7s',
-  postCdn1: 'postCdn1',
-  postCdn2: 'postCdn2',
-  wgs84Lat: 'wgs84Lat',
-  wgs84Lon: 'wgs84Lon'
-};
-
-exports.Prisma.PostTagScalarFieldEnum = {
-  id: 'id',
-  tagId: 'tagId',
-  postId: 'postId'
-};
-
-exports.Prisma.TagScalarFieldEnum = {
-  id: 'id',
-  tagName: 'tagName'
-};
-
-exports.Prisma.HealthScalarFieldEnum = {
-  id: 'id',
-  healthName: 'healthName'
-};
-
-exports.Prisma.CommentScalarFieldEnum = {
-  id: 'id',
-  content: 'content',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  userId: 'userId',
-  postId: 'postId'
-};
-
-exports.Prisma.InventoryScalarFieldEnum = {
-  id: 'id',
-  quantity: 'quantity',
-  itemSeq: 'itemSeq',
-  hpid: 'hpid'
+  password: 'password',
+  profileImage: 'profileImage'
 };
 
 exports.Prisma.SortOrder = {
@@ -279,21 +149,7 @@ exports.Prisma.NullsOrder = {
 
 
 exports.Prisma.ModelName = {
-  QnaTag: 'QnaTag',
-  Qna: 'Qna',
-  UserMedi: 'UserMedi',
-  UserHealth: 'UserHealth',
-  Medicine: 'Medicine',
-  MediTime: 'MediTime',
-  User: 'User',
-  Post: 'Post',
-  Answer: 'Answer',
-  Pharmacy: 'Pharmacy',
-  PostTag: 'PostTag',
-  Tag: 'Tag',
-  Health: 'Health',
-  Comment: 'Comment',
-  Inventory: 'Inventory'
+  Member: 'Member'
 };
 
 /**
