@@ -25,7 +25,10 @@
     "typescript": "5.8.3"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@chakra-ui/react": "^3.17.0",
+=======
+>>>>>>> 801303d ([refactor/#17] chakraui, emotion 등 제거)
     "@prisma/client": "^6.7.0",
     "@tanstack/react-query": "^5.76.1",
     "@types/jest": "^29.5.14",
