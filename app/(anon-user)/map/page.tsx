@@ -1,7 +1,12 @@
-export default function MapPage() {
+import React from 'react';
+import KakaoMap from '../../../components/map/MapPage';
+
+const MapPage: React.FC = () => {
   return (
-    <div className="main-container">
-      <h1>약국 찾기 페이지</h1>
+    <div>
+      <KakaoMap />
     </div>
   );
-}
+};
+
+export default MapPage;
