@@ -1,45 +1,128 @@
 /* @tailwind base;
 @tailwind components;
 @tailwind utilities; */
-@import 'tailwindcss';
+@import "tailwindcss";
 
 // Noto Sans 폰트 import
 /* @tailwind base;
 @tailwind components;
 @tailwind utilities; */
-@import 'tailwindcss';
+@import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap");
 
-:root {
-  --background: #ffffff;
-  --foreground: #1a1a1a;
+@layer base {
+  :root {
+    /* 시스템 기본 변수 */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 174 65% 69%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 166 65% 81%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 166 65% 81%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 174 65% 69%;
+
+    --radius: 0.5rem;
+
+    --sub-bg: 220 30% 98%;
+
+    /* 디자인 시스템 색상 변수 */
+    --primary-bg: #ffffff;
+    --primary-subtle: #0000000d;
+    --primary-default: #50c3b8;
+    --primary-hover: #67b2aa;
+    --primary-light: #aeeee4;
+
+    --text-primary: #1a1a1a;
+    --text-secondary: #8a8a8a;
+    --text-disabled: #b0b0b0;
+    --text-white: #ffffff;
+
+    --bg-header: rgba(255, 255, 255, 0.95);
+
+    --border-neutral: #d5d5d5;
+    --border-light: #e2e8f0;
+
+    --warn-error: #d64545;
+    --warn-warning: #e0bd3a;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 174 65% 69%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 166 65% 81%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 166 65% 81%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 174 65% 69%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: unset;
+    font-family: "Noto Sans", Arial, Helvetica, sans-serif;
+    font-size: 1.6rem; // 기본 폰트 크기 = 16px
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    > .main-container {
+      max-width: 1200px;
+      margin: 64px auto;
+      min-height: calc(100vh - 84px);
+    }
+  }
 }
 
 html {
   font-size: 62.5%; // 1rem = 10px
   max-width: 100vw;
   overflow-x: hidden;
-}
-
-body {
-  margin: unset;
-  font-family: "Noto Sans", Arial, Helvetica, sans-serif;
-  font-size: 1.6rem; // 기본 폰트 크기 = 16px
-  color: var(--foreground);
-  background: var(--background);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  > .main-container {
-    max-width: 1200px;
-    margin: 64px auto;
-    min-height: calc(100vh - 84px);
-  }
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
 }
 
 // CSS Resets
@@ -111,4 +194,17 @@ textarea {
   width: 100%;
   padding: var(--input-padding);
   box-sizing: border-box;
+}
+
+/* sr-only 클래스 (스크린 리더용) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
