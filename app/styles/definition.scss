@@ -1,11 +1,11 @@
 // ─────────────────────────────
-// Primary Colors (Blue Scale)
+// Primary Colors
 // ─────────────────────────────
-$primary-default: #FFFFFF; // 연한 배경, 블록 강조
-$primary-subtle: #F7F8FA; // hover, 강조 배경
-$primary-default: #81DED4; // 메인 버튼, 포인트
-$primary-hover: #AEEEE4; // 버튼 hover, 액션 요소
-$primary-active: #67b2aa; // 눌린 상태, active 버튼
+$primary-bg: #ffffff; // 연한 배경, 블록 강조
+$primary-subtle: #0000000d; // 흰색 배경 hover, 강조 배경
+$primary-default: #50c3b8; // 메인 버튼, 포인트, 강조 (로고, 링크)
+$primary-hover: #67b2aa; // 메인 버튼 색상의 hover, 액션 요소
+$primary-light: #aeeee4; // 중요 버튼의 hover, 보조 강조
 
 // ─────────────────────────────
 // Text Colors
@@ -13,11 +13,18 @@ $primary-active: #67b2aa; // 눌린 상태, active 버튼
 $text-primary: #1a1a1a; // 본문, 제목 등 주요 텍스트
 $text-secondary: #8a8a8a; // 설명 텍스트, 보조 정보
 $text-disabled: #b0b0b0; // placeholder 등 비활성화 텍스트
+$text-white: #ffffff; // 버튼 내 텍스트 등 흰색 글자
+
+// ─────────────────────────────
+// Background Colors
+// ─────────────────────────────
+$bg-header: rgba(255, 255, 255, 0.95); // 헤더 배경색
 
 // ─────────────────────────────
 // Border Colors
 // ─────────────────────────────
 $border-neutral: #d5d5d5; // 입력창, 테두리 등 일반 보더
+$border-light: #e2e8f0; // 연한 테두리 (등록 버튼 등)
 
 // ─────────────────────────────
 // Warn / Error Colors
@@ -32,3 +39,4 @@ $font-page-title: 3.6rem; // 32px
 $font-section-title: 2.8rem; // 24px
 $font-body: 1.6rem; // 16px
 $font-caption: 1.4rem; // 14px
+$font-nav: 0.875rem; // 내비게이션 링크 및 버튼 크기
