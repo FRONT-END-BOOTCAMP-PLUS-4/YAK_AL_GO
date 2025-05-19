@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button/Button";
+import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 import styles from "./rootHeader.module.scss";
 import { cn } from "@/lib/utils";
