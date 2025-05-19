@@ -1,7 +1,17 @@
-/* @tailwind base;
+@tailwind base;
 @tailwind components;
-@tailwind utilities; */
-@import "tailwindcss";
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+// 모든 페이지 컨테이너에 패딩 적용
+main {
+  padding: 32px;
+}
 
 // Noto Sans 폰트 import
 /* @tailwind base;
