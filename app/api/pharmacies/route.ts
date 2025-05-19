@@ -3,13 +3,7 @@ import prisma from '../../../lib/prisma';
 
 export async function GET() {
   try {
-    const pharmacies = await prisma.pharmacy.findMany({
-      select: {
-        dutyName: true,
-        wgs84Lat: true,
-        wgs84Lon: true,
-      },
-    });
+    const pharmacies = await prisma.pharmacy.findMany();
     return NextResponse.json(pharmacies);
   } catch (error) {
     console.error('Error fetching pharmacies:', error);
