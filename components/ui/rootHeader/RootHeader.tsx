@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "홈", href: "/" },
-  { name: "약 검색", href: "/search" },
+  { name: "약 검색", href: "/medicines" },
   { name: "약국 찾기", href: "/map" },
   { name: "커뮤니티", href: "/community" },
 ];
@@ -63,10 +63,10 @@ export default function RootHeader() {
             </div>
           ) : (
             <div className={styles.authButtonGroup}>
-              <Link href="/auth/login" className={styles.loginButton}>
+              <Link href="/login" className={styles.loginButton}>
                 로그인
               </Link>
-              <Link href="/auth/signup" className={styles.registerButton}>
+              <Link href="/signup" className={styles.registerButton}>
                 회원가입
               </Link>
             </div>
