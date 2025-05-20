@@ -1,26 +1,27 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, X, User, MapPin, Search, MessageSquare } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu, X, User, MapPin, Search, MessageSquare } from "lucide-react";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const navigation = [
   { name: "홈", href: "/" },
   { name: "약 검색", href: "/medicines" },
   { name: "약국 찾기", href: "/map" },
   { name: "커뮤니티", href: "/qna" },
-]
+];
 
 export default function Header() {
-  const [isOpen, setIsOpen] = useState(false)
-  const pathname = usePathname()
+  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
 
   // Mock authentication state - replace with actual auth
-  const isAuthenticated = false
+  const isAuthenticated = false;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -41,12 +42,13 @@ export default function Header() {
                     className="flex items-center gap-2 font-bold text-lg text-primary"
                     onClick={() => setIsOpen(false)}
                   >
-                    약알고
+                    <Image
+                      src="/logo.png"
+                      alt="약알고"
+                      width={100}
+                      height={50}
+                    />
                   </Link>
-                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                    <X className="h-5 w-5" />
-                    <span className="sr-only">Close menu</span>
-                  </Button>
                 </div>
                 <nav className="flex-1 overflow-auto py-4">
                   <ul className="grid gap-1 px-2">
@@ -56,13 +58,21 @@ export default function Header() {
                           href={item.href}
                           className={cn(
                             "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
-                            pathname === item.href ? "bg-primary text-primary-foreground" : "hover:bg-muted",
+                            pathname === item.href
+                              ? "bg-primary text-primary-foreground"
+                              : "hover:bg-muted"
                           )}
                           onClick={() => setIsOpen(false)}
                         >
-                          {item.name === "약 검색" && <Search className="h-4 w-4" />}
-                          {item.name === "약국 찾기" && <MapPin className="h-4 w-4" />}
-                          {item.name === "커뮤니티" && <MessageSquare className="h-4 w-4" />}
+                          {item.name === "약 검색" && (
+                            <Search className="h-4 w-4" />
+                          )}
+                          {item.name === "약국 찾기" && (
+                            <MapPin className="h-4 w-4" />
+                          )}
+                          {item.name === "커뮤니티" && (
+                            <MessageSquare className="h-4 w-4" />
+                          )}
                           {item.name}
                         </Link>
                       </li>
@@ -103,7 +113,7 @@ export default function Header() {
             </SheetContent>
           </Sheet>
           <Link href="/" className="flex items-center gap-2">
-            <span className="font-bold text-xl text-primary">약알고</span>
+            <Image src="/logo.png" alt="약알고" width={100} height={50} />
           </Link>
         </div>
         <nav className="hidden lg:flex lg:gap-4 lg:items-center">
@@ -113,7 +123,9 @@ export default function Header() {
               href={item.href}
               className={cn(
                 "px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                pathname === item.href ? "bg-primary text-primary-foreground" : "hover:bg-muted",
+                pathname === item.href
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted"
               )}
             >
               {item.name}
@@ -138,7 +150,11 @@ export default function Header() {
               <Button asChild className="hidden lg:inline-flex">
                 <Link href="/login">로그인</Link>
               </Button>
-              <Button asChild variant="outline" className="hidden lg:inline-flex">
+              <Button
+                asChild
+                variant="outline"
+                className="hidden lg:inline-flex"
+              >
                 <Link href="/register">회원가입</Link>
               </Button>
               <Button asChild variant="ghost" size="icon" className="lg:hidden">
@@ -152,5 +168,5 @@ export default function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }
