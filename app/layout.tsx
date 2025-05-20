@@ -16,9 +16,11 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <Header />
-        <ReactQueryProviders>{children}</ReactQueryProviders>
-        <Footer />
+        <ReactQueryProviders>
+          <Header />
+          {children}
+          <Footer />
+        </ReactQueryProviders>
       </body>
     </html>
   );

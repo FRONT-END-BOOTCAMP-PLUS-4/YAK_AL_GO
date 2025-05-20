@@ -2,23 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+// Noto Sans 폰트 import
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
 }
-
-// 모든 페이지 컨테이너에 패딩 적용
-main {
-  padding: 32px;
-}
-
-// Noto Sans 폰트 import
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
-@import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap");
 
 @layer base {
   :root {
@@ -109,29 +100,28 @@ main {
 
 @layer base {
   * {
-    @apply border-border;
     box-sizing: border-box;
     padding: 0;
     margin: 0;
   }
   body {
-    @apply bg-background text-foreground;
     margin: unset;
-    font-family: "Noto Sans", Arial, Helvetica, sans-serif;
+    font-family: 'Noto Sans', Arial, Helvetica, sans-serif;
     font-size: 1.6rem; // 기본 폰트 크기 = 16px
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     > .main-container {
       max-width: 1200px;
-      margin: 64px auto;
+      margin: 32px auto;
       min-height: calc(100vh - 84px);
     }
   }
 }
 
 html {
-  max-width: 100vw;
-  overflow-x: hidden;
+  // font-size: 62.5%; // 1rem = 10px
+  // max-width: 100vw;
+  // overflow-x: hidden;
 }
 
 // CSS Resets
@@ -177,9 +167,9 @@ textarea {
 }
 
 select,
-input[type="text"],
-input[type="password"],
-input[type="email"] {
+input[type='text'],
+input[type='password'],
+input[type='email'] {
   display: block;
   width: 100%;
   max-width: var(--container-width);

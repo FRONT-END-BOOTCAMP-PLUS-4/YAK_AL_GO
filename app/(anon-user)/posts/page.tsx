@@ -80,7 +80,7 @@ const posts = [
 
 export default function CommunityPage() {
   return (
-    <div className="container py-8">
+    <div className="main-container py-8">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">커뮤니티</h1>
