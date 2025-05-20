@@ -35,7 +35,7 @@ export default function PostCreatePage() {
   };
 
   return (
-    <div className="container mx-auto py-8 max-w-4xl">
+    <div className="main-container mx-auto py-8 max-w-4xl">
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-bold">새 게시글 작성</h1>

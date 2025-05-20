@@ -144,7 +144,7 @@ const MedicinesPage = () => {
   }, [searchQuery, activeTab, sortOrder]);
 
   return (
-    <div className="container">
+    <div className="main-container">
       <div className={styles.headerSection}>
         <h1 className={styles.title}>약 검색</h1>
         <p className={styles.description}>

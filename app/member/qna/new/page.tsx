@@ -1,3 +1,7 @@
 export default function QnaCreatePage() {
-    return <div>Create New QnA Page</div>;
+  return (
+    <div className="main-container">
+      <h1>Create New QnA Page</h1>
+    </div>
+  );
 }
