@@ -12,6 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import dynamic from "next/dynamic"
+
+// KakaoMap 컴포넌트 동적 import (SSR 비활성화)
+const KakaoMap = dynamic(() => import("@/components/map/KakaoMap"), { ssr: false })
 
 // Mock data for pharmacies
 const pharmacies = [
