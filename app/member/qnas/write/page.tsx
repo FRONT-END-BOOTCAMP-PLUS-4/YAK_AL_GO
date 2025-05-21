@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Editor } from '@/components/blocks/editor-x/editor';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { initialValue } from '@/app/member/qnas/write/editorInitialValue';
@@ -17,7 +17,7 @@ export default function WritePage() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [isComposing, setIsComposing] = useState(false);
-  const [editorState, setEditorState] = useState<SerializedEditorState>(initialValue);
+  const editorState = useRef<SerializedEditorState>(initialValue);
 
   const handleAddTag = () => {
     if (tagInput && !tags.includes(tagInput)) {
@@ -99,7 +99,10 @@ export default function WritePage() {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium">내용</label>
-                  <Editor editorSerializedState={editorState} onSerializedChange={(value) => setEditorState(value)} />
+                  <Editor
+                    editorSerializedState={editorState.current}
+                    onSerializedChange={(value) => (editorState.current = value)}
+                  />
                 </div>
               </div>
             </CardContent>
