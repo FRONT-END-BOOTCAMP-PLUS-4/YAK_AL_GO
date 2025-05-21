@@ -43,7 +43,7 @@ const KakaoMap = ({ pharmacies, selected, onSelect }: KakaoMapProps) => {
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <Map
-        center={center}  // initialCenter 대신 center 상태 사용
+        center={center} // initialCenter 대신 center 상태 사용
         style={{ width: "100%", height: "100%" }}
         level={3}
         onClick={() => onSelect(null)}
@@ -67,6 +67,24 @@ const KakaoMap = ({ pharmacies, selected, onSelect }: KakaoMapProps) => {
           </MapMarker>
         ))}
       </Map>
+
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          width: "20px",
+          height: "20px",
+          transform: "translate(-50%, -50%)",
+          pointerEvents: "none",
+          zIndex: 10,
+        }}
+      >
+        <svg width="20" height="20">
+          <line x1="10" y1="0" x2="10" y2="20" stroke="black" strokeWidth="2" />
+          <line x1="0" y1="10" x2="20" y2="10" stroke="black" strokeWidth="2" />
+        </svg>
+      </div>
     </div>
   );
 };
