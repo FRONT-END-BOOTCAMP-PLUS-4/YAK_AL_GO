@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+
+import { useState, useEffect, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, X, Navigation, Clock, Filter, Phone } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
@@ -54,11 +55,18 @@ interface Pharmacy {
   duty_time7s: string
   duty_time7c: string
   inventories: Inventory[]
+  isOpen?: boolean // 영업 상태 표시를 위한 속성 추가
 }
 
 export default function MapPage() {
   const searchParams = useSearchParams()
   const medicineName = searchParams.get("medicine")
+
+  // 현재 시간 가져오기
+  const now = new Date()
+  const currentHour = now.getHours()
+  const currentMinute = now.getMinutes()
+  const currentDay = now.getDay().toString() // 현재 요일 (0-6)
 
   const [selectedPharmacyIndex, setSelectedPharmacyIndex] = useState<number | null>(null)
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null)
@@ -67,17 +75,30 @@ export default function MapPage() {
   const [filteredPharmacies, setFilteredPharmacies] = useState<Pharmacy[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedMedicine, setSelectedMedicine] = useState(medicineName || "전체")
-  const [selectedTime, setSelectedTime] = useState("")
+
+  // 시간 필터 상태 변경
+  const [selectedDay, setSelectedDay] = useState<string>(currentDay)
+  const [selectedHour, setSelectedHour] = useState<string>(currentHour.toString())
+  const [selectedMinute, setSelectedMinute] = useState<string>(currentMinute.toString())
+  const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(true) // 기본적으로 영업중인 약국만 표시
+
   const [showFilterPopover, setShowFilterPopover] = useState(false)
   const [medicines, setMedicines] = useState<string[]>([])
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null)
 
+  // 현재 선택된 요일을 숫자로 변환하는 상태 추가
+  const [dayNumber, setDayNumber] = useState<number>(now.getDay())
+
   // 4자리 숫자 형태의 시간을 "시:분" 형태로 변환하는 함수
-  const formatTimeString = (timeStr: string | null | undefined): string => {
-    if (!timeStr) return ""
+  const formatTimeString = (timeStr: string | null | undefined): string | null => {
+    if (!timeStr) {
+      return null // null 또는 undefined인 경우 null 반환
+    }
 
     // 이미 "시:분" 형태인 경우 그대로 반환
-    if (timeStr.includes(":")) return timeStr
+    if (timeStr.includes(":")) {
+      return timeStr
+    }
 
     // 4자리 숫자 형태인 경우 "시:분" 형태로 변환
     if (timeStr.length === 4) {
@@ -88,6 +109,44 @@ export default function MapPage() {
 
     return timeStr
   }
+
+  // 요일 선택 시 dayNumber 상태 업데이트
+  const handleDayChange = useCallback((value: string) => {
+    setSelectedDay(value)
+    const day = Number.parseInt(value, 10)
+    setDayNumber(day)
+  }, [])
+
+  // 시간 입력 처리
+  const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    // 숫자만 입력 가능하도록
+    if (/^\d*$/.test(value)) {
+      // 0-23 범위 내에서만 허용
+      const hour = Number.parseInt(value, 10)
+      if (!value || (hour >= 0 && hour <= 23)) {
+        setSelectedHour(value)
+      }
+    }
+  }
+
+  // 분 입력 처리
+  const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    // 숫자만 입력 가능하도록
+    if (/^\d*$/.test(value)) {
+      // 0-59 범위 내에서만 허용
+      const minute = Number.parseInt(value, 10)
+      if (!value || (minute >= 0 && minute <= 59)) {
+        setSelectedMinute(value)
+      }
+    }
+  }
+
+  // 컴포넌트 마운트 시 초기 요일 설정
+  useEffect(() => {
+    setDayNumber(Number.parseInt(selectedDay, 10))
+  }, [selectedDay])
 
   // Fetch pharmacies and medicines data
   useEffect(() => {
@@ -103,8 +162,14 @@ export default function MapPage() {
         const pharmaciesData = await pharmaciesRes.json()
 
         if (Array.isArray(pharmaciesData)) {
-          setPharmacies(pharmaciesData)
-          setFilteredPharmacies(pharmaciesData)
+          // 각 약국의 영업 상태 확인
+          const pharmaciesWithOpenStatus = pharmaciesData.map((pharmacy) => ({
+            ...pharmacy,
+            isOpen: checkPharmacyOpenAtTime(pharmacy, dayNumber, new Date().getHours(), new Date().getMinutes()),
+          }))
+
+          setPharmacies(pharmaciesWithOpenStatus)
+          setFilteredPharmacies(pharmaciesWithOpenStatus)
         }
 
         // Fetch medicines for filter
@@ -123,90 +188,136 @@ export default function MapPage() {
     }
 
     fetchData()
-  }, [selectedMedicine])
+  }, [selectedMedicine, dayNumber])
 
   // Filter pharmacies based on search query and filters
   useEffect(() => {
     filterPharmacies()
-  }, [searchQuery, selectedTime, pharmacies])
+  }, [searchQuery, selectedDay, selectedHour, selectedMinute, pharmacies, dayNumber, showOnlyOpen])
 
+  // checkPharmacyOpenAtTime 함수
+  const checkPharmacyOpenAtTime = (pharmacy: Pharmacy, day: number, hour: number, minute: number): boolean => {
+    // 요일에 따른 시작/종료 시간 가져오기
+    let startTimeStr, endTimeStr
+
+    switch (day) {
+      case 0: // Sunday
+        startTimeStr = pharmacy.duty_time7s
+        endTimeStr = pharmacy.duty_time7c
+        break
+      case 1: // Monday
+        startTimeStr = pharmacy.duty_time1s
+        endTimeStr = pharmacy.duty_time1c
+        break
+      case 2: // Tuesday
+        startTimeStr = pharmacy.duty_time2s
+        endTimeStr = pharmacy.duty_time2c
+        break
+      case 3: // Wednesday
+        startTimeStr = pharmacy.duty_time3s
+        endTimeStr = pharmacy.duty_time3c
+        break
+      case 4: // Thursday
+        startTimeStr = pharmacy.duty_time4s
+        endTimeStr = pharmacy.duty_time4c
+        break
+      case 5: // Friday
+        startTimeStr = pharmacy.duty_time5s
+        endTimeStr = pharmacy.duty_time5c
+        break
+      case 6: // Saturday
+        startTimeStr = pharmacy.duty_time6s
+        endTimeStr = pharmacy.duty_time6c
+        break
+      default:
+        return false
+    }
+
+    // 시작 시간이나 종료 시간이 null, undefined 또는 빈 문자열이면 영업 종료
+    if (!startTimeStr || !endTimeStr || startTimeStr === "" || endTimeStr === "") {
+      return false
+    }
+
+    const startTime = formatTimeString(startTimeStr)
+    const endTime = formatTimeString(endTimeStr)
+
+    // 변환된 시간이 null이면 영업 종료
+    if (!startTime || !endTime) {
+      return false
+    }
+
+    // 시간 비교
+    const [startHour, startMinute] = startTime.split(":").map(Number)
+    const [endHour, endMinute] = endTime.split(":").map(Number)
+
+    const checkTimeInMinutes = hour * 60 + minute
+    const startTimeInMinutes = startHour * 60 + startMinute
+    const endTimeInMinutes = endHour * 60 + endMinute
+
+    // 종료 시간이 시작 시간보다 이른 경우 (다음 날까지 영업)
+    let isOpen
+    if (endTimeInMinutes < startTimeInMinutes) {
+      isOpen = checkTimeInMinutes >= startTimeInMinutes || checkTimeInMinutes <= endTimeInMinutes
+    } else {
+      isOpen = checkTimeInMinutes >= startTimeInMinutes && checkTimeInMinutes <= endTimeInMinutes
+    }
+
+    return isOpen
+  }
+
+  // 현재 시간에 약국이 영업 중인지 확인하는 함수
+  const checkPharmacyOpen = (pharmacy: Pharmacy): boolean => {
+    const now = new Date()
+    return checkPharmacyOpenAtTime(pharmacy, now.getDay(), now.getHours(), now.getMinutes())
+  }
+
+  // 선택된 요일과 시간에 약국이 영업 중인지 확인하는 함수
+  const checkPharmacyOpenAtSelectedTime = (pharmacy: Pharmacy): boolean => {
+    // 선택된 시간이 없으면 현재 시간 사용
+    const hour = selectedHour ? Number.parseInt(selectedHour) : new Date().getHours()
+    const minute = selectedMinute ? Number.parseInt(selectedMinute) : new Date().getMinutes()
+    return checkPharmacyOpenAtTime(pharmacy, dayNumber, hour, minute)
+  }
+
+  // filterPharmacies 함수
   const filterPharmacies = () => {
     let filtered = [...pharmacies]
 
-    // Filter by search query
+    // 검색어로 필터링
     if (searchQuery) {
       filtered = filtered.filter(
-        (pharmacy) => pharmacy.duty_name.includes(searchQuery) || pharmacy.duty_addr.includes(searchQuery),
+        (pharmacy) =>
+          pharmacy.duty_name.includes(searchQuery) ||
+          pharmacy.duty_addr.includes(searchQuery) ||
+          // 약품명으로도 검색 가능하도록 추가
+          pharmacy.inventories.some((inv) => inv.medicines.item_name.includes(searchQuery)),
       )
     }
 
-    // Filter by time (simplified for demo)
-    if (selectedTime) {
-      const [hour, minute] = selectedTime.split(":").map(Number)
-      const dayOfWeek = new Date().getDay() // 0 = Sunday, 1 = Monday, etc.
+    // 항상 선택된 요일 기준으로 영업 상태 확인
+    filtered = filtered.map((pharmacy) => {
+      const isOpen = checkPharmacyOpenAtSelectedTime(pharmacy)
+      return {
+        ...pharmacy,
+        isOpen,
+      }
+    })
 
-      filtered = filtered.filter((pharmacy) => {
-        // Get the correct time fields based on day of week
-        let startTime, endTime
-
-        switch (dayOfWeek) {
-          case 0: // Sunday
-            startTime = formatTimeString(pharmacy.duty_time7s)
-            endTime = formatTimeString(pharmacy.duty_time7c)
-            break
-          case 1: // Monday
-            startTime = formatTimeString(pharmacy.duty_time1s)
-            endTime = formatTimeString(pharmacy.duty_time1c)
-            break
-          case 2: // Tuesday
-            startTime = formatTimeString(pharmacy.duty_time2s)
-            endTime = formatTimeString(pharmacy.duty_time2c)
-            break
-          case 3: // Wednesday
-            startTime = formatTimeString(pharmacy.duty_time3s)
-            endTime = formatTimeString(pharmacy.duty_time3c)
-            break
-          case 4: // Thursday
-            startTime = formatTimeString(pharmacy.duty_time4s)
-            endTime = formatTimeString(pharmacy.duty_time4c)
-            break
-          case 5: // Friday
-            startTime = formatTimeString(pharmacy.duty_time5s)
-            endTime = formatTimeString(pharmacy.duty_time5c)
-            break
-          case 6: // Saturday
-            startTime = formatTimeString(pharmacy.duty_time6s)
-            endTime = formatTimeString(pharmacy.duty_time6c)
-            break
-          default:
-            startTime = formatTimeString(pharmacy.duty_time1s)
-            endTime = formatTimeString(pharmacy.duty_time1c)
-        }
-
-        if (!startTime || !endTime) return false
-
-        const [startHour, startMinute] = startTime.split(":").map(Number)
-        const [endHour, endMinute] = endTime.split(":").map(Number)
-
-        const currentTimeInMinutes = hour * 60 + minute
-        const startTimeInMinutes = startHour * 60 + startMinute
-        const endTimeInMinutes = endHour * 60 + endMinute
-
-        // Handle cases where closing time is on the next day (e.g., 22:00 - 02:00)
-        if (endTimeInMinutes < startTimeInMinutes) {
-          return currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes <= endTimeInMinutes
-        }
-
-        return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes
-      })
+    // 영업중인 약국만 표시 옵션이 활성화되어 있으면 필터링
+    if (showOnlyOpen) {
+      filtered = filtered.filter((pharmacy) => pharmacy.isOpen)
     }
 
     setFilteredPharmacies(filtered)
   }
 
   const resetFilters = () => {
+    const now = new Date()
     setSelectedMedicine("전체")
-    setSelectedTime("")
+    setSelectedDay(now.getDay().toString())
+    setDayNumber(now.getDay())
+    setSelectedHour(now.getHours().toString())
+    setSelectedMinute(now.getMinutes().toString())
     setShowFilterPopover(false)
   }
 
@@ -266,12 +377,19 @@ export default function MapPage() {
 
   // Check if pharmacy is currently open
   const isPharmacyOpen = (pharmacy: Pharmacy) => {
-    const now = new Date()
-    const dayOfWeek = now.getDay() // 0 = Sunday, 1 = Monday, etc.
-    const hour = now.getHours()
-    const minute = now.getMinutes()
+    // isOpen 속성이 있으면 그 값을 사용
+    if (typeof pharmacy.isOpen !== "undefined") {
+      return pharmacy.isOpen
+    }
 
-    // Get the correct time fields based on day of week
+    // 없으면 선택된 요일 기준으로 계산
+    return checkPharmacyOpenAtSelectedTime(pharmacy)
+  }
+
+  // Get formatted operating hours for today
+  const getTodayHours = (pharmacy: Pharmacy) => {
+    const dayOfWeek = new Date().getDay() // 0 = Sunday, 1 = Monday, etc.
+
     let startTime, endTime
 
     switch (dayOfWeek) {
@@ -304,64 +422,12 @@ export default function MapPage() {
         endTime = formatTimeString(pharmacy.duty_time6c)
         break
       default:
-        return false
-    }
-
-    if (!startTime || !endTime) return false
-
-    // Parse hours and minutes
-    const [startHour, startMinute] = startTime.split(":").map(Number)
-    const [endHour, endMinute] = endTime.split(":").map(Number)
-
-    // Convert to minutes for easier comparison
-    const currentTimeInMinutes = hour * 60 + minute
-    const startTimeInMinutes = startHour * 60 + startMinute
-    const endTimeInMinutes = endHour * 60 + endMinute
-
-    // Handle cases where closing time is on the next day (e.g., 22:00 - 02:00)
-    if (endTimeInMinutes < startTimeInMinutes) {
-      return currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes <= endTimeInMinutes
-    }
-
-    return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes
-  }
-
-  // Get formatted operating hours for today
-  const getTodayHours = (pharmacy: Pharmacy) => {
-    const dayOfWeek = new Date().getDay() // 0 = Sunday, 1 = Monday, etc.
-
-    switch (dayOfWeek) {
-      case 0: // Sunday
-        return pharmacy.duty_time7s && pharmacy.duty_time7c
-          ? `${formatTimeString(pharmacy.duty_time7s)} - ${formatTimeString(pharmacy.duty_time7c)}`
-          : "휴무일"
-      case 1: // Monday
-        return pharmacy.duty_time1s && pharmacy.duty_time1c
-          ? `${formatTimeString(pharmacy.duty_time1s)} - ${formatTimeString(pharmacy.duty_time1c)}`
-          : "휴무일"
-      case 2: // Tuesday
-        return pharmacy.duty_time2s && pharmacy.duty_time2c
-          ? `${formatTimeString(pharmacy.duty_time2s)} - ${formatTimeString(pharmacy.duty_time2c)}`
-          : "휴무일"
-      case 3: // Wednesday
-        return pharmacy.duty_time3s && pharmacy.duty_time3c
-          ? `${formatTimeString(pharmacy.duty_time3s)} - ${formatTimeString(pharmacy.duty_time3c)}`
-          : "휴무일"
-      case 4: // Thursday
-        return pharmacy.duty_time4s && pharmacy.duty_time4c
-          ? `${formatTimeString(pharmacy.duty_time4s)} - ${formatTimeString(pharmacy.duty_time4c)}`
-          : "휴무일"
-      case 5: // Friday
-        return pharmacy.duty_time5s && pharmacy.duty_time5c
-          ? `${formatTimeString(pharmacy.duty_time5s)} - ${formatTimeString(pharmacy.duty_time5c)}`
-          : "휴무일"
-      case 6: // Saturday
-        return pharmacy.duty_time6s && pharmacy.duty_time6c
-          ? `${formatTimeString(pharmacy.duty_time6s)} - ${formatTimeString(pharmacy.duty_time6c)}`
-          : "휴무일"
-      default:
         return "정보 없음"
     }
+
+    if (!startTime || !endTime) return "휴무일"
+
+    return `${startTime} - ${endTime}`
   }
 
   // Get medicine names from pharmacy inventories
@@ -376,9 +442,37 @@ export default function MapPage() {
   }
 
   // 요일별 영업 시간 포맷팅
-  const formatWeekdayHours = (startTime: string | null | undefined, endTime: string | null | undefined) => {
+  const formatWeekdayHours = (startTimeStr: string | null | undefined, endTimeStr: string | null | undefined) => {
+    if (!startTimeStr || !endTimeStr) return "휴무일"
+
+    const startTime = formatTimeString(startTimeStr)
+    const endTime = formatTimeString(endTimeStr)
+
     if (!startTime || !endTime) return "휴무일"
-    return `${formatTimeString(startTime)} - ${formatTimeString(endTime)}`
+
+    return `${startTime} - ${endTime}`
+  }
+
+  // 요일 이름 가져오기
+  const getDayName = (day: string) => {
+    switch (day) {
+      case "0":
+        return "일요일"
+      case "1":
+        return "월요일"
+      case "2":
+        return "화요일"
+      case "3":
+        return "수요일"
+      case "4":
+        return "목요일"
+      case "5":
+        return "금요일"
+      case "6":
+        return "토요일"
+      default:
+        return ""
+    }
   }
 
   return (
@@ -393,7 +487,7 @@ export default function MapPage() {
           <div className="flex w-full items-center space-x-2">
             <Input
               type="text"
-              placeholder="약국 이름, 주소 검색"
+              placeholder="약국 이름, 주소, 약품명 검색"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -410,11 +504,6 @@ export default function MapPage() {
               <Button variant="outline" className="flex gap-2">
                 <Filter className="h-4 w-4" />
                 필터
-                {(selectedMedicine !== "전체" || selectedTime) && (
-                  <Badge className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
-                    {(selectedMedicine !== "전체" ? 1 : 0) + (selectedTime ? 1 : 0)}
-                  </Badge>
-                )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80">
@@ -436,50 +525,75 @@ export default function MapPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* 요일 선택 */}
                 <div className="space-y-2">
-                  <Label htmlFor="time">시간</Label>
-                  <Select value={selectedTime} onValueChange={setSelectedTime}>
-                    <SelectTrigger id="time">
-                      <SelectValue placeholder="시간 선택" />
+                  <Label htmlFor="day">요일</Label>
+                  <Select value={selectedDay} onValueChange={handleDayChange}>
+                    <SelectTrigger id="day">
+                      <SelectValue placeholder="요일 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="00:00">전체</SelectItem>
-                      {Array.from({ length: 24 }).map((_, i) => (
-                        <SelectItem key={i} value={`${i.toString().padStart(2, "0")}:00`}>
-                          {`${i.toString().padStart(2, "0")}:00`}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="1">월요일</SelectItem>
+                      <SelectItem value="2">화요일</SelectItem>
+                      <SelectItem value="3">수요일</SelectItem>
+                      <SelectItem value="4">목요일</SelectItem>
+                      <SelectItem value="5">금요일</SelectItem>
+                      <SelectItem value="6">토요일</SelectItem>
+                      <SelectItem value="0">일요일</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* 시간과 분 입력 (한 줄에 배치) */}
+                <div className="space-y-2">
+                  <Label>시간</Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={selectedHour}
+                      onChange={handleHourChange}
+                      placeholder="시"
+                      className="w-1/2"
+                    />
+                    <span>:</span>
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={selectedMinute}
+                      onChange={handleMinuteChange}
+                      placeholder="분"
+                      className="w-1/2"
+                    />
+                  </div>
+                </div>
+
+                {/* 영업중 필터링 옵션 */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="showOnlyOpen"
+                    checked={showOnlyOpen}
+                    onChange={(e) => setShowOnlyOpen(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="showOnlyOpen" className="text-sm cursor-pointer">
+                    영업중인 약국만 보기
+                  </Label>
+                </div>
+
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" size="sm" onClick={resetFilters}>
                     초기화
-                  </Button>
-                  <Button size="sm" onClick={() => setShowFilterPopover(false)}>
-                    적용
                   </Button>
                 </div>
               </div>
             </PopoverContent>
           </Popover>
         </div>
-
-        {selectedMedicine !== "전체" && (
-          <div className="flex items-center">
-            <Badge className="bg-primary">
-              약품: {selectedMedicine}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-4 w-4 ml-1 p-0"
-                onClick={() => setSelectedMedicine("전체")}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          </div>
-        )}
 
         <div className="grid gap-6 md:grid-cols-[350px_1fr]">
           <div className="order-2 md:order-1">
@@ -488,218 +602,81 @@ export default function MapPage() {
                 <CardTitle className="text-lg">약국 목록</CardTitle>
               </CardHeader>
               <CardContent className="p-4">
-                <Tabs defaultValue="all">
-                  <TabsList>
-                    <TabsTrigger value="all">전체</TabsTrigger>
-                    <TabsTrigger value="open">영업중</TabsTrigger>
-                    <TabsTrigger value="closed">영업종료</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="all" className="mt-4">
-                    {isLoading ? (
-                      <div className="space-y-4">
-                        {[1, 2, 3].map((i) => (
-                          <Card key={i}>
-                            <CardContent className="p-4">
-                              <Skeleton className="h-6 w-3/4 mb-2" />
-                              <Skeleton className="h-4 w-full mb-2" />
-                              <Skeleton className="h-4 w-1/2" />
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <Card key={i}>
+                        <CardContent className="p-4">
+                          <Skeleton className="h-6 w-3/4 mb-2" />
+                          <Skeleton className="h-4 w-full mb-2" />
+                          <Skeleton className="h-4 w-1/2" />
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                    {filteredPharmacies.length > 0 ? (
+                      filteredPharmacies.map((pharmacy, index) => (
+                        <Card
+                          key={pharmacy.hpid}
+                          className={`cursor-pointer transition-all hover:shadow-md ${
+                            selectedPharmacyIndex === index ? "border-primary" : ""
+                          } ${
+                            selectedMedicine !== "전체" && getPharmacyMedicines(pharmacy).includes(selectedMedicine)
+                              ? "border-primary border-2"
+                              : ""
+                          }`}
+                          onClick={() => handleSelectPharmacy(index)}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h3 className="font-bold">{pharmacy.duty_name}</h3>
+                                <p className="text-sm text-muted-foreground">{pharmacy.duty_addr}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <Clock className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-xs">{getTodayHours(pharmacy)}</span>
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                {currentLocation && (
+                                  <span className="text-xs">
+                                    {formatDistance(Number(pharmacy.wgs84_lat), Number(pharmacy.wgs84_lon))}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {pharmacy.inventories.slice(0, 3).map((inventory) => (
+                                <Badge
+                                  key={inventory.id}
+                                  variant="outline"
+                                  className={`text-xs ${
+                                    inventory.medicines.item_name === selectedMedicine
+                                      ? "bg-primary text-primary-foreground"
+                                      : ""
+                                  }`}
+                                >
+                                  {inventory.medicines.item_name}
+                                </Badge>
+                              ))}
+                              {pharmacy.inventories.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{pharmacy.inventories.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
                     ) : (
-                      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                        {filteredPharmacies.length > 0 ? (
-                          filteredPharmacies.map((pharmacy, index) => (
-                            <Card
-                              key={pharmacy.hpid}
-                              className={`cursor-pointer transition-all hover:shadow-md ${
-                                selectedPharmacyIndex === index ? "border-primary" : ""
-                              } ${
-                                selectedMedicine !== "전체" && getPharmacyMedicines(pharmacy).includes(selectedMedicine)
-                                  ? "border-primary border-2"
-                                  : ""
-                              }`}
-                              onClick={() => handleSelectPharmacy(index)}
-                            >
-                              <CardContent className="p-4">
-                                <div className="flex items-start justify-between">
-                                  <div>
-                                    <h3 className="font-bold">{pharmacy.duty_name}</h3>
-                                    <p className="text-sm text-muted-foreground">{pharmacy.duty_addr}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <Clock className="h-3 w-3 text-muted-foreground" />
-                                      <span className="text-xs">{getTodayHours(pharmacy)}</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col items-end gap-1">
-                                    <Badge
-                                      variant={isPharmacyOpen(pharmacy) ? "default" : "outline"}
-                                      className={isPharmacyOpen(pharmacy) ? "bg-green-500" : ""}
-                                    >
-                                      {isPharmacyOpen(pharmacy) ? "영업중" : "영업종료"}
-                                    </Badge>
-                                    {currentLocation && (
-                                      <span className="text-xs">
-                                        {formatDistance(Number(pharmacy.wgs84_lat), Number(pharmacy.wgs84_lon))}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="mt-2 flex flex-wrap gap-1">
-                                  {pharmacy.inventories.slice(0, 3).map((inventory) => (
-                                    <Badge
-                                      key={inventory.id}
-                                      variant="outline"
-                                      className={`text-xs ${
-                                        inventory.medicines.item_name === selectedMedicine
-                                          ? "bg-primary text-primary-foreground"
-                                          : ""
-                                      }`}
-                                    >
-                                      {inventory.medicines.item_name}
-                                    </Badge>
-                                  ))}
-                                  {pharmacy.inventories.length > 3 && (
-                                    <Badge variant="outline" className="text-xs">
-                                      +{pharmacy.inventories.length - 3}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))
-                        ) : (
-                          <div className="flex flex-col items-center justify-center py-8 text-center">
-                            <p className="text-muted-foreground">검색 결과가 없습니다.</p>
-                          </div>
-                        )}
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <p className="text-muted-foreground">검색 결과가 없습니다.</p>
                       </div>
                     )}
-                  </TabsContent>
-                  <TabsContent value="open" className="mt-4">
-                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                      {filteredPharmacies
-                        .filter((pharmacy) => isPharmacyOpen(pharmacy))
-                        .map((pharmacy, index) => (
-                          <Card
-                            key={pharmacy.hpid}
-                            className={`cursor-pointer transition-all hover:shadow-md ${
-                              selectedPharmacyIndex === index ? "border-primary" : ""
-                            } ${
-                              selectedMedicine !== "전체" && getPharmacyMedicines(pharmacy).includes(selectedMedicine)
-                                ? "border-primary border-2"
-                                : ""
-                            }`}
-                            onClick={() => handleSelectPharmacy(index)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <h3 className="font-bold">{pharmacy.duty_name}</h3>
-                                  <p className="text-sm text-muted-foreground">{pharmacy.duty_addr}</p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Clock className="h-3 w-3 text-muted-foreground" />
-                                    <span className="text-xs">{getTodayHours(pharmacy)}</span>
-                                  </div>
-                                </div>
-                                <div className="flex flex-col items-end gap-1">
-                                  <Badge variant="default" className="bg-green-500">
-                                    영업중
-                                  </Badge>
-                                  {currentLocation && (
-                                    <span className="text-xs">
-                                      {formatDistance(Number(pharmacy.wgs84_lat), Number(pharmacy.wgs84_lon))}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="mt-2 flex flex-wrap gap-1">
-                                {pharmacy.inventories.slice(0, 3).map((inventory) => (
-                                  <Badge
-                                    key={inventory.id}
-                                    variant="outline"
-                                    className={`text-xs ${
-                                      inventory.medicines.item_name === selectedMedicine
-                                        ? "bg-primary text-primary-foreground"
-                                        : ""
-                                    }`}
-                                  >
-                                    {inventory.medicines.item_name}
-                                  </Badge>
-                                ))}
-                                {pharmacy.inventories.length > 3 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    +{pharmacy.inventories.length - 3}
-                                  </Badge>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="closed" className="mt-4">
-                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                      {filteredPharmacies
-                        .filter((pharmacy) => !isPharmacyOpen(pharmacy))
-                        .map((pharmacy, index) => (
-                          <Card
-                            key={pharmacy.hpid}
-                            className={`cursor-pointer transition-all hover:shadow-md ${
-                              selectedPharmacyIndex === index ? "border-primary" : ""
-                            } ${
-                              selectedMedicine !== "전체" && getPharmacyMedicines(pharmacy).includes(selectedMedicine)
-                                ? "border-primary border-2"
-                                : ""
-                            }`}
-                            onClick={() => handleSelectPharmacy(index)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <h3 className="font-bold">{pharmacy.duty_name}</h3>
-                                  <p className="text-sm text-muted-foreground">{pharmacy.duty_addr}</p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Clock className="h-3 w-3 text-muted-foreground" />
-                                    <span className="text-xs">{getTodayHours(pharmacy)}</span>
-                                  </div>
-                                </div>
-                                <div className="flex flex-col items-end gap-1">
-                                  <Badge variant="outline">영업종료</Badge>
-                                  {currentLocation && (
-                                    <span className="text-xs">
-                                      {formatDistance(Number(pharmacy.wgs84_lat), Number(pharmacy.wgs84_lon))}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="mt-2 flex flex-wrap gap-1">
-                                {pharmacy.inventories.slice(0, 3).map((inventory) => (
-                                  <Badge
-                                    key={inventory.id}
-                                    variant="outline"
-                                    className={`text-xs ${
-                                      inventory.medicines.item_name === selectedMedicine
-                                        ? "bg-primary text-primary-foreground"
-                                        : ""
-                                    }`}
-                                  >
-                                    {inventory.medicines.item_name}
-                                  </Badge>
-                                ))}
-                                {pharmacy.inventories.length > 3 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    +{pharmacy.inventories.length - 3}
-                                  </Badge>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
