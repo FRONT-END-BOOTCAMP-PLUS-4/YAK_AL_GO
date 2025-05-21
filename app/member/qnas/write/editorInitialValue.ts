@@ -1,8 +1,4 @@
-'use client';
-
-import { useState } from 'react';
 import { SerializedEditorState } from 'lexical';
-import { Editor } from '@/components/blocks/editor-x/editor';
 
 export const initialValue = {
   root: {
@@ -14,7 +10,7 @@ export const initialValue = {
             format: 0,
             mode: 'normal',
             style: '',
-            text: 'Hello World 🚀',
+            text: '질문을 작성해주세요',
             type: 'text',
             version: 1,
           },
