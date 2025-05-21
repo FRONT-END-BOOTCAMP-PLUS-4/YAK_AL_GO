@@ -10,7 +10,7 @@ export const initialValue = {
             format: 0,
             mode: 'normal',
             style: '',
-            text: '질문을 작성해주세요',
+            text: '',
             type: 'text',
             version: 1,
           },

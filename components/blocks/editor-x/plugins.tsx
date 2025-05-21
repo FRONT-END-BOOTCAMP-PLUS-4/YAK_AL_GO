@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import {
   CHECK_LIST,
@@ -63,7 +65,16 @@ import { ImportExportPlugin } from '@/components/editor/plugins/actions/import-e
 import { MarkdownTogglePlugin } from '@/components/editor/plugins/actions/markdown-toggle-plugin';
 import { MaxLengthPlugin } from '@/components/editor/plugins/actions/max-length-plugin';
 import { ShareContentPlugin } from '@/components/editor/plugins/actions/share-content-plugin';
-import { SpeechToTextPlugin } from '@/components/editor/plugins/actions/speech-to-text-plugin';
+// hydration 문제 해결 위해 dynamic import
+// import { SpeechToTextPlugin } from '@/components/editor/plugins/actions/speech-to-text-plugin';
+import dynamic from 'next/dynamic';
+const SpeechToTextPlugin = dynamic(
+  () => import('@/components/editor/plugins/actions/speech-to-text-plugin').then((mod) => mod.SpeechToTextPlugin),
+  {
+    ssr: false,
+  }
+);
+
 import { TreeViewPlugin } from '@/components/editor/plugins/actions/tree-view-plugin';
 import { AutoLinkPlugin } from '@/components/editor/plugins/auto-link-plugin';
 import { AutocompletePlugin } from '@/components/editor/plugins/autocomplete-plugin';
@@ -202,7 +213,7 @@ export function Plugins({}) {
               <div className="" ref={onRef}>
                 <ContentEditable
                   placeholder={placeholder}
-                  className="ContentEditable__root relative block overflow-auto h-[350px] px-8 py-4 focus:outline-none "
+                  className="ContentEditable__root relative block overflow-auto min-h-72  px-8 py-4 focus:outline-none "
                 />
               </div>
             </div>

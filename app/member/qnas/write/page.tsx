@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Editor } from '@/components/blocks/editor-x/editor';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { initialValue } from '@/app/member/qnas/write/editorInitialValue';
 import { SerializedEditorState } from 'lexical';
+
+import { Editor } from '@/components/blocks/editor-x/editor';
 
 export default function WritePage() {
   const router = useRouter();
