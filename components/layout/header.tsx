@@ -9,6 +9,7 @@ import { Menu, X, User, MapPin, Search, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
+
 const navigation = [
   { name: "홈", href: "/" },
   { name: "약 검색", href: "/medicines" },
@@ -134,36 +135,22 @@ export default function Header() {
         </nav>
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
-            <div className="flex items-center gap-2">
-              <Button asChild variant="ghost" size="icon">
-                <Link href="/profile">
-                  <User className="h-5 w-5" />
-                  <span className="sr-only">Profile</span>
-                </Link>
-              </Button>
-              <Button variant="outline" className="hidden lg:inline-flex">
-                로그아웃
-              </Button>
-            </div>
+            <Button asChild variant="ghost" size="icon">
+              <Link href="/profile">
+                <img
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-RSc375mqZMwoKX2FpPgjORqaMwFLtg.png"
+                  alt="Profile"
+                  className="h-8 w-8"
+                />
+              </Link>
+            </Button>
           ) : (
-            <div className="flex items-center gap-2">
-              <Button asChild className="hidden lg:inline-flex">
-                <Link href="/login">로그인</Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="hidden lg:inline-flex"
-              >
-                <Link href="/register">회원가입</Link>
-              </Button>
-              <Button asChild variant="ghost" size="icon" className="lg:hidden">
-                <Link href="/login">
-                  <User className="h-5 w-5" />
-                  <span className="sr-only">Login</span>
-                </Link>
-              </Button>
-            </div>
+            <Button asChild variant="ghost" size="icon">
+              <Link href="/auth">
+                <User className="h-6 w-6" />
+                <span className="sr-only">로그인/회원가입</span>
+              </Link>
+            </Button>
           )}
         </div>
       </div>
