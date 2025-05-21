@@ -129,7 +129,7 @@ export default function CommunityPage() {
           <p className="text-muted-foreground">약에 관한 정보를 공유하고 소통하는 공간입니다.</p>
         </div>
 
-        <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="flex flex-col gap-4 sm:flex-row mx-1">
           <div className="flex w-full items-center space-x-2">
             <Input type="text" placeholder="검색어를 입력하세요" />
             <Button type="submit" size="icon">
