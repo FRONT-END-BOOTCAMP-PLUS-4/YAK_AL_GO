@@ -598,7 +598,7 @@ export default function MapPage() {
         <div className="grid gap-6 md:grid-cols-[350px_1fr]">
           <div className="order-2 md:order-1">
             <Card className="h-full">
-              <CardHeader>
+              <CardHeader className="pb-2">
                 <CardTitle className="text-lg">약국 목록</CardTitle>
               </CardHeader>
               <CardContent className="p-4">
