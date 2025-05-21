@@ -41,7 +41,7 @@ export default function WritePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Implement form submission
-    console.log({ title, tags });
+    console.log({ title, tags, editorState: editorState.current });
     router.push('/community');
   };
 

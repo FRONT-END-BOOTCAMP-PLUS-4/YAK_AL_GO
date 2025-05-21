@@ -65,6 +65,7 @@ import { ImportExportPlugin } from '@/components/editor/plugins/actions/import-e
 import { MarkdownTogglePlugin } from '@/components/editor/plugins/actions/markdown-toggle-plugin';
 import { MaxLengthPlugin } from '@/components/editor/plugins/actions/max-length-plugin';
 import { ShareContentPlugin } from '@/components/editor/plugins/actions/share-content-plugin';
+
 // hydration 문제 해결 위해 dynamic import
 // import { SpeechToTextPlugin } from '@/components/editor/plugins/actions/speech-to-text-plugin';
 import dynamic from 'next/dynamic';
@@ -194,7 +195,7 @@ export function Plugins({}) {
                   <InsertImage />
                   <InsertInlineImage />
                   <InsertCollapsibleContainer />
-                  <InsertExcalidraw />
+                  {/* <InsertExcalidraw /> */}
                   <InsertTable />
                   <InsertPoll />
                   <InsertColumnsLayout />
@@ -237,7 +238,7 @@ export function Plugins({}) {
         <EmojisPlugin />
         <ImagesPlugin />
         <InlineImagePlugin />
-        <ExcalidrawPlugin />
+        {/* <ExcalidrawPlugin /> */}
         <TableCellResizerPlugin />
         <TableHoverActionsPlugin anchorElem={floatingAnchorElem} />
         <TableActionMenuPlugin anchorElem={floatingAnchorElem} cellMerge={true} />
@@ -289,7 +290,7 @@ export function Plugins({}) {
             CodePickerPlugin(),
             DividerPickerPlugin(),
             PageBreakPickerPlugin(),
-            ExcalidrawPickerPlugin(),
+            // ExcalidrawPickerPlugin(),
             PollPickerPlugin(),
             EmbedsPickerPlugin({ embed: 'figma' }),
             EmbedsPickerPlugin({ embed: 'tweet' }),
