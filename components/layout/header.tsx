@@ -1,20 +1,18 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X, User, MapPin, Search, MessageSquare } from "lucide-react";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-
+import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Menu, X, User, MapPin, Search, MessageSquare } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const navigation = [
-  { name: "홈", href: "/" },
-  { name: "약 검색", href: "/medicines" },
-  { name: "약국 찾기", href: "/map" },
-  { name: "커뮤니티", href: "/qna" },
+  { name: '홈', href: '/' },
+  { name: '약 검색', href: '/medicines' },
+  { name: '약국 찾기', href: '/map' },
+  { name: '커뮤니티', href: '/community' },
 ];
 
 export default function Header() {
@@ -41,14 +39,8 @@ export default function Header() {
                   <Link
                     href="/"
                     className="flex items-center gap-2 font-bold text-lg text-primary"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <Image
-                      src="/logo.png"
-                      alt="약알고"
-                      width={100}
-                      height={50}
-                    />
+                    onClick={() => setIsOpen(false)}>
+                    <Image src="/logo.png" alt="약알고" width={100} height={50} />
                   </Link>
                 </div>
                 <nav className="flex-1 overflow-auto py-4">
@@ -58,22 +50,13 @@ export default function Header() {
                         <Link
                           href={item.href}
                           className={cn(
-                            "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
-                            pathname === item.href
-                              ? "bg-primary text-primary-foreground"
-                              : "hover:bg-muted"
+                            'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium',
+                            pathname === item.href ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
                           )}
-                          onClick={() => setIsOpen(false)}
-                        >
-                          {item.name === "약 검색" && (
-                            <Search className="h-4 w-4" />
-                          )}
-                          {item.name === "약국 찾기" && (
-                            <MapPin className="h-4 w-4" />
-                          )}
-                          {item.name === "커뮤니티" && (
-                            <MessageSquare className="h-4 w-4" />
-                          )}
+                          onClick={() => setIsOpen(false)}>
+                          {item.name === '약 검색' && <Search className="h-4 w-4" />}
+                          {item.name === '약국 찾기' && <MapPin className="h-4 w-4" />}
+                          {item.name === '커뮤니티' && <MessageSquare className="h-4 w-4" />}
                           {item.name}
                         </Link>
                       </li>
@@ -86,8 +69,7 @@ export default function Header() {
                       <Link
                         href="/profile"
                         className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
-                        onClick={() => setIsOpen(false)}
-                      >
+                        onClick={() => setIsOpen(false)}>
                         <User className="h-4 w-4" />
                         마이페이지
                       </Link>
@@ -123,12 +105,9 @@ export default function Header() {
               key={item.name}
               href={item.href}
               className={cn(
-                "px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                pathname === item.href
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted"
-              )}
-            >
+                'px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                pathname === item.href ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+              )}>
               {item.name}
             </Link>
           ))}
