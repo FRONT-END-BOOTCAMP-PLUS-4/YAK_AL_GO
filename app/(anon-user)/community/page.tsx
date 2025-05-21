@@ -138,7 +138,11 @@ export default function CommunityPage() {
             </Button>
           </div>
           <Button asChild>
-            <Link href="/community/write">글쓰기</Link>
+            {activeTab === 'qnas' ? (
+              <Link href="/member/qnas/write">질문하기</Link>
+            ) : (
+              <Link href="/member/posts/write">글쓰기</Link>
+            )}
           </Button>
         </div>
 

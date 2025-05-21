@@ -8,12 +8,16 @@ import { Editor } from '@/components/blocks/editor-x/editor';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { initialValue } from '@/app/member/qnas/write/editorInitialValue';
+import { SerializedEditorState } from 'lexical';
+
 export default function WritePage() {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [isComposing, setIsComposing] = useState(false);
+  const [editorState, setEditorState] = useState<SerializedEditorState>(initialValue);
 
   const handleAddTag = () => {
     if (tagInput && !tags.includes(tagInput)) {
@@ -95,7 +99,7 @@ export default function WritePage() {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium">내용</label>
-                  <Editor />
+                  <Editor editorSerializedState={editorState} onSerializedChange={(value) => setEditorState(value)} />
                 </div>
               </div>
             </CardContent>
