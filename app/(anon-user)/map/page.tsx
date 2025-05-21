@@ -265,12 +265,6 @@ export default function MapPage() {
     return isOpen
   }
 
-  // 현재 시간에 약국이 영업 중인지 확인하는 함수
-  const checkPharmacyOpen = (pharmacy: Pharmacy): boolean => {
-    const now = new Date()
-    return checkPharmacyOpenAtTime(pharmacy, now.getDay(), now.getHours(), now.getMinutes())
-  }
-
   // 선택된 요일과 시간에 약국이 영업 중인지 확인하는 함수
   const checkPharmacyOpenAtSelectedTime = (pharmacy: Pharmacy): boolean => {
     // 선택된 시간이 없으면 현재 시간 사용
