@@ -150,7 +150,7 @@ export default function CommunityPage() {
           <TabsContent value="qnas" className="mt-4">
             <div className="grid gap-4">
               {qnas.map((qna, index) => (
-                <Link href={`/qnas/${qna.id}`} key={qna.id}>
+                <Link href={`community/qnas/${qna.id}`} key={qna.id}>
                   <Card className="h-full overflow-hidden transition-all hover:shadow-md">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
@@ -196,7 +196,7 @@ export default function CommunityPage() {
           <TabsContent value="posts" className="mt-4">
             <div className="grid gap-4">
               {posts.map((post, index) => (
-                <Link href={`/posts/${post.id}`} key={post.id}>
+                <Link href={`community/posts/${post.id}`} key={post.id}>
                   <Card className="h-full overflow-hidden transition-all hover:shadow-md">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
