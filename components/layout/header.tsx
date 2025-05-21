@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X, User, MapPin, Search, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
+import Image from 'next/image';
 const navigation = [
   { name: '홈', href: '/' },
   { name: '약 검색', href: '/medicines' },
