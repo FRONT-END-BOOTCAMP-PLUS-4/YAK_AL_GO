@@ -347,7 +347,7 @@ export default function MapPage() {
       }
     })
 
-    // 영업중인 약국만 표시 옵션이 활성화되어 있으면 필터링
+    // 영업중인 약국만 ���시 옵션이 활성화되어 있으면 필터링
     if (showOnlyOpen) {
       filtered = filtered.filter((pharmacy) => pharmacy.isOpen)
     }
@@ -486,7 +486,7 @@ export default function MapPage() {
     setSelectedPharmacyIndex(index)
     setSelectedPharmacy(index !== null ? filteredPharmacies[index] : null)
 
-    // 선택된 약국이 있으면 지도 중심을 약국 위치로 설정
+    // 선택된 약국이 있을 때만 지도 중심을 약국 위치로 설정
     if (index !== null) {
       const pharmacy = filteredPharmacies[index]
       const pharmacyLocation = {
@@ -496,6 +496,7 @@ export default function MapPage() {
       setMapCenter(pharmacyLocation)
       locationUpdateSourceRef.current = "user"
     }
+    // 선택이 해제될 때는 지도 중심을 변경하지 않음 (else 블록 없음)
   }
 
   // 요일별 영업 시간 포맷팅
@@ -534,15 +535,13 @@ export default function MapPage() {
 
   // 지도 중심 변경 핸들러 추가
   const handleMapCenterChanged = (center: { lat: number; lng: number }) => {
-    // 사용자 조작에 의한 지도 이동일 때만 mapCenter 업데이트
-    if (locationUpdateSourceRef.current !== "user") {
-      setMapCenter(center)
-      locationUpdateSourceRef.current = "map"
+    // 항상 mapCenter 업데이트 및 약국 리스트 재정렬
+    setMapCenter(center)
+    locationUpdateSourceRef.current = "map"
 
-      // 지도 중심이 변경되면 약국 리스트를 재정렬
-      if (filteredPharmacies.length > 0) {
-        sortPharmaciesByDistance(filteredPharmacies, center)
-      }
+    // 지도 중심이 변경되면 약국 리스트를 재정렬
+    if (filteredPharmacies.length > 0) {
+      sortPharmaciesByDistance(filteredPharmacies, center)
     }
 
     // 플래그 초기화
@@ -790,8 +789,16 @@ export default function MapPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => {
+                            // 약국 정보창 닫기
                             setSelectedPharmacy(null)
                             setSelectedPharmacyIndex(null)
+
+                            // 지도 중심 변경 방지를 위한 플래그 설정
+                            locationUpdateSourceRef.current = "map"
+
+                            // 추가: 현재 지도 중심 유지
+                            const currentCenter = { ...mapCenter }
+                            setMapCenter(currentCenter)
                           }}
                         >
                           <X className="h-4 w-4" />

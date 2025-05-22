@@ -98,12 +98,17 @@ const KakaoMap = (props: KakaoMapProps) => {
     userInteractionRef.current = true
 
     const center = map.getCenter()
+
+    // 지도 조작 시 선택된 약국 초기화 (문제 2 해결)
+    onSelect(null)
+
+    // 항상 부모 컴포넌트에 중심 위치 변경 알림 (문제 1 해결)
     onCenterChanged({
       lat: center.getLat(),
       lng: center.getLng(),
     })
 
-    // 짧은 시간 후에 플래그 초기화
+    // 플래그 초기화 타이밍 조정
     setTimeout(() => {
       userInteractionRef.current = false
     }, 100)
