@@ -30,7 +30,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
 
 // KakaoMap 컴포넌트 동적 import (SSR 비활성화)
 const KakaoMap = dynamic(() => import("@/components/map/KakaoMap"), {
@@ -131,6 +130,9 @@ export default function MapPage() {
     defaultLocation
   );
 
+  // 위치 업데이트 소스를 추적하기 위한 ref
+  const locationUpdateSourceRef = useRef<"user" | "map" | "init">("init");
+
   // Kakao Maps API 로딩 상태 관리
   useEffect(() => {
     const loadKakaoMap = async () => {
@@ -144,9 +146,6 @@ export default function MapPage() {
 
     loadKakaoMap();
   }, []);
-
-  // 위치 업데이트 소스를 추적하기 위한 ref
-  const locationUpdateSourceRef = useRef<"user" | "map" | "init">("init");
 
   // 4자리 숫자 형태의 시간을 "시:분" 형태로 변환하는 함수
   const formatTimeString = (
@@ -208,31 +207,6 @@ export default function MapPage() {
   useEffect(() => {
     setDayNumber(Number.parseInt(selectedDay, 10));
   }, [selectedDay]);
-
-  // 컴포넌트 마운트 시 위치 정보 요청
-  useEffect(() => {
-    // 위치 정보 요청 함수
-    const requestLocation = () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            const newLocation = { lat: latitude, lng: longitude };
-            setCurrentLocation(newLocation);
-            setMapCenter(newLocation); // 현재 위치를 지도 중심으로 설정
-            locationUpdateSourceRef.current = "user";
-          },
-          (error) => {
-            console.error("Error getting location:", error);
-            // 위치 정보를 받지 못해도 에러 메시지는 표시하지 않음
-          }
-        );
-      }
-    };
-
-    // 위치 정보 요청
-    requestLocation();
-  }, []);
 
   // Fetch pharmacies and medicines data
   useEffect(() => {
@@ -478,8 +452,10 @@ export default function MapPage() {
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
+      console.log("Getting current location...");
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          console.log("Current location:", position);
           const { latitude, longitude } = position.coords;
           const newLocation = { lat: latitude, lng: longitude };
           setCurrentLocation(newLocation);
@@ -495,6 +471,10 @@ export default function MapPage() {
         (error) => {
           console.error("Error getting location:", error);
           alert("위치 정보를 가져오는데 실패했습니다.");
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
         }
       );
     } else {
@@ -786,17 +766,6 @@ export default function MapPage() {
               </CardHeader>
               <CardContent className="p-4">
                 {
-                  // <div className="space-y-4">
-                  //   {[1, 2, 3].map((i) => (
-                  //     <Card key={i}>
-                  //       <CardContent className="p-4">
-                  //         <Skeleton className="h-6 w-3/4 mb-2" />
-                  //         <Skeleton className="h-4 w-full mb-2" />
-                  //         <Skeleton className="h-4 w-1/2" />
-                  //       </CardContent>
-                  //     </Card>
-                  //   ))}
-                  // </div>
                   <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                     {filteredPharmacies.length > 0 ? (
                       filteredPharmacies.map((pharmacy, index) => (
@@ -895,6 +864,7 @@ export default function MapPage() {
                       onSelect={handleSelectPharmacy}
                       currentLocation={currentLocation}
                       mapCenter={mapCenter}
+                      defaultCenter={defaultLocation}
                       onCenterChanged={handleMapCenterChanged}
                     />
                   }

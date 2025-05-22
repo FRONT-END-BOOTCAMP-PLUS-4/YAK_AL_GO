@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Map, MapMarker } from "react-kakao-maps-sdk";
 
 // KakaoMapProps 타입 정의 수정
@@ -14,22 +14,36 @@ type KakaoMapProps = {
   onSelect: (index: number | null) => void;
   currentLocation?: { lat: number; lng: number } | null;
   mapCenter: { lat: number; lng: number };
+  defaultCenter: { lat: number; lng: number };
   onCenterChanged: (center: { lat: number; lng: number }) => void;
 };
 
 // KakaoMap 컴포넌트 수정
 const KakaoMap = (props: KakaoMapProps) => {
-  const { pharmacies, selected, onSelect, mapCenter, onCenterChanged } = props;
-  const [map, setMap] = useState<kakao.maps.Map | null>(null);
+  const {
+    pharmacies,
+    selected,
+    onSelect,
+    defaultCenter,
+    mapCenter,
+    onCenterChanged,
+  } = props;
 
-  // 사용자 조작에 의한 지도 이동인지 구분하기 위한 플래그
-  const userInteractionRef = useRef(false);
-  // 초기 렌더링 여부를 확인하기 위한 ref
-  const initialRenderRef = useRef(true);
   // 약국 선택에 의한 지도 이동인지 구분하기 위한 플래그
   const pharmacySelectionRef = useRef(false);
   // 이전에 선택된 약국 인덱스를 저장
   const prevSelectedRef = useRef<number | null>(null);
+  const mapRef = useRef<kakao.maps.Map>(null);
+
+  useEffect(() => {
+    if (mapRef.current) {
+      // 지도 중심을 props로 받은 mapCenter로 설정
+      mapRef.current.setCenter(
+        new kakao.maps.LatLng(mapCenter.lat, mapCenter.lng)
+      );
+      console.log("map center in kakaoMap", mapRef.current.getCenter());
+    }
+  }, [mapCenter]);
 
   // 약국 선택 변경 감지
   useEffect(() => {
@@ -39,87 +53,28 @@ const KakaoMap = (props: KakaoMapProps) => {
     }
   }, [selected]);
 
-  // 선택된 약국이나 현재 위치가 변경될 때만 지도 중심 이동
-  useEffect(() => {
-    if (!map) return;
-
-    // 초기 렌더링 시에는 mapCenter로 설정
-    if (initialRenderRef.current) {
-      initialRenderRef.current = false;
-      return;
-    }
-
-    // 약국 선택에 의한 변경일 경우
-    if (
-      pharmacySelectionRef.current &&
-      selected !== null &&
-      pharmacies[selected]
-    ) {
-      map.setCenter(
-        new kakao.maps.LatLng(
-          Number(pharmacies[selected].wgs84Lat),
-          Number(pharmacies[selected].wgs84Lon)
-        )
-      );
-      pharmacySelectionRef.current = false;
-    }
-    // 내 위치 버튼 클릭에 의한 변경일 경우 (props.currentLocation이 변경되었을 때)
-    else if (props.currentLocation && !userInteractionRef.current) {
-      // 이전 위치와 다른 경우에만 이동
-      const currentCenter = map.getCenter();
-      const currentLat = currentCenter.getLat();
-      const currentLng = currentCenter.getLng();
-
-      if (
-        Math.abs(currentLat - props.currentLocation.lat) > 0.0001 ||
-        Math.abs(currentLng - props.currentLocation.lng) > 0.0001
-      ) {
-        map.setCenter(
-          new kakao.maps.LatLng(
-            props.currentLocation.lat,
-            props.currentLocation.lng
-          )
-        );
-      }
-    }
-  }, [map, selected, pharmacies, props.currentLocation]);
-
-  // 지도 중심 변경 이벤트 핸들러
-  const handleCenterChanged = () => {
-    if (!map) return;
-
-    userInteractionRef.current = true;
-
-    const center = map.getCenter();
-
-    // 지도 조작 시 선택된 약국 초기화 (문제 2 해결)
-    onSelect(null);
-
-    // 항상 부모 컴포넌트에 중심 위치 변경 알림 (문제 1 해결)
-    onCenterChanged({
-      lat: center.getLat(),
-      lng: center.getLng(),
-    });
-
-    // 플래그 초기화 타이밍 조정
-    setTimeout(() => {
-      userInteractionRef.current = false;
-    }, 100);
-  };
-
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <Map
-        center={mapCenter}
+        ref={mapRef}
+        center={defaultCenter}
         style={{ width: "100%", height: "100%" }}
         level={3}
-        onClick={(_, __) => {
-          // 지도 클릭 시 선택된 약국만 초기화하고 지도 위치는 유지
+        onClick={() => {
           onSelect(null);
         }}
-        onDragEnd={handleCenterChanged}
-        onZoomChanged={handleCenterChanged}
-        onCreate={setMap}
+        onDrag={() => {
+          onSelect(null);
+        }}
+        onZoomChanged={() => {
+          onSelect(null);
+        }}
+        onDragEnd={(map) => {
+          onCenterChanged({
+            lat: map.getCenter().getLat(),
+            lng: map.getCenter().getLng(),
+          });
+        }}
       >
         {pharmacies.map((pharmacy, idx) => (
           <MapMarker
@@ -130,13 +85,7 @@ const KakaoMap = (props: KakaoMapProps) => {
             }}
             clickable={true}
             onClick={() => onSelect(idx)}
-          >
-            {selected === idx && (
-              <div style={{ padding: "5px", color: "#000" }}>
-                {pharmacy.dutyName}
-              </div>
-            )}
-          </MapMarker>
+          ></MapMarker>
         ))}
       </Map>
 
