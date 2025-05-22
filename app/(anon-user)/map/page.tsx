@@ -89,6 +89,12 @@ export default function MapPage() {
   // 현재 선택된 요일을 숫자로 변환하는 상태 추가
   const [dayNumber, setDayNumber] = useState<number>(now.getDay())
 
+  // 초기 위치 설정 (서울 중심)
+  const [defaultLocation] = useState<{ lat: number; lng: number }>({
+    lat: 37.5665,
+    lng: 126.978,
+  })
+
   // 4자리 숫자 형태의 시간을 "시:분" 형태로 변환하는 함수
   const formatTimeString = (timeStr: string | null | undefined): string | null => {
     if (!timeStr) {
@@ -148,6 +154,28 @@ export default function MapPage() {
     setDayNumber(Number.parseInt(selectedDay, 10))
   }, [selectedDay])
 
+  // 컴포넌트 마운트 시 위치 정보 요청
+  useEffect(() => {
+    // 위치 정보 요청 함수
+    const requestLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords
+            setCurrentLocation({ lat: latitude, lng: longitude })
+          },
+          (error) => {
+            console.error("Error getting location:", error)
+            // 위치 정보를 받지 못해도 에러 메시지는 표시하지 않음
+          },
+        )
+      }
+    }
+
+    // 위치 정보 요청
+    requestLocation()
+  }, [])
+
   // Fetch pharmacies and medicines data
   useEffect(() => {
     const fetchData = async () => {
@@ -168,8 +196,26 @@ export default function MapPage() {
             isOpen: checkPharmacyOpenAtTime(pharmacy, dayNumber, new Date().getHours(), new Date().getMinutes()),
           }))
 
-          setPharmacies(pharmaciesWithOpenStatus)
-          setFilteredPharmacies(pharmaciesWithOpenStatus)
+          // 거리순으로 정렬 (현재 위치가 있으면 현재 위치 기준, 없으면 기본 위치 기준)
+          const locationForSorting = currentLocation || defaultLocation
+          const sortedPharmacies = [...pharmaciesWithOpenStatus].sort((a, b) => {
+            const distA = calculateDistance(
+              locationForSorting.lat,
+              locationForSorting.lng,
+              Number(a.wgs84_lat),
+              Number(a.wgs84_lon),
+            )
+            const distB = calculateDistance(
+              locationForSorting.lat,
+              locationForSorting.lng,
+              Number(b.wgs84_lat),
+              Number(b.wgs84_lon),
+            )
+            return distA - distB
+          })
+
+          setPharmacies(sortedPharmacies)
+          setFilteredPharmacies(sortedPharmacies)
         }
 
         // Fetch medicines for filter
@@ -188,7 +234,7 @@ export default function MapPage() {
     }
 
     fetchData()
-  }, [selectedMedicine, dayNumber])
+  }, [selectedMedicine, dayNumber, currentLocation, defaultLocation])
 
   // Filter pharmacies based on search query and filters
   useEffect(() => {
@@ -302,6 +348,24 @@ export default function MapPage() {
       filtered = filtered.filter((pharmacy) => pharmacy.isOpen)
     }
 
+    // 필터링 후에도 거리순 정렬 유지
+    const locationForSorting = currentLocation || defaultLocation
+    filtered.sort((a, b) => {
+      const distA = calculateDistance(
+        locationForSorting.lat,
+        locationForSorting.lng,
+        Number(a.wgs84_lat),
+        Number(a.wgs84_lon),
+      )
+      const distB = calculateDistance(
+        locationForSorting.lat,
+        locationForSorting.lng,
+        Number(b.wgs84_lat),
+        Number(b.wgs84_lon),
+      )
+      return distA - distB
+    })
+
     setFilteredPharmacies(filtered)
   }
 
@@ -331,6 +395,12 @@ export default function MapPage() {
             })
 
             setFilteredPharmacies(sortedPharmacies)
+          }
+
+          // Move map to current location
+          if (selectedPharmacyIndex !== null) {
+            setSelectedPharmacyIndex(null)
+            setSelectedPharmacy(null)
           }
         },
         (error) => {
@@ -692,6 +762,7 @@ export default function MapPage() {
                       }))}
                       selected={selectedPharmacyIndex}
                       onSelect={handleSelectPharmacy}
+                      currentLocation={currentLocation}
                     />
                   )}
 
