@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -95,6 +95,12 @@ export default function MapPage() {
     lng: 126.978,
   })
 
+  // 지도 중심 위치를 추적하는 상태 변수 추가
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(defaultLocation)
+
+  // 위치 업데이트 소스를 추적하기 위한 ref
+  const locationUpdateSourceRef = useRef<"user" | "map" | "init">("init")
+
   // 4자리 숫자 형태의 시간을 "시:분" 형태로 변환하는 함수
   const formatTimeString = (timeStr: string | null | undefined): string | null => {
     if (!timeStr) {
@@ -162,7 +168,10 @@ export default function MapPage() {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords
-            setCurrentLocation({ lat: latitude, lng: longitude })
+            const newLocation = { lat: latitude, lng: longitude }
+            setCurrentLocation(newLocation)
+            setMapCenter(newLocation) // 현재 위치를 지도 중심으로 설정
+            locationUpdateSourceRef.current = "user"
           },
           (error) => {
             console.error("Error getting location:", error)
@@ -196,26 +205,10 @@ export default function MapPage() {
             isOpen: checkPharmacyOpenAtTime(pharmacy, dayNumber, new Date().getHours(), new Date().getMinutes()),
           }))
 
-          // 거리순으로 정렬 (현재 위치가 있으면 현재 위치 기준, 없으면 기본 위치 기준)
-          const locationForSorting = currentLocation || defaultLocation
-          const sortedPharmacies = [...pharmaciesWithOpenStatus].sort((a, b) => {
-            const distA = calculateDistance(
-              locationForSorting.lat,
-              locationForSorting.lng,
-              Number(a.wgs84_lat),
-              Number(a.wgs84_lon),
-            )
-            const distB = calculateDistance(
-              locationForSorting.lat,
-              locationForSorting.lng,
-              Number(b.wgs84_lat),
-              Number(b.wgs84_lon),
-            )
-            return distA - distB
-          })
+          setPharmacies(pharmaciesWithOpenStatus)
 
-          setPharmacies(sortedPharmacies)
-          setFilteredPharmacies(sortedPharmacies)
+          // 약국 데이터를 가져온 후 현재 지도 중심 기준으로 정렬
+          sortPharmaciesByDistance(pharmaciesWithOpenStatus, mapCenter)
         }
 
         // Fetch medicines for filter
@@ -234,7 +227,18 @@ export default function MapPage() {
     }
 
     fetchData()
-  }, [selectedMedicine, dayNumber, currentLocation, defaultLocation])
+  }, [selectedMedicine, dayNumber, mapCenter])
+
+  // 약국을 거리순으로 정렬하는 함수
+  const sortPharmaciesByDistance = (pharmaciesToSort: Pharmacy[], center: { lat: number; lng: number }) => {
+    const sorted = [...pharmaciesToSort].sort((a, b) => {
+      const distA = calculateDistance(center.lat, center.lng, Number(a.wgs84_lat), Number(a.wgs84_lon))
+      const distB = calculateDistance(center.lat, center.lng, Number(b.wgs84_lat), Number(b.wgs84_lon))
+      return distA - distB
+    })
+
+    setFilteredPharmacies(sorted)
+  }
 
   // Filter pharmacies based on search query and filters
   useEffect(() => {
@@ -349,20 +353,9 @@ export default function MapPage() {
     }
 
     // 필터링 후에도 거리순 정렬 유지
-    const locationForSorting = currentLocation || defaultLocation
     filtered.sort((a, b) => {
-      const distA = calculateDistance(
-        locationForSorting.lat,
-        locationForSorting.lng,
-        Number(a.wgs84_lat),
-        Number(a.wgs84_lon),
-      )
-      const distB = calculateDistance(
-        locationForSorting.lat,
-        locationForSorting.lng,
-        Number(b.wgs84_lat),
-        Number(b.wgs84_lon),
-      )
+      const distA = calculateDistance(mapCenter.lat, mapCenter.lng, Number(a.wgs84_lat), Number(a.wgs84_lon))
+      const distB = calculateDistance(mapCenter.lat, mapCenter.lng, Number(b.wgs84_lat), Number(b.wgs84_lon))
       return distA - distB
     })
 
@@ -384,20 +377,12 @@ export default function MapPage() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords
-          setCurrentLocation({ lat: latitude, lng: longitude })
+          const newLocation = { lat: latitude, lng: longitude }
+          setCurrentLocation(newLocation)
+          setMapCenter(newLocation) // 현재 위치를 지도 중심으로 설정
+          locationUpdateSourceRef.current = "user"
 
-          // Sort pharmacies by distance from current location
-          if (pharmacies.length > 0) {
-            const sortedPharmacies = [...pharmacies].sort((a, b) => {
-              const distA = calculateDistance(latitude, longitude, Number(a.wgs84_lat), Number(a.wgs84_lon))
-              const distB = calculateDistance(latitude, longitude, Number(b.wgs84_lat), Number(b.wgs84_lon))
-              return distA - distB
-            })
-
-            setFilteredPharmacies(sortedPharmacies)
-          }
-
-          // Move map to current location
+          // 선택된 약국 초기화
           if (selectedPharmacyIndex !== null) {
             setSelectedPharmacyIndex(null)
             setSelectedPharmacy(null)
@@ -432,10 +417,7 @@ export default function MapPage() {
 
   // Format distance for display
   const formatDistance = (lat: number, lon: number) => {
-    if (!currentLocation) return ""
-
-    const distance = calculateDistance(currentLocation.lat, currentLocation.lng, Number(lat), Number(lon))
-
+    const distance = calculateDistance(mapCenter.lat, mapCenter.lng, Number(lat), Number(lon))
     return distance < 1 ? `${(distance * 1000).toFixed(0)}m` : `${distance.toFixed(1)}km`
   }
 
@@ -503,6 +485,17 @@ export default function MapPage() {
   const handleSelectPharmacy = (index: number | null) => {
     setSelectedPharmacyIndex(index)
     setSelectedPharmacy(index !== null ? filteredPharmacies[index] : null)
+
+    // 선택된 약국이 있으면 지도 중심을 약국 위치로 설정
+    if (index !== null) {
+      const pharmacy = filteredPharmacies[index]
+      const pharmacyLocation = {
+        lat: Number(pharmacy.wgs84_lat),
+        lng: Number(pharmacy.wgs84_lon),
+      }
+      setMapCenter(pharmacyLocation)
+      locationUpdateSourceRef.current = "user"
+    }
   }
 
   // 요일별 영업 시간 포맷팅
@@ -537,6 +530,25 @@ export default function MapPage() {
       default:
         return ""
     }
+  }
+
+  // 지도 중심 변경 핸들러 추가
+  const handleMapCenterChanged = (center: { lat: number; lng: number }) => {
+    // 사용자 조작에 의한 지도 이동일 때만 mapCenter 업데이트
+    if (locationUpdateSourceRef.current !== "user") {
+      setMapCenter(center)
+      locationUpdateSourceRef.current = "map"
+
+      // 지도 중심이 변경되면 약국 리스트를 재정렬
+      if (filteredPharmacies.length > 0) {
+        sortPharmaciesByDistance(filteredPharmacies, center)
+      }
+    }
+
+    // 플래그 초기화
+    setTimeout(() => {
+      locationUpdateSourceRef.current = "map"
+    }, 100)
   }
 
   return (
@@ -704,11 +716,9 @@ export default function MapPage() {
                                 </div>
                               </div>
                               <div className="flex flex-col items-end gap-1">
-                                {currentLocation && (
-                                  <span className="text-xs">
-                                    {formatDistance(Number(pharmacy.wgs84_lat), Number(pharmacy.wgs84_lon))}
-                                  </span>
-                                )}
+                                <span className="text-xs">
+                                  {formatDistance(Number(pharmacy.wgs84_lat), Number(pharmacy.wgs84_lon))}
+                                </span>
                               </div>
                             </div>
                             <div className="mt-2 flex flex-wrap gap-1">
@@ -763,6 +773,8 @@ export default function MapPage() {
                       selected={selectedPharmacyIndex}
                       onSelect={handleSelectPharmacy}
                       currentLocation={currentLocation}
+                      mapCenter={mapCenter}
+                      onCenterChanged={handleMapCenterChanged}
                     />
                   )}
 

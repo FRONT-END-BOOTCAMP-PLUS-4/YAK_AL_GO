@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Map, MapMarker } from "react-kakao-maps-sdk"
 
+// KakaoMapProps 타입 정의 수정
 type KakaoMapProps = {
   pharmacies: Array<{
     dutyName: string
@@ -12,39 +13,101 @@ type KakaoMapProps = {
   selected: number | null
   onSelect: (index: number | null) => void
   currentLocation?: { lat: number; lng: number } | null
+  mapCenter: { lat: number; lng: number }
+  onCenterChanged: (center: { lat: number; lng: number }) => void
 }
 
+// KakaoMap 컴포넌트 수정
 const KakaoMap = (props: KakaoMapProps) => {
-  const { pharmacies, selected, onSelect } = props
+  const { pharmacies, selected, onSelect, mapCenter, onCenterChanged } = props
   const [mapLoaded, setMapLoaded] = useState(false)
-  const [center, setCenter] = useState({
-    lat: 37.5639747,
-    lng: 127.0077246,
-  })
+  const [map, setMap] = useState<kakao.maps.Map | null>(null)
 
-  // 초기 위치 설정 로직 수정
+  // 사용자 조작에 의한 지도 이동인지 구분하기 위한 플래그
+  const userInteractionRef = useRef(false)
+  // 초기 렌더링 여부를 확인하기 위한 ref
+  const initialRenderRef = useRef(true)
+  // 약국 선택에 의한 지도 이동인지 구분하기 위한 플래그
+  const pharmacySelectionRef = useRef(false)
+  // 이전에 선택된 약국 인덱스를 저장
+  const prevSelectedRef = useRef<number | null>(null)
+
+  // Kakao Maps API 로딩 상태 관리
   useEffect(() => {
-    if (selected !== null && pharmacies[selected]) {
-      // 선택된 약국이 있으면 약국 위치로 이동
-      setCenter({
-        lat: Number(pharmacies[selected].wgs84Lat),
-        lng: Number(pharmacies[selected].wgs84Lon),
-      })
-    } else if (props.currentLocation) {
-      // 선택된 약국이 없고 현재 위치가 있으면 현재 위치로 이동
-      setCenter({
-        lat: props.currentLocation.lat,
-        lng: props.currentLocation.lng,
-      })
+    const loadKakaoMap = async () => {
+      if (!window.kakao?.maps) {
+        const script = document.createElement("script")
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY}&autoload=false`
+        script.onload = () => {
+          window.kakao.maps.load(() => {
+            setMapLoaded(true)
+          })
+        }
+        document.head.appendChild(script)
+      } else {
+        setMapLoaded(true)
+      }
     }
-    // 둘 다 없으면 초기 설정된 위치 유지
-  }, [selected, pharmacies, props.currentLocation])
 
-  useEffect(() => {
-    window.kakao?.maps?.load(() => {
-      setMapLoaded(true)
-    })
+    loadKakaoMap()
   }, [])
+
+  // 약국 선택 변경 감지
+  useEffect(() => {
+    if (selected !== prevSelectedRef.current) {
+      pharmacySelectionRef.current = true
+      prevSelectedRef.current = selected
+    }
+  }, [selected])
+
+  // 선택된 약국이나 현재 위치가 변경될 때만 지도 중심 이동
+  useEffect(() => {
+    if (!map) return
+
+    // 초기 렌더링 시에는 mapCenter로 설정
+    if (initialRenderRef.current) {
+      initialRenderRef.current = false
+      return
+    }
+
+    // 약국 선택에 의한 변경일 경우
+    if (pharmacySelectionRef.current && selected !== null && pharmacies[selected]) {
+      map.setCenter(new kakao.maps.LatLng(Number(pharmacies[selected].wgs84Lat), Number(pharmacies[selected].wgs84Lon)))
+      pharmacySelectionRef.current = false
+    }
+    // 내 위치 버튼 클릭에 의한 변경일 경우 (props.currentLocation이 변경되었을 때)
+    else if (props.currentLocation && !userInteractionRef.current) {
+      // 이전 위치와 다른 경우에만 이동
+      const currentCenter = map.getCenter()
+      const currentLat = currentCenter.getLat()
+      const currentLng = currentCenter.getLng()
+
+      if (
+        Math.abs(currentLat - props.currentLocation.lat) > 0.0001 ||
+        Math.abs(currentLng - props.currentLocation.lng) > 0.0001
+      ) {
+        map.setCenter(new kakao.maps.LatLng(props.currentLocation.lat, props.currentLocation.lng))
+      }
+    }
+  }, [map, selected, pharmacies, props.currentLocation])
+
+  // 지도 중심 변경 이벤트 핸들러
+  const handleCenterChanged = () => {
+    if (!map) return
+
+    userInteractionRef.current = true
+
+    const center = map.getCenter()
+    onCenterChanged({
+      lat: center.getLat(),
+      lng: center.getLng(),
+    })
+
+    // 짧은 시간 후에 플래그 초기화
+    setTimeout(() => {
+      userInteractionRef.current = false
+    }, 100)
+  }
 
   if (!mapLoaded) {
     return <div>지도를 불러오는 중...</div>
@@ -53,11 +116,16 @@ const KakaoMap = (props: KakaoMapProps) => {
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <Map
-        center={center} // initialCenter 대신 center 상태 사용
+        center={mapCenter}
         style={{ width: "100%", height: "100%" }}
         level={3}
-        onClick={() => onSelect(null)}
-        onDragStart={() => onSelect(null)}
+        onClick={(_, __) => {
+          // 지도 클릭 시 선택된 약국만 초기화하고 지도 위치는 유지
+          onSelect(null)
+        }}
+        onDragEnd={handleCenterChanged}
+        onZoomChanged={handleCenterChanged}
+        onCreate={setMap}
       >
         {pharmacies.map((pharmacy, idx) => (
           <MapMarker
