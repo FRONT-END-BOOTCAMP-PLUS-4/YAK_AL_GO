@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -123,11 +123,11 @@ export default function MapPage() {
   }
 
   // 요일 선택 시 dayNumber 상태 업데이트
-  const handleDayChange = useCallback((value: string) => {
+  const handleDayChange = (value: string) => {
     setSelectedDay(value)
     const day = Number.parseInt(value, 10)
     setDayNumber(day)
-  }, [])
+  }
 
   // 시간 입력 처리
   const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -347,7 +347,7 @@ export default function MapPage() {
       }
     })
 
-    // 영업중인 약국만 ���시 옵션이 활성화되어 있으면 필터링
+    // 영업중인 약국만 표시 옵션이 활성화되어 있으면 필터링
     if (showOnlyOpen) {
       filtered = filtered.filter((pharmacy) => pharmacy.isOpen)
     }
@@ -419,17 +419,6 @@ export default function MapPage() {
   const formatDistance = (lat: number, lon: number) => {
     const distance = calculateDistance(mapCenter.lat, mapCenter.lng, Number(lat), Number(lon))
     return distance < 1 ? `${(distance * 1000).toFixed(0)}m` : `${distance.toFixed(1)}km`
-  }
-
-  // Check if pharmacy is currently open
-  const isPharmacyOpen = (pharmacy: Pharmacy) => {
-    // isOpen 속성이 있으면 그 값을 사용
-    if (typeof pharmacy.isOpen !== "undefined") {
-      return pharmacy.isOpen
-    }
-
-    // 없으면 선택된 요일 기준으로 계산
-    return checkPharmacyOpenAtSelectedTime(pharmacy)
   }
 
   // Get formatted operating hours for today
@@ -511,28 +500,6 @@ export default function MapPage() {
     return `${startTime} - ${endTime}`
   }
 
-  // 요일 이름 가져오기
-  const getDayName = (day: string) => {
-    switch (day) {
-      case "0":
-        return "일요일"
-      case "1":
-        return "월요일"
-      case "2":
-        return "화요일"
-      case "3":
-        return "수요일"
-      case "4":
-        return "목요일"
-      case "5":
-        return "금요일"
-      case "6":
-        return "토요일"
-      default:
-        return ""
-    }
-  }
-
   // 지도 중심 변경 핸들러 추가
   const handleMapCenterChanged = (center: { lat: number; lng: number }) => {
     // 항상 mapCenter 업데이트 및 약국 리스트 재정렬
@@ -574,7 +541,18 @@ export default function MapPage() {
           <Button className="flex gap-2" onClick={getCurrentLocation}>
             <Navigation className="h-4 w-4" />내 위치
           </Button>
-          <Popover open={showFilterPopover} onOpenChange={setShowFilterPopover}>
+          <Popover
+            open={showFilterPopover}
+            onOpenChange={(open) => {
+              setShowFilterPopover(open)
+              // 지도 중심 변경 방지를 위한 플래그 설정
+              locationUpdateSourceRef.current = "map"
+
+              // 현재 지도 중심 유지
+              const currentCenter = { ...mapCenter }
+              setMapCenter(currentCenter)
+            }}
+          >
             <PopoverTrigger asChild>
               <Button variant="outline" className="flex gap-2">
                 <Filter className="h-4 w-4" />
