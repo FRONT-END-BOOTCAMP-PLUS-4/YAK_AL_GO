@@ -57,35 +57,35 @@ model medi_times {
 }
 
 model medicines {
-  item_seq                String                    @id
-  item_name               String                    @db.VarChar(255)
-  entp_name               String?                   @db.VarChar(255)
-  item_permit_date        DateTime?
-  etc_otc_code            String?                   @db.VarChar(50)
-  class_no                String?                   @db.VarChar(100)
-  chart                   String?
-  bar_code                String?                   @db.VarChar(50)
-  material_name           String?
-  ee_doc_id               String?                   @db.VarChar(255)
-  bizrno                  String?                   @db.VarChar(20)
-  cancel_date             DateTime?
-  cancel_name             String?                   @db.VarChar(100)
-  change_date             DateTime?
-  created_at              DateTime                  @default(now())
-  edi_code                String?                   @db.VarChar(50)
-  insert_file             String?                   @db.VarChar(255)
-  nb_doc_id               String?                   @db.VarChar(255)
-  pack_unit               String?                   @db.VarChar(255)
-  reexam_date             DateTime?
-  reexam_target           String?                   @db.VarChar(255)
-  storage_method          String?                   @db.VarChar(255)
-  type_code               String?                   @db.VarChar(10)
-  type_name               String?                   @db.VarChar(100)
-  ud_doc_id               String?                   @db.VarChar(255)
-  updated_at              DateTime                  @updatedAt
-  valid_term              String?                   @db.VarChar(100)
-  inventories inventories[]
-  user_medis  user_medis[]
+  item_seq         String        @id
+  item_name        String        @db.VarChar(255)
+  entp_name        String?       @db.VarChar(255)
+  item_permit_date DateTime?
+  etc_otc_code     String?       @db.VarChar(50)
+  class_no         String?       @db.VarChar(100)
+  chart            String?
+  bar_code         String?       @db.VarChar(50)
+  material_name    String?
+  ee_doc_id        String?       @db.VarChar(255)
+  bizrno           String?       @db.VarChar(20)
+  cancel_date      DateTime?
+  cancel_name      String?       @db.VarChar(100)
+  change_date      DateTime?
+  created_at       DateTime      @default(now())
+  edi_code         String?       @db.VarChar(50)
+  insert_file      String?       @db.VarChar(255)
+  nb_doc_id        String?       @db.VarChar(255)
+  pack_unit        String?       @db.VarChar(255)
+  reexam_date      DateTime?
+  reexam_target    String?       @db.VarChar(255)
+  storage_method   String?       @db.VarChar(255)
+  type_code        String?       @db.VarChar(10)
+  type_name        String?       @db.VarChar(100)
+  ud_doc_id        String?       @db.VarChar(255)
+  updated_at       DateTime      @updatedAt
+  valid_term       String?       @db.VarChar(100)
+  inventories      inventories[]
+  user_medis       user_medis[]
 
   @@index([item_name])
   @@index([entp_name])
@@ -155,7 +155,7 @@ model qnas {
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @default(now()) @map("updated_at")
   deletedAt   DateTime?  @map("deleted_at")
-  userId      String     @map("user_id") @db.Uuid 
+  userId      String     @map("user_id") @db.Uuid
   content     Json
   contentHTML String?    @map("content_html")
   answers     answers[]
@@ -182,7 +182,7 @@ model user_medis {
   id         Int          @id @default(autoincrement())
   start_date DateTime?
   end_date   DateTime?
-  userId     String     @db.Uuid
+  userId     String       @db.Uuid
   itemSeq    String
   medi_times medi_times[]
   medicines  medicines    @relation(fields: [itemSeq], references: [item_seq])
@@ -196,7 +196,7 @@ model users {
   name         String?        @db.VarChar(100)
   birthyear    Int?
   gender       String?        @db.VarChar(10)
-  member_type  Int            @default(0) 
+  member_type  Int            @default(0)
   created_at   DateTime       @default(now())
   deleted_at   DateTime?
   hpid         String?
