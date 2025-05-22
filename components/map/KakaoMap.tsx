@@ -1,43 +1,53 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { Map, MapMarker } from "react-kakao-maps-sdk";
+import { useEffect, useState } from "react"
+import { Map, MapMarker } from "react-kakao-maps-sdk"
 
 type KakaoMapProps = {
   pharmacies: Array<{
-    dutyName: string;
-    wgs84Lat: number;
-    wgs84Lon: number;
-  }>;
-  selected: number | null;
-  onSelect: (index: number | null) => void;
-};
+    dutyName: string
+    wgs84Lat: number
+    wgs84Lon: number
+  }>
+  selected: number | null
+  onSelect: (index: number | null) => void
+  currentLocation?: { lat: number; lng: number } | null
+}
 
-const KakaoMap = ({ pharmacies, selected, onSelect }: KakaoMapProps) => {
-  const [mapLoaded, setMapLoaded] = useState(false);
+const KakaoMap = (props: KakaoMapProps) => {
+  const { pharmacies, selected, onSelect } = props
+  const [mapLoaded, setMapLoaded] = useState(false)
   const [center, setCenter] = useState({
     lat: 37.5639747,
     lng: 127.0077246,
-  });
+  })
 
-  // 선택된 약국이 변경될 때마다 지도 중심 이동
+  // 초기 위치 설정 로직 수정
   useEffect(() => {
     if (selected !== null && pharmacies[selected]) {
+      // 선택된 약국이 있으면 약국 위치로 이동
       setCenter({
         lat: Number(pharmacies[selected].wgs84Lat),
         lng: Number(pharmacies[selected].wgs84Lon),
-      });
+      })
+    } else if (props.currentLocation) {
+      // 선택된 약국이 없고 현재 위치가 있으면 현재 위치로 이동
+      setCenter({
+        lat: props.currentLocation.lat,
+        lng: props.currentLocation.lng,
+      })
     }
-  }, [selected, pharmacies]);
+    // 둘 다 없으면 초기 설정된 위치 유지
+  }, [selected, pharmacies, props.currentLocation])
 
   useEffect(() => {
     window.kakao?.maps?.load(() => {
-      setMapLoaded(true);
-    });
-  }, []);
+      setMapLoaded(true)
+    })
+  }, [])
 
   if (!mapLoaded) {
-    return <div>지도를 불러오는 중...</div>;
+    return <div>지도를 불러오는 중...</div>
   }
 
   return (
@@ -59,11 +69,7 @@ const KakaoMap = ({ pharmacies, selected, onSelect }: KakaoMapProps) => {
             clickable={true}
             onClick={() => onSelect(idx)}
           >
-            {selected === idx && (
-              <div style={{ padding: "5px", color: "#000" }}>
-                {pharmacy.dutyName}
-              </div>
-            )}
+            {selected === idx && <div style={{ padding: "5px", color: "#000" }}>{pharmacy.dutyName}</div>}
           </MapMarker>
         ))}
       </Map>
@@ -86,7 +92,7 @@ const KakaoMap = ({ pharmacies, selected, onSelect }: KakaoMapProps) => {
         </svg>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default KakaoMap;
+export default KakaoMap
