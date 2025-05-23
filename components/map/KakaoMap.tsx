@@ -41,7 +41,6 @@ const KakaoMap = (props: KakaoMapProps) => {
       mapRef.current.setCenter(
         new kakao.maps.LatLng(mapCenter.lat, mapCenter.lng)
       );
-      console.log("map center in kakaoMap", mapRef.current.getCenter());
     }
   }, [mapCenter]);
 
