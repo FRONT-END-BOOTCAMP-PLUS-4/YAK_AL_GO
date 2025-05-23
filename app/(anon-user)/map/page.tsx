@@ -102,7 +102,7 @@ export default function MapPage() {
     }
 
     fetchData()
-  }, [selectedMedicine, currentDay, mapCenter])
+  }, [selectedMedicine, currentDay])
 
   // 약국을 거리순으로 정렬하는 함수
   const sortPharmaciesByDistance = (pharmaciesToSort: PharmacyType[], center: { lat: number; lng: number }) => {
