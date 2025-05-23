@@ -452,10 +452,8 @@ export default function MapPage() {
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
-      console.log("Getting current location...");
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log("Current location:", position);
           const { latitude, longitude } = position.coords;
           const newLocation = { lat: latitude, lng: longitude };
           setCurrentLocation(newLocation);
