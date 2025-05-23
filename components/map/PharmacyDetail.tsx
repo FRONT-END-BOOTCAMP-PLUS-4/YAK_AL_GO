@@ -67,7 +67,7 @@ export const PharmacyDetail: React.FC<PharmacyDetailProps> = ({
                   : ""
               }
             >
-              {inventory.medicines.item_name} ({inventory.quantity}개)
+              {inventory.medicines.item_name}
             </Badge>
           ))}
         </div>
@@ -206,7 +206,7 @@ export const PharmacyDetail: React.FC<PharmacyDetailProps> = ({
                           : ""
                       }
                     >
-                      {inventory.medicines.item_name} ({inventory.quantity}개)
+                      {inventory.medicines.item_name}
                     </Badge>
                   ))}
                 </div>

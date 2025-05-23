@@ -12,12 +12,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PopoverContent } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface PharmacyFilterProps {
   selectedMedicine: string;
   setSelectedMedicine: (medicine: string) => void;
-  selectedDay: string;
-  setSelectedDay: (day: string) => void;
+  selectedDays: string[];
+  setSelectedDays: (days: string[]) => void;
   selectedHour: string;
   setSelectedHour: (hour: string) => void;
   selectedMinute: string;
@@ -31,8 +32,8 @@ interface PharmacyFilterProps {
 export const PharmacyFilter: React.FC<PharmacyFilterProps> = ({
   selectedMedicine,
   setSelectedMedicine,
-  selectedDay,
-  setSelectedDay,
+  selectedDays,
+  setSelectedDays,
   selectedHour,
   setSelectedHour,
   selectedMinute,
@@ -68,15 +69,28 @@ export const PharmacyFilter: React.FC<PharmacyFilterProps> = ({
     }
   };
 
-  // 요일 선택 시 dayNumber 상태 업데이트
-  const handleDayChange = (value: string) => {
-    setSelectedDay(value);
+  // 요일 선택 처리
+  const handleDayChange = (day: string) => {
+    if (selectedDays.includes(day)) {
+      setSelectedDays(selectedDays.filter((d) => d !== day));
+    } else {
+      setSelectedDays([...selectedDays, day]);
+    }
   };
+
+  const days = [
+    { value: "1", label: "월요일" },
+    { value: "2", label: "화요일" },
+    { value: "3", label: "수요일" },
+    { value: "4", label: "목요일" },
+    { value: "5", label: "금요일" },
+    { value: "6", label: "토요일" },
+    { value: "0", label: "일요일" },
+  ];
 
   return (
     <PopoverContent className="w-80">
       <div className="space-y-4">
-        <h3 className="font-medium">필터</h3>
         <div className="space-y-2">
           <Label htmlFor="medicine">약품</Label>
           <Select value={selectedMedicine} onValueChange={setSelectedMedicine}>
@@ -94,23 +108,26 @@ export const PharmacyFilter: React.FC<PharmacyFilterProps> = ({
           </Select>
         </div>
 
-        {/* 요일 선택 */}
+        {/* 요일 다중 선택 */}
         <div className="space-y-2">
-          <Label htmlFor="day">요일</Label>
-          <Select value={selectedDay} onValueChange={handleDayChange}>
-            <SelectTrigger id="day">
-              <SelectValue placeholder="요일 선택" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">월요일</SelectItem>
-              <SelectItem value="2">화요일</SelectItem>
-              <SelectItem value="3">수요일</SelectItem>
-              <SelectItem value="4">목요일</SelectItem>
-              <SelectItem value="5">금요일</SelectItem>
-              <SelectItem value="6">토요일</SelectItem>
-              <SelectItem value="0">일요일</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label>요일 (다중 선택 가능)</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {days.map((day) => (
+              <div key={day.value} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`day-${day.value}`}
+                  checked={selectedDays.includes(day.value)}
+                  onCheckedChange={() => handleDayChange(day.value)}
+                />
+                <Label
+                  htmlFor={`day-${day.value}`}
+                  className="text-sm cursor-pointer"
+                >
+                  {day.label}
+                </Label>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* 시간과 분 입력 (한 줄에 배치) */}
@@ -141,12 +158,10 @@ export const PharmacyFilter: React.FC<PharmacyFilterProps> = ({
 
         {/* 영업중 필터링 옵션 */}
         <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
+          <Checkbox
             id="showOnlyOpen"
             checked={showOnlyOpen}
-            onChange={(e) => setShowOnlyOpen(e.target.checked)}
-            className="h-4 w-4"
+            onCheckedChange={(checked) => setShowOnlyOpen(checked === true)}
           />
           <Label htmlFor="showOnlyOpen" className="text-sm cursor-pointer">
             영업중인 약국만 보기

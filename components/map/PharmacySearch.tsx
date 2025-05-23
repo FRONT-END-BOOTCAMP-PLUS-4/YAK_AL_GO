@@ -1,33 +1,33 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Navigation, Filter } from "lucide-react";
-import { Popover, PopoverTrigger } from "@/components/ui/popover";
-import { PharmacyFilter } from "./PharmacyFilter";
+import type React from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Search, Navigation, Filter } from "lucide-react"
+import { Popover, PopoverTrigger } from "@/components/ui/popover"
+import { PharmacyFilter } from "./PharmacyFilter"
 
 interface PharmacySearchProps {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  getCurrentLocation: () => void;
-  showFilterPopover: boolean;
-  setShowFilterPopover: (show: boolean) => void;
-  selectedMedicine: string;
-  setSelectedMedicine: (medicine: string) => void;
-  selectedDay: string;
-  setSelectedDay: (day: string) => void;
-  selectedHour: string;
-  setSelectedHour: (hour: string) => void;
-  selectedMinute: string;
-  setSelectedMinute: (minute: string) => void;
-  showOnlyOpen: boolean;
-  setShowOnlyOpen: (show: boolean) => void;
-  resetFilters: () => void;
-  medicines: string[];
-  mapCenter: { lat: number; lng: number };
-  setMapCenter: (center: { lat: number; lng: number }) => void;
-  locationUpdateSourceRef: React.MutableRefObject<"user" | "map" | "init">;
+  searchQuery: string
+  setSearchQuery: (query: string) => void
+  getCurrentLocation: () => void
+  showFilterPopover: boolean
+  setShowFilterPopover: (show: boolean) => void
+  selectedMedicine: string
+  setSelectedMedicine: (medicine: string) => void
+  selectedDays: string[] // 배열로 변경
+  setSelectedDays: (days: string[]) => void // 배열로 변경
+  selectedHour: string
+  setSelectedHour: (hour: string) => void
+  selectedMinute: string
+  setSelectedMinute: (minute: string) => void
+  showOnlyOpen: boolean
+  setShowOnlyOpen: (show: boolean) => void
+  resetFilters: () => void
+  medicines: string[]
+  mapCenter: { lat: number; lng: number }
+  setMapCenter: (center: { lat: number; lng: number }) => void
+  locationUpdateSourceRef: React.MutableRefObject<"user" | "map" | "init">
 }
 
 export const PharmacySearch: React.FC<PharmacySearchProps> = ({
@@ -38,8 +38,8 @@ export const PharmacySearch: React.FC<PharmacySearchProps> = ({
   setShowFilterPopover,
   selectedMedicine,
   setSelectedMedicine,
-  selectedDay,
-  setSelectedDay,
+  selectedDays, // 변경된 prop 이름
+  setSelectedDays, // 변경된 prop 이름
   selectedHour,
   setSelectedHour,
   selectedMinute,
@@ -72,13 +72,13 @@ export const PharmacySearch: React.FC<PharmacySearchProps> = ({
       <Popover
         open={showFilterPopover}
         onOpenChange={(open) => {
-          setShowFilterPopover(open);
+          setShowFilterPopover(open)
           // 지도 중심 변경 방지를 위한 플래그 설정
-          locationUpdateSourceRef.current = "map";
+          locationUpdateSourceRef.current = "map"
 
           // 현재 지도 중심 유지
-          const currentCenter = { ...mapCenter };
-          setMapCenter(currentCenter);
+          const currentCenter = { ...mapCenter }
+          setMapCenter(currentCenter)
         }}
       >
         <PopoverTrigger asChild>
@@ -90,8 +90,8 @@ export const PharmacySearch: React.FC<PharmacySearchProps> = ({
         <PharmacyFilter
           selectedMedicine={selectedMedicine}
           setSelectedMedicine={setSelectedMedicine}
-          selectedDay={selectedDay}
-          setSelectedDay={setSelectedDay}
+          selectedDays={selectedDays} // 변경된 prop 이름
+          setSelectedDays={setSelectedDays} // 변경된 prop 이름
           selectedHour={selectedHour}
           setSelectedHour={setSelectedHour}
           selectedMinute={selectedMinute}
@@ -103,5 +103,5 @@ export const PharmacySearch: React.FC<PharmacySearchProps> = ({
         />
       </Popover>
     </div>
-  );
-};
+  )
+}
