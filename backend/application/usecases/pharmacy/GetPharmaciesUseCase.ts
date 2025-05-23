@@ -13,8 +13,17 @@ export class GetPharmaciesUseCase {
   }
 
   async execute(request: PharmacySearchRequestDto): Promise<PharmacySearchResponseDto> {
+    // 헬퍼 함수: Prisma 결과를 PharmacyDto로 변환
+    const convertToPharmacyDto = (prismaPharmacy: any): PharmacyDto => {
+      return {
+        ...prismaPharmacy,
+        wgs84_lat: prismaPharmacy.wgs84_lat ? Number(prismaPharmacy.wgs84_lat) : 0,
+        wgs84_lon: prismaPharmacy.wgs84_lon ? Number(prismaPharmacy.wgs84_lon) : 0,
+      }
+    }
+
     try {
-      let pharmacies: PharmacyDto[]
+      let rawPharmacies: any[]
 
       if (request.medicine && request.medicine !== "전체") {
         // Get pharmacies that have the specified medicine in inventory
@@ -34,7 +43,7 @@ export class GetPharmaciesUseCase {
             },
           },
         })
-        pharmacies = pharmaciesWithMedicine as PharmacyDto[]
+        rawPharmacies = pharmaciesWithMedicine
       } else {
         // Get all pharmacies with their inventories
         const allPharmacies = await prisma.pharmacies.findMany({
@@ -46,8 +55,11 @@ export class GetPharmaciesUseCase {
             },
           },
         })
-        pharmacies = allPharmacies as PharmacyDto[]
+        rawPharmacies = allPharmacies
       }
+
+      // Convert to PharmacyDto
+      let pharmacies: PharmacyDto[] = rawPharmacies.map(convertToPharmacyDto)
 
       // Apply search query filter
       if (request.searchQuery) {
@@ -66,8 +78,8 @@ export class GetPharmaciesUseCase {
           distance = this.calculateDistanceUseCase.execute(
             request.location.lat,
             request.location.lng,
-            Number(pharmacy.wgs84_lat),
-            Number(pharmacy.wgs84_lon),
+            pharmacy.wgs84_lat,
+            pharmacy.wgs84_lon,
           )
         }
 
