@@ -1,66 +1,469 @@
-import prisma from '../../../../lib/prisma'; // 싱글톤 인스턴스 사용
 import axios from 'axios';
-import type { PrismaClient } from '@prisma/generated';
+import { PrismaClient } from '@/prisma/generated/index';
 
-export interface MedicineResponse {
+export interface DurMedicineDataInterface {
+  ITEM_SEQ: string;
+  ITEM_NAME: string;
+  ENTP_NAME?: string;
+  ITEM_PERMIT_DATE?: string;
+  ETC_OTC_CODE?: string;
+  CLASS_NO?: string;
+  CHART?: string;
+  BAR_CODE?: string;
+  MATERIAL_NAME?: string;
+  EE_DOC_ID?: string;
+  BIZRNO?: string;
+  CANCEL_DATE?: string;
+  CANCEL_NAME?: string;
+  CHANGE_DATE?: string;
+  EDI_CODE?: string;
+  INSERT_FILE?: string;
+  NB_DOC_ID?: string;
+  PACK_UNIT?: string;
+  REEXAM_DATE?: string;
+  REEXAM_TARGET?: string;
+  STORAGE_METHOD?: string;
+  TYPE_CODE?: string;
+  TYPE_NAME?: string;
+  UD_DOC_ID?: string;
+  VALID_TERM?: string;
+}
+
+export interface ApiResponseInterface {
   header: {
     resultCode: string;
     resultMsg: string;
   };
   body: {
-    pageNo: number;
     totalCount: number;
+    items: DurMedicineDataInterface[];
     numOfRows: number;
-    items: MedicineItem[] | MedicineItem;
+    pageNo: number;
   };
 }
 
-interface MedicineItem {
-  ITEM_SEQ: string;
-  ITEM_NAME: string;
-  ENTP_NAME: string;
-  ITEM_PERMIT_DATE: string;
-  ETC_OTC_CODE: string;
-  CLASS_NO: string;
-  CHART: string;
-  BAR_CODE: string;
-  MATERIAL_NAME: string;
-  EE_DOC_ID: string;
-  UD_DOC_ID: string;
-  NB_DOC_ID: string;
-  INSERT_FILE: string;
-  STORAGE_METHOD: string;
-  VALID_TERM: string;
-  REEXAM_TARGET: string;
-  REEXAM_DATE: string;
-  PACK_UNIT: string;
-  EDI_CODE: string;
-  CANCEL_DATE: string;
-  CANCEL_NAME: string;
-  TYPE_CODE: string;
-  TYPE_NAME: string;
-  'TYPE_NAME  '?: string; // 공백이 포함된 필드 처리
-  CHANGE_DATE: string;
-  BIZRNO: string;
-}
-
-export class MedicineDataService {
-  private readonly baseUrl =
+class MedicineDataService {
+  private readonly API_BASE_URL =
     'https://apis.data.go.kr/1471000/DURPrdlstInfoService03/getDurPrdlstInfoList03';
-  private readonly apiKey = process.env.NEXT_PUBLIC_MEDICINE_API_KEY;
+  private readonly API_KEY: string;
+  private readonly prisma: PrismaClient;
+  private readonly MAX_ROWS_PER_REQUEST = 100;
+  private readonly REQUEST_DELAY = 200; // API 호출 간격 (ms)
 
-  // 개선된 날짜 형식 변환 함수
-  private convertDate(dateStr: string | null | undefined): Date | null {
-    if (!dateStr || dateStr === '') return null;
+  constructor(apiKey: string) {
+    if (!apiKey) {
+      throw new Error('API_KEY가 설정되지 않았습니다.');
+    }
+
+    // API 키 URL 디코딩 (공공데이터포털 API 키 특수문자 처리)
+    this.API_KEY = decodeURIComponent(apiKey);
+    this.prisma = new PrismaClient();
+
+    console.log(`🔑 원본 API 키 길이: ${apiKey.length}자`);
+    console.log(`🔑 디코딩된 API 키 길이: ${this.API_KEY.length}자`);
+  }
+
+  /**
+   * 소량 테스트용 DUR 품목정보 데이터 동기화
+   */
+  async syncLimitedMedicineData(
+    pageNo: number,
+    numOfRows: number
+  ): Promise<{
+    success: boolean;
+    totalProcessed: number;
+    message: string;
+  }> {
+    try {
+      console.log(`🧪 테스트 동기화 시작: 페이지 ${pageNo}, 건수 ${numOfRows}`);
+
+      const response = await this.fetchDurMedicineData(pageNo, numOfRows);
+
+      if (!response.body.items || response.body.items.length === 0) {
+        return {
+          success: false,
+          totalProcessed: 0,
+          message: 'API에서 데이터를 받을 수 없습니다.',
+        };
+      }
+
+      const saveResult = await this.saveMedicineDataToDB(response.body.items);
+
+      console.log(`✅ 테스트 완료: ${response.body.items.length}건 처리`);
+      console.log(
+        `📊 결과: 성공 ${saveResult.successCount}, 실패 ${saveResult.errorCount}, 생성 ${saveResult.createdCount}, 업데이트 ${saveResult.updatedCount}, 스킵 ${saveResult.skippedCount}`
+      );
+
+      return {
+        success: true,
+        totalProcessed: response.body.items.length,
+        message: `테스트 동기화 완료: ${response.body.items.length}건 처리 | 생성: ${saveResult.createdCount}건, 업데이트: ${saveResult.updatedCount}건, 스킵: ${saveResult.skippedCount}건, 실패: ${saveResult.errorCount}건`,
+      };
+    } catch (error) {
+      console.error('💥 테스트 동기화 중 오류 발생:', error);
+      return {
+        success: false,
+        totalProcessed: 0,
+        message: `테스트 동기화 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
+      };
+    }
+  }
+
+  /**
+   * 전체 DUR 품목정보 데이터를 조회하여 데이터베이스에 저장
+   */
+  async syncAllMedicineData(): Promise<{
+    success: boolean;
+    totalProcessed: number;
+    message: string;
+  }> {
+    try {
+      console.log('🚀 DUR 품목정보 전체 동기화를 시작합니다...');
+
+      // 첫 번째 요청으로 전체 건수 확인
+      const firstResponse = await this.fetchDurMedicineData(1, 1);
+      const totalCount = firstResponse.body.totalCount;
+      const totalPages = Math.ceil(totalCount / this.MAX_ROWS_PER_REQUEST);
+
+      console.log(`📊 전체 데이터 건수: ${totalCount}건, 예상 페이지 수: ${totalPages}페이지`);
+
+      let totalProcessed = 0;
+      let totalErrorCount = 0;
+      let totalCreatedCount = 0;
+      let totalUpdatedCount = 0;
+      let totalSkippedCount = 0;
+
+      // 페이지별로 데이터 조회 및 저장
+      for (let page = 1; page <= totalPages; page++) {
+        try {
+          console.log(
+            `⏳ ${page}/${totalPages} 페이지 처리 중... (${(((page - 1) / totalPages) * 100).toFixed(1)}%)`
+          );
+
+          const response = await this.fetchDurMedicineData(page, this.MAX_ROWS_PER_REQUEST);
+
+          if (response.body.items && response.body.items.length > 0) {
+            const saveResult = await this.saveMedicineDataToDB(response.body.items);
+            totalProcessed += response.body.items.length;
+
+            totalErrorCount += saveResult.errorCount;
+            totalCreatedCount += saveResult.createdCount;
+            totalUpdatedCount += saveResult.updatedCount;
+            totalSkippedCount += saveResult.skippedCount;
+
+            console.log(`✅ ${page} 페이지 완료: ${response.body.items.length}건 처리`);
+            console.log(
+              `📊 페이지 결과: 생성 ${saveResult.createdCount}, 업데이트 ${saveResult.updatedCount}, 스킵 ${saveResult.skippedCount}, 실패 ${saveResult.errorCount}`
+            );
+          }
+
+          // API 호출 간격 조절 (rate limiting 준수)
+          if (page < totalPages) {
+            await this.delay(this.REQUEST_DELAY);
+          }
+        } catch (error) {
+          console.error(`❌ ${page} 페이지 처리 중 오류 발생:`, error);
+          totalErrorCount += this.MAX_ROWS_PER_REQUEST;
+
+          // 연속 오류 발생 시 더 긴 지연
+          await this.delay(this.REQUEST_DELAY * 2);
+        }
+      }
+
+      console.log(`🎉 전체 동기화 완료: 총 ${totalProcessed}건 처리`);
+      console.log(
+        `📊 최종 결과: 생성 ${totalCreatedCount}건, 업데이트 ${totalUpdatedCount}건, 스킵 ${totalSkippedCount}건, 실패 ${totalErrorCount}건`
+      );
+
+      return {
+        success: true,
+        totalProcessed,
+        message: `DUR 품목정보 동기화가 완료되었습니다. 총 ${totalProcessed}건 처리 | 생성: ${totalCreatedCount}건, 업데이트: ${totalUpdatedCount}건, 스킵: ${totalSkippedCount}건, 실패: ${totalErrorCount}건`,
+      };
+    } catch (error) {
+      console.error('💥 DUR 품목정보 동기화 중 오류 발생:', error);
+      return {
+        success: false,
+        totalProcessed: 0,
+        message: `동기화 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
+      };
+    }
+  }
+
+  /**
+   * DUR 품목정보 API 호출
+   */
+  private async fetchDurMedicineData(
+    pageNo: number,
+    numOfRows: number
+  ): Promise<ApiResponseInterface> {
+    try {
+      const params = {
+        serviceKey: this.API_KEY,
+        pageNo: pageNo.toString(),
+        numOfRows: numOfRows.toString(),
+        type: 'json',
+      };
+
+      console.log(`🔗 API 호출: 페이지 ${pageNo}, 요청 건수 ${numOfRows}`);
+      console.log(`🔗 API URL: ${this.API_BASE_URL}`);
+      console.log(`🔑 API 키 길이: ${this.API_KEY.length}자`);
+      console.log(`🔑 API 키 앞 30자: ${this.API_KEY.substring(0, 30)}...`);
+      console.log('📋 요청 파라미터:', JSON.stringify(params, null, 2));
+
+      const response = await axios.get(this.API_BASE_URL, {
+        params,
+        timeout: 30000, // 30초 타임아웃
+        headers: {
+          'User-Agent': 'DUR-Medicine-Sync-Service/1.0',
+          Accept: 'application/json',
+        },
+      });
+
+      // XML 에러 응답 처리
+      if (
+        typeof response.data === 'string' &&
+        response.data.includes('<OpenAPI_ServiceResponse>')
+      ) {
+        console.error('❌ API에서 XML 에러 응답 반환:', response.data);
+
+        if (response.data.includes('SERVICE_KEY_IS_NOT_REGISTERED_ERROR')) {
+          throw new Error(
+            'API 키가 등록되지 않았거나 유효하지 않습니다. 공공데이터포털에서 API 키를 확인해주세요.'
+          );
+        }
+
+        if (response.data.includes('SERVICE_ACCESS_DENIED_ERROR')) {
+          throw new Error('API 접근이 거부되었습니다. API 승인 상태를 확인해주세요.');
+        }
+
+        throw new Error(`API에서 에러 응답을 반환했습니다: ${response.data}`);
+      }
+
+      const data = response.data as ApiResponseInterface;
+
+      // JSON 응답 구조 확인
+      if (!data || !data.header) {
+        console.error('⚠️ 예상과 다른 API 응답 구조:', data);
+        throw new Error('API 응답 구조가 예상과 다릅니다.');
+      }
+
+      if (data.header.resultCode !== '00') {
+        console.error(`❌ API 에러 코드: ${data.header.resultCode}`);
+        console.error(`❌ API 에러 메시지: ${data.header.resultMsg}`);
+        throw new Error(`API 오류: ${data.header.resultMsg}`);
+      }
+
+      console.log(`✅ API 응답 성공: ${data.body.items?.length || 0}건 수신`);
+      return data;
+    } catch (error) {
+      console.error('💥 API 호출 상세 에러:', error);
+
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response?: {
+            status?: number;
+            headers?: Record<string, string>;
+            data?: unknown;
+          };
+          config?: {
+            url?: string;
+            params?: Record<string, string>;
+          };
+        };
+        console.error('HTTP 상태:', axiosError.response?.status);
+        console.error('응답 데이터:', axiosError.response?.data);
+      }
+
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
+      throw new Error(`API 호출 실패: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * 의약품 데이터를 데이터베이스에 저장 (스마트 업데이트)
+   */
+  private async saveMedicineDataToDB(items: DurMedicineDataInterface[]): Promise<{
+    successCount: number;
+    errorCount: number;
+    createdCount: number;
+    updatedCount: number;
+    skippedCount: number;
+  }> {
+    let successCount = 0;
+    let errorCount = 0;
+    let createdCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
+
+    for (const item of items) {
+      try {
+        // 기존 데이터 확인
+        const existingItem = await this.prisma.medicines.findUnique({
+          where: {
+            item_seq: item.ITEM_SEQ,
+          },
+        });
+
+        const newData = {
+          item_name: item.ITEM_NAME || '',
+          entp_name: item.ENTP_NAME || null,
+          item_permit_date: this.parseDate(item.ITEM_PERMIT_DATE),
+          etc_otc_code: item.ETC_OTC_CODE || null,
+          class_no: item.CLASS_NO || null,
+          chart: item.CHART || null,
+          bar_code: item.BAR_CODE || null,
+          material_name: item.MATERIAL_NAME || null,
+          ee_doc_id: item.EE_DOC_ID || null,
+          bizrno: item.BIZRNO || null,
+          cancel_date: this.parseDate(item.CANCEL_DATE),
+          cancel_name: item.CANCEL_NAME || null,
+          change_date: this.parseDate(item.CHANGE_DATE),
+          edi_code: item.EDI_CODE || null,
+          insert_file: item.INSERT_FILE || null,
+          nb_doc_id: item.NB_DOC_ID || null,
+          pack_unit: item.PACK_UNIT || null,
+          reexam_date: this.parseDate(item.REEXAM_DATE),
+          reexam_target: item.REEXAM_TARGET || null,
+          storage_method: item.STORAGE_METHOD || null,
+          type_code: item.TYPE_CODE || null,
+          type_name: item.TYPE_NAME || null,
+          ud_doc_id: item.UD_DOC_ID || null,
+          valid_term: item.VALID_TERM || null,
+        };
+
+        if (!existingItem) {
+          // 새 데이터 생성
+          await this.prisma.medicines.create({
+            data: {
+              item_seq: item.ITEM_SEQ,
+              ...newData,
+            },
+          });
+          createdCount++;
+          console.log(`🆕 새 데이터 생성: ${item.ITEM_SEQ}`);
+        } else {
+          // 데이터 변경 확인
+          const hasChanges = this.hasDataChanged(existingItem, newData);
+
+          if (hasChanges) {
+            // 변경사항이 있을 때만 업데이트
+            await this.prisma.medicines.update({
+              where: {
+                item_seq: item.ITEM_SEQ,
+              },
+              data: {
+                ...newData,
+                updated_at: new Date(),
+              },
+            });
+            updatedCount++;
+            console.log(`🔄 데이터 업데이트: ${item.ITEM_SEQ}`);
+          } else {
+            // 동일한 데이터는 스킵
+            skippedCount++;
+            console.log(`⏭️ 동일 데이터 스킵: ${item.ITEM_SEQ}`);
+          }
+        }
+
+        successCount++;
+      } catch (error) {
+        console.error(`💥 의약품 데이터 저장 실패 (ITEM_SEQ: ${item.ITEM_SEQ}):`, error);
+        errorCount++;
+      }
+    }
+
+    return {
+      successCount,
+      errorCount,
+      createdCount,
+      updatedCount,
+      skippedCount,
+    };
+  }
+
+  /**
+   * 데이터 변경 여부 확인
+   */
+  private hasDataChanged(
+    existingData: Record<string, unknown>,
+    newData: Record<string, unknown>
+  ): boolean {
+    const compareFields = [
+      'item_name',
+      'entp_name',
+      'etc_otc_code',
+      'class_no',
+      'chart',
+      'bar_code',
+      'material_name',
+      'ee_doc_id',
+      'bizrno',
+      'cancel_name',
+      'edi_code',
+      'insert_file',
+      'nb_doc_id',
+      'pack_unit',
+      'reexam_target',
+      'storage_method',
+      'type_code',
+      'type_name',
+      'ud_doc_id',
+      'valid_term',
+    ];
+
+    // 문자열 필드 비교
+    for (const field of compareFields) {
+      if (existingData[field] !== newData[field]) {
+        console.log(`📝 필드 변경 감지 (${field}): "${existingData[field]}" → "${newData[field]}"`);
+        return true;
+      }
+    }
+
+    // 날짜 필드 비교
+    const dateFields = ['item_permit_date', 'cancel_date', 'change_date', 'reexam_date'];
+    for (const field of dateFields) {
+      const existingDate =
+        existingData[field] instanceof Date ? (existingData[field] as Date).getTime() : null;
+      const newDate = newData[field] instanceof Date ? (newData[field] as Date).getTime() : null;
+
+      if (existingDate !== newDate) {
+        console.log(
+          `📅 날짜 필드 변경 감지 (${field}): ${existingData[field]} → ${newData[field]}`
+        );
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * 날짜 문자열을 Date 객체로 변환
+   */
+  private parseDate(dateString?: string): Date | null {
+    if (!dateString) return null;
 
     try {
-      // "2003October31st" 형식 처리
-      const match = dateStr.match(
-        /^(\d{4})(January|February|March|April|May|June|July|August|September|October|November|December)(\d+)(?:st|nd|rd|th)$/
-      );
+      // YYYYMMDD 형식의 날짜 문자열을 처리
+      if (dateString.length === 8 && /^\d{8}$/.test(dateString)) {
+        const year = Number.parseInt(dateString.substring(0, 4));
+        const month = Number.parseInt(dateString.substring(4, 6)) - 1;
+        const day = Number.parseInt(dateString.substring(6, 8));
+        return new Date(year, month, day);
+      }
+
+      // "2021August23rd" 형식의 날짜 처리
+      const datePattern = /^(\d{4})([A-Za-z]+)(\d{1,2})(?:st|nd|rd|th)?$/;
+      const match = dateString.match(datePattern);
+
       if (match) {
         const year = Number.parseInt(match[1]);
-        const month = {
+        const monthName = match[2];
+        const day = Number.parseInt(match[3]);
+
+        // 월 이름을 숫자로 변환
+        const monthMap: Record<string, number> = {
           January: 0,
           February: 1,
           March: 2,
@@ -73,243 +476,36 @@ export class MedicineDataService {
           October: 9,
           November: 10,
           December: 11,
-        }[match[2]] as number;
-        const day = Number.parseInt(match[3]);
-        return new Date(year, month, day);
-      }
-
-      // ISO 형식 확인 (예: 2017-10-01T00:00:00)
-      if (dateStr.includes('-') || dateStr.includes('T')) {
-        return new Date(dateStr);
-      }
-
-      // YYYYMMDD 형식 확인
-      if (/^\d{8}$/.test(dateStr)) {
-        const year = Number.parseInt(dateStr.substring(0, 4));
-        const month = Number.parseInt(dateStr.substring(4, 6)) - 1;
-        const day = Number.parseInt(dateStr.substring(6, 8));
-        return new Date(year, month, day);
-      }
-
-      console.log(`날짜 형식 불일치: ${dateStr}`);
-      return null;
-    } catch (error) {
-      console.error(`날짜 변환 오류 (${dateStr}):`, error);
-      return null;
-    }
-  }
-
-  // 특정 약품만 검색하여 DB에 저장
-  async fetchAndSaveMedicine(itemName: string) {
-    try {
-      console.log(`'${itemName}' 약품 데이터 요청 시작`);
-
-      // DB 연결 테스트
-      try {
-        const count = await prisma.medicines.count();
-        console.log(`현재 의약품 수: ${count}`);
-      } catch (connError) {
-        console.error('DB 연결 오류:', connError);
-        throw connError;
-      }
-
-      if (!this.apiKey) {
-        throw new Error('API 키가 설정되지 않았습니다. 환경 변수 MEDICINE_API_KEY를 확인해주세요.');
-      }
-
-      const params = {
-        type: 'json',
-        serviceKey: decodeURIComponent(this.apiKey), // API 키를 디코딩된 상태로 사용
-        itemName: encodeURIComponent(itemName), // 검색어 인코딩
-        pageNo: 1,
-        numOfRows: 100,
-      };
-
-      console.log('API 요청 URL:', this.baseUrl);
-      console.log('API 요청 파라미터:', {
-        ...params,
-        serviceKey: '(비공개)',
-      });
-
-      const response = await axios.get<MedicineResponse>(this.baseUrl, {
-        params,
-      });
-
-      // 전체 응답 로깅
-      console.log('API 원본 응답:', JSON.stringify(response.data, null, 2));
-
-      // 응답 구조 검증
-      if (!response.data) {
-        throw new Error('API 응답이 비어있습니다.');
-      }
-
-      if (!response.data.header) {
-        throw new Error(`API 응답에 header가 없습니다: ${JSON.stringify(response.data)}`);
-      }
-
-      console.log('API 응답 코드:', response.data.header.resultCode);
-      console.log('API 응답 메시지:', response.data.header.resultMsg);
-
-      if (response.data.header.resultCode !== '00') {
-        throw new Error(`API Error: ${response.data.header.resultMsg}`);
-      }
-
-      // API 응답 형식 확인 및 처리
-      let medicines: MedicineItem[] = [];
-      if (Array.isArray(response.data.body.items)) {
-        medicines = response.data.body.items;
-      } else if (response.data.body.items && typeof response.data.body.items === 'object') {
-        medicines = [response.data.body.items as MedicineItem];
-      }
-
-      console.log(`검색된 약품 개수: ${medicines.length}`);
-
-      if (medicines.length === 0) {
-        return {
-          success: true,
-          message: `'${itemName}' 검색 결과가 없습니다.`,
-          data: [],
         };
-      }
 
-      // 첫 번째 항목 로깅
-      console.log('첫 번째 약품 데이터 샘플:', medicines[0]);
-
-      // 검색된 약품 저장
-      const result = await this.saveAllMedicinesToDB(medicines);
-
-      return {
-        success: true,
-        message: `'${itemName}' 검색 결과 ${medicines.length}개 데이터 중 ${result.count}개가 저장되었습니다.`,
-        data: medicines,
-      };
-    } catch (error) {
-      console.error(`'${itemName}' 검색 및 저장 중 오류 발생:`, error);
-      if (error instanceof Error) {
-        console.error('오류 메시지:', error.message);
-        console.error('오류 스택:', error.stack);
-      }
-      throw error;
-    }
-  }
-
-  private async saveAllMedicinesToDB(medicines: MedicineItem[]) {
-    try {
-      console.log('데이터베이스에 의약품 데이터 저장 시작...');
-      let totalSaved = 0;
-
-      // 원본 데이터 로깅
-      console.log('첫 번째 약품 데이터(원본):', JSON.stringify(medicines[0], null, 2));
-
-      // 각 약품을 개별적으로 저장
-      for (const medicine of medicines) {
-        try {
-          // 공백 필드 확인 로깅
-          if ('TYPE_NAME  ' in medicine) {
-            console.log('공백 포함 필드 존재 확인:', medicine['TYPE_NAME  ']);
-          }
-
-          // 데이터 변환 및 검증
-          const itemData = {
-            item_seq: medicine.ITEM_SEQ,
-            item_name: medicine.ITEM_NAME ? medicine.ITEM_NAME.trim().substring(0, 255) : '',
-            entp_name: medicine.ENTP_NAME ? medicine.ENTP_NAME.trim().substring(0, 255) : null,
-            item_permit_date: this.convertDate(medicine.ITEM_PERMIT_DATE),
-            etc_otc_code: medicine.ETC_OTC_CODE
-              ? medicine.ETC_OTC_CODE.trim().substring(0, 50)
-              : null,
-            class_no: medicine.CLASS_NO ? medicine.CLASS_NO.trim().substring(0, 100) : null,
-            chart: medicine.CHART ? medicine.CHART.trim() : null,
-            bar_code: medicine.BAR_CODE ? medicine.BAR_CODE.trim().substring(0, 50) : null,
-            material_name: medicine.MATERIAL_NAME ? medicine.MATERIAL_NAME.trim() : null,
-            ee_doc_id: medicine.EE_DOC_ID ? medicine.EE_DOC_ID.trim().substring(0, 255) : null,
-            bizrno: medicine.BIZRNO ? medicine.BIZRNO.trim().substring(0, 20) : null,
-            cancel_date: this.convertDate(medicine.CANCEL_DATE),
-            cancel_name: medicine.CANCEL_NAME
-              ? medicine.CANCEL_NAME.trim().substring(0, 100)
-              : null,
-            change_date: this.convertDate(medicine.CHANGE_DATE),
-            created_at: new Date(),
-            edi_code: medicine.EDI_CODE ? medicine.EDI_CODE.trim().substring(0, 50) : null,
-            insert_file: medicine.INSERT_FILE
-              ? medicine.INSERT_FILE.trim().substring(0, 255)
-              : null,
-            nb_doc_id: medicine.NB_DOC_ID ? medicine.NB_DOC_ID.trim().substring(0, 255) : null,
-            pack_unit: medicine.PACK_UNIT ? medicine.PACK_UNIT.trim().substring(0, 255) : null,
-            reexam_date: this.convertDate(medicine.REEXAM_DATE),
-            reexam_target: medicine.REEXAM_TARGET
-              ? medicine.REEXAM_TARGET.trim().substring(0, 255)
-              : null,
-            storage_method: medicine.STORAGE_METHOD
-              ? medicine.STORAGE_METHOD.trim().substring(0, 255)
-              : null,
-            type_code: medicine.TYPE_CODE ? medicine.TYPE_CODE.trim().substring(0, 10) : null,
-            type_name:
-              (medicine['TYPE_NAME  ']?.trim() || medicine.TYPE_NAME?.trim() || '').substring(
-                0,
-                100
-              ) || null,
-            ud_doc_id: medicine.UD_DOC_ID ? medicine.UD_DOC_ID.trim().substring(0, 255) : null,
-            updated_at: new Date(),
-            valid_term: medicine.VALID_TERM ? medicine.VALID_TERM.trim().substring(0, 100) : null,
-          };
-
-          // 변환된 데이터 로깅
-          console.log('변환된 데이터:', JSON.stringify(itemData, null, 2));
-
-          // 유효성 검사
-          if (!itemData.item_seq) {
-            console.error('필수 필드(item_seq)가 누락되었습니다:', medicine);
-            continue;
-          }
-
-          // DB 저장 시도
-          try {
-            console.log('Prisma upsert 시도:', itemData.item_seq);
-            const result = await prisma.medicines.upsert({
-              where: { item_seq: itemData.item_seq },
-              update: itemData,
-              create: itemData,
-            });
-            console.log(`항목 저장 성공 (${itemData.item_seq}): ${itemData.item_name}`);
-            console.log('저장된 데이터:', result);
-            totalSaved++;
-          } catch (dbError) {
-            console.error('DB 저장 오류 상세 정보:');
-            console.error(
-              '- 오류 메시지:',
-              dbError instanceof Error ? dbError.message : 'Unknown error'
-            );
-            console.error(
-              '- 오류 타입:',
-              dbError instanceof Error ? dbError.constructor.name : 'Unknown type'
-            );
-            console.error('- 대상 데이터:', JSON.stringify(itemData, null, 2));
-
-            if (dbError instanceof Error && 'code' in dbError) {
-              const prismaError = dbError as Error & { code?: string; meta?: unknown };
-              console.error('- Prisma 오류 코드:', prismaError.code);
-              console.error('- Prisma 메타 정보:', prismaError.meta);
-            }
-
-            throw dbError;
-          }
-        } catch (itemError) {
-          console.error(`항목 처리 실패 (${medicine.ITEM_SEQ}):`, itemError);
-          console.error('실패한 데이터:', JSON.stringify(medicine, null, 2));
-          throw itemError;
+        const month = monthMap[monthName];
+        if (month !== undefined) {
+          return new Date(year, month, day);
         }
       }
 
-      console.log(`의약품 데이터 저장 완료: 총 ${totalSaved}/${medicines.length}개 항목 저장됨`);
-      return { count: totalSaved };
-    } catch (error) {
-      console.error('DB 저장 중 오류 발생:', error);
-      if (error instanceof Error) {
-        console.error('오류 메시지:', error.message);
-        console.error('오류 스택:', error.stack);
-      }
-      throw error;
+      // 다른 형식의 날짜 처리
+      const date = new Date(dateString);
+      return Number.isNaN(date.getTime()) ? null : date;
+    } catch {
+      console.warn(`⚠️ 날짜 파싱 실패: ${dateString}`);
+      return null;
     }
   }
+
+  /**
+   * 지연 함수
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * 데이터베이스 연결 종료
+   */
+  async disconnect(): Promise<void> {
+    await this.prisma.$disconnect();
+  }
 }
+
+export { MedicineDataService };
