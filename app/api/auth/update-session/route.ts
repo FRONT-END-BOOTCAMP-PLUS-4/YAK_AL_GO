@@ -1,6 +1,7 @@
 import { getToken } from 'next-auth/jwt';
 import { NextResponse } from 'next/server';
 
+// token 업데이트를 위한 API
 export async function POST(req: Request) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const body = await req.json(); // 폼들어있음

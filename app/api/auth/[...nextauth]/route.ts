@@ -40,13 +40,13 @@ const handler = NextAuth({
           token.birthyear = dbUser.birthyear;
           token.member_type = dbUser.member_type;
           // created_at추가 보류 => 타입 오류 발생 가능
+          token.created_at = dbUser.created_at;
           token.hpid = dbUser.hpid;
           token.needsSignup = false;
         } else {
           // 회원가입이 되어있지 않은 사용자 => 보류
           // 사용자 별 토큰에 정보 입력 : 일반 step1 | 약사 step2
           // 이후 사용자 정보는 토큰에 입력? 세션에 입력?
-
           token.needsSignup = true;
         }
         // 사용자 isActive 여부 판단 완료
@@ -63,6 +63,7 @@ const handler = NextAuth({
       session.user.name = token.name as string;
       session.user.birthyear = token.birthyear as number;
       session.user.member_type = token.member_type as number;
+      session.user.created_at = token.created_at as Date;
       session.user.hpid = token.hpid as string;
       session.user.needsSignup = Boolean(token.needsSignup ?? false);
       return session;
