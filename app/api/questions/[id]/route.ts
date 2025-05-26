@@ -8,7 +8,8 @@ const getQuestionByIdUseCase = new GetQuestionByIdUseCase(questionRepository);
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const questionId = parseInt(params.id);
+    const { id } = await params;
+    const questionId = parseInt(id);
 
     if (isNaN(questionId)) {
       return NextResponse.json({ message: 'Invalid question ID' }, { status: 400 });
