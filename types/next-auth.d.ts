@@ -13,8 +13,8 @@ declare module 'next-auth' {
   interface User {
     id: string;
     email?: string;
+    photo?: string;
     name?: string;
-    role?: number;
     hpid?: string;
     needsSignup?: boolean;
     birthyear?: number;
@@ -25,8 +25,8 @@ declare module 'next-auth' {
     user: {
       id: string;
       email?: string;
+      photo?: string;
       name?: string;
-      role?: number;
       hpid?: string;
       needsSignup: boolean;
       birthyear?: number;
@@ -36,8 +36,8 @@ declare module 'next-auth' {
   interface JWT {
     id?: string;
     email?: string;
+    photo?: string;
     name?: string;
-    role?: number;
     hpid?: string;
     needsSignup?: boolean;
     birthyear?: number;

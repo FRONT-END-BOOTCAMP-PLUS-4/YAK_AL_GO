@@ -1,9 +1,10 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,34 +15,33 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft } from "lucide-react"
 
-import { useSession } from "next-auth/react"
 
 export default function SignupStep1Page() {
+  const { data: session, status } = useSession()
   const router = useRouter()
+
   const [userType, setUserType] = useState<"general" | "pharmacist">("general")
   const [error, setError] = useState("")
-
-  const { data: session, status } = useSession()
-  
 
   console.log("Session data:", session)
 
   // 폼 상태 관리
   const [formData, setFormData] = useState({
+    id : "",
     email: "",
-    name: "",
-    nickname: "",
-    age: "",
+    photo: "",
+    name : "",
+    birthyear: 5,
+    membertype : 5,
     healthConditions: [] as string[],
-    licenseNumber: "",
-    pharmacyId: "",
-    pharmacyName: "",
-    pharmacyAddress: "",
+    hpid: "",
+
   })
 
 
 
-  // 폼 입력 핸들러
+  // <폼 입력 핸들러>
+  // 입력 필드 변경 핸들러
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -66,36 +66,41 @@ export default function SignupStep1Page() {
   }
 
   // 다음 단계로 이동
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     // 폼 데이터 유효성 검사
     if (userType === "general") {
-      if (!formData.nickname || !formData.age) {
-        setError("모든 필수 항목을 입력해주세요.")
+      if (!formData.birthyear) {
+        setError("나이, 항목을 입력해주세요.")
         return
       }
     } else {
-      if (!formData.licenseNumber || !formData.pharmacyId || !formData.pharmacyName || !formData.pharmacyAddress) {
-        setError("모든 필수 항목을 입력해주세요.")
+      if (!formData.hpid) {
+        setError("약국 ID 항목을 입력해주세요.")
         return
       }
+
     }
+    // 여기서 JWT와 세션 업데이트를 위한 api 호출
+    const response = await fetch("/api/auth/update-session", {
+      method : "POST",
+      headers: { "Content-Type" : "application/json" },
+      body : JSON.stringify(formData),
+    });
 
-    // 세션 스토리지에 폼 데이터 저장
-    sessionStorage.setItem(
-      "signupData",
-      JSON.stringify({
-        ...formData,
-        userType,
-      }),
-    )
-
+    if (response.ok) {
+      // 일반 회원인 경우에만 2단계로 이동, 약사는 바로 완료
+      if (userType === "general") {
+        router.push("/auth/step2")
+    } else {
+        router.push("/auth/complete")
+      }
+    } else{
+      setError("세션 업데이트에 실패했습니다. 다시 시도해주세요.")
+      return
+    }
     // 일반 회원인 경우에만 2단계로 이동, 약사는 바로 완료
-    if (userType === "general") {
-      router.push("/auth/step2")
-    } else {
-      router.push("/auth/complete")
-    }
   }
+  
 if (status === "loading") {
     return <div>Loading...</div>  
   }
@@ -147,7 +152,7 @@ if (status === "loading") {
                   name="age"
                   type="number"
                   placeholder="나이를 입력하세요"
-                  value={formData.age} // 값 초기화화
+                  value={formData.birthyear} // 값 초기화화
                   onChange={handleInputChange}
                   required // 필수 입력
                 />
@@ -205,45 +210,12 @@ if (status === "loading") {
             <TabsContent value="pharmacist" className="space-y-4 mt-4">
               {/* 약사 회원 폼 */}
               <div className="space-y-2">
-                <Label htmlFor="licenseNumber">약사 면허 번호</Label>
-                <Input
-                  id="licenseNumber"
-                  name="licenseNumber"
-                  placeholder="약사 면허 번호를 입력하세요"
-                  value={formData.licenseNumber}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="pharmacyId">약국 ID (HPID)</Label>
                 <Input
                   id="pharmacyId"
                   name="pharmacyId"
                   placeholder="약국 ID를 입력하세요"
-                  value={formData.pharmacyId}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pharmacyName">약국명</Label>
-                <Input
-                  id="pharmacyName"
-                  name="pharmacyName"
-                  placeholder="약국명을 입력하세요"
-                  value={formData.pharmacyName}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pharmacyAddress">약국 주소</Label>
-                <Input
-                  id="pharmacyAddress"
-                  name="pharmacyAddress"
-                  placeholder="약국 주소를 입력하세요"
-                  value={formData.pharmacyAddress}
+                  value={formData.hpid}
                   onChange={handleInputChange}
                   required
                 />
