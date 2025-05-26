@@ -1,0 +1,212 @@
+# 약알고 (YAK_AL_GO) 프로젝트 인텔리전스
+
+## 프로젝트 개요
+의약품 정보 검색, 약국 찾기, 전문가 Q&A를 제공하는 종합 의약품 정보 플랫폼
+
+## 핵심 기술 스택
+- **Frontend**: Next.js 15 + React 19 + TypeScript
+- **Styling**: Tailwind CSS + Shadcn/ui
+- **Database**: PostgreSQL + Prisma ORM
+- **Authentication**: NextAuth.js
+- **Code Quality**: Biome (린터/포매터)
+
+## 중요한 프로젝트 패턴
+
+### 1. 코딩 컨벤션 (엄격히 준수)
+```typescript
+// ✅ 올바른 예시
+const getUserInfo = () => { ... }           // 함수: camelCase + 동사 시작
+const UserProfile = () => { ... }           // 컴포넌트: PascalCase + 화살표 함수
+const MAX_RETRY_COUNT = 3;                  // 상수: UPPER_SNAKE_CASE
+const userIdList = [];                      // 배열: ~List로 끝남
+
+// ❌ 잘못된 예시
+const userInfo = () => { ... }              // 동사 없음
+function UserProfile() { ... }              // 컴포넌트는 화살표 함수
+const maxRetryCount = 3;                    // 상수는 대문자
+const userIds = [];                         // 배열은 List로 끝남
+```
+
+### 2. 파일 구조 패턴
+```
+components/UserProfile.tsx                  // 컴포넌트: PascalCase
+lib/fetchData.ts                           // 유틸리티: camelCase
+app/api/medicines/route.ts                 // API: Next.js 13+ 규칙
+```
+
+### 3. 데이터베이스 접근 패턴
+```typescript
+// Prisma 클라이언트 사용 시 항상 에러 처리
+try {
+  const medicines = await prisma.medicines.findMany({
+    where: { item_name: { contains: query } },
+    take: 20,
+    skip: page * 20
+  });
+} catch (error) {
+  console.error('Database error:', error);
+  throw new Error('의약품 검색 중 오류가 발생했습니다.');
+}
+```
+
+### 4. API 응답 패턴
+```typescript
+// 일관된 API 응답 구조
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+```
+
+## 프로젝트별 중요 사항
+
+### 1. 의약품 데이터 처리
+- `medicines` 테이블의 `item_seq`가 Primary Key
+- 검색 시 `item_name`과 `entp_name` 인덱스 활용
+- 대용량 데이터이므로 항상 페이지네이션 적용
+
+### 2. 사용자 인증
+- NextAuth.js 사용, UUID 기반 사용자 ID
+- `member_type` 필드로 일반/전문가 구분
+- 세션 기반 권한 관리
+
+### 3. 지도 기능
+- 카카오 맵 API 사용 (`react-kakao-maps-sdk`)
+- 약국 위치는 `wgs84_lat`, `wgs84_lon` 필드
+- 실시간 재고는 `inventories` 테이블 참조
+
+### 4. 에러 처리 전략
+```typescript
+// 클라이언트 에러 처리
+const { handleError } = useErrorHandler();
+
+try {
+  await apiCall();
+} catch (error) {
+  handleError(error);
+}
+
+// 서버 에러 처리
+export async function handleApiError(error: unknown) {
+  if (error instanceof ZodError) {
+    return NextResponse.json({ success: false, error: { code: 'VALIDATION_ERROR' } });
+  }
+  // ... 기타 에러 타입 처리
+}
+```
+
+## 성능 최적화 가이드
+
+### 1. 데이터베이스 최적화
+- 의약품 검색 시 LIKE 쿼리 대신 전문 검색 고려
+- `medicines` 테이블 인덱스: `item_name`, `entp_name`
+- 페이지네이션으로 대용량 데이터 처리
+
+### 2. 프론트엔드 최적화
+- 의약품 목록은 가상화 스크롤 적용
+- 이미지는 Next.js Image 컴포넌트 사용
+- 동적 임포트로 코드 분할
+
+### 3. API 최적화
+- 응답 데이터 압축
+- 적절한 캐싱 헤더 설정
+- 레이트 리미팅 적용
+
+## 보안 고려사항
+
+### 1. 입력 검증
+- 모든 API 입력에 Zod 스키마 적용
+- SQL 인젝션 방지 (Prisma ORM 사용)
+- XSS 방지 (React 기본 보호 + 추가 검증)
+
+### 2. 인증 보안
+- JWT 토큰 안전한 저장
+- CSRF 토큰 검증
+- 세션 타임아웃 관리
+
+## 개발 워크플로우
+
+### 1. 브랜치 전략
+- `main`: 프로덕션 배포
+- `develop`: 개발 통합
+- `feature/*`: 기능별 개발
+
+### 2. 코드 리뷰 체크리스트
+- [ ] 컨벤션 준수 확인
+- [ ] 타입 안전성 검증
+- [ ] 에러 처리 완성도
+- [ ] 성능 최적화 여부
+- [ ] 테스트 커버리지
+
+### 3. 배포 전 체크리스트
+- [ ] Biome 린트 통과
+- [ ] TypeScript 컴파일 성공
+- [ ] 테스트 통과
+- [ ] 환경 변수 설정 확인
+
+## 자주 사용하는 패턴
+
+### 1. 커스텀 훅 패턴
+```typescript
+const useMedicineSearch = (query: string) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // 검색 로직
+  return { data, loading, error, refetch };
+};
+```
+
+### 2. 폼 처리 패턴
+```typescript
+const form = useForm({
+  resolver: zodResolver(schema),
+  defaultValues: { ... }
+});
+
+const onSubmit = async (data: FormData) => {
+  try {
+    await submitData(data);
+    router.push('/success');
+  } catch (error) {
+    handleError(error);
+  }
+};
+```
+
+### 3. 서버 컴포넌트 패턴
+```typescript
+async function MedicinePage({ params }: { params: { id: string } }) {
+  const medicine = await getMedicineById(params.id);
+  
+  if (!medicine) {
+    notFound();
+  }
+  
+  return <MedicineDetail medicine={medicine} />;
+}
+```
+
+## 트러블슈팅 가이드
+
+### 1. 일반적인 이슈
+- **Prisma 연결 오류**: DATABASE_URL 환경 변수 확인
+- **빌드 실패**: TypeScript 타입 오류 해결
+- **스타일 깨짐**: Tailwind CSS 클래스명 확인
+
+### 2. 성능 이슈
+- **느린 검색**: 데이터베이스 인덱스 확인
+- **큰 번들 크기**: 동적 임포트 적용
+- **메모리 누수**: useEffect cleanup 함수 확인
+
+## 프로젝트 현재 상태
+- **진행률**: 약 40%
+- **현재 작업**: 의약품 API 개선 (feat/41-edit-medicine-api/Kim)
+- **다음 단계**: 약국 지도 기능, 사용자 인증 완성
+
+이 규칙들은 프로젝트 진행에 따라 지속적으로 업데이트됩니다. 
