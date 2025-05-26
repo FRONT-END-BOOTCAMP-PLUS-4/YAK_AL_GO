@@ -11,6 +11,7 @@ import { TagSelect } from '@/components/qna/TagSelect';
 import { initialValue } from '@/app/member/qnas/write/editorInitialValue';
 import { SerializedEditorState } from 'lexical';
 import { Tag } from '@/backend/domain/entities/TagEntity';
+import { getEditorHtmlFromJSON } from '@/lib/community/getEditorHtmlFromJSON';
 // Dynamically import the Editor component with no SSR
 const Editor = dynamic(() => import('@/components/blocks/editor-x/editor').then((mod) => mod.Editor), {
   ssr: false,
@@ -24,6 +25,8 @@ export default function WritePage() {
   const editorState = useRef<SerializedEditorState>(initialValue);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    const htmlContent = getEditorHtmlFromJSON(editorState.current);
+
     e.preventDefault();
     try {
       const response = await fetch('/api/questions', {
@@ -34,6 +37,7 @@ export default function WritePage() {
         body: JSON.stringify({
           title: title.current?.value,
           content: editorState.current,
+          htmlContent: htmlContent,
           tags,
           userId: '20250522',
         }),
@@ -58,7 +62,6 @@ export default function WritePage() {
           <h1 className="text-3xl font-bold">질문 작성</h1>
           <p className="text-muted-foreground">약에 관한 궁금한 점을 전문가에게 물어보세요.</p>
         </div>
-
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <Card>
             <CardContent className="p-6">
