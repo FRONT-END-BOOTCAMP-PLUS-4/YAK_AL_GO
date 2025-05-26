@@ -61,10 +61,6 @@ export const PharmacySearch: React.FC<PharmacySearchProps> = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <Button type="submit" size="icon">
-          <Search className="h-4 w-4" />
-          <span className="sr-only">Search</span>
-        </Button>
       </div>
       <Button className="flex gap-2" onClick={getCurrentLocation}>
         <Navigation className="h-4 w-4" />내 위치
