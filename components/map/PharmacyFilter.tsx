@@ -49,13 +49,15 @@ export const PharmacyFilter: React.FC<PharmacyFilterProps> = ({
 
   // 검색어가 변경될 때마다 필터링된 약품 리스트 갱신
   useEffect(() => {
-    if (medicineQuery.trim() === "") {
+    const trimmedQuery = medicineQuery.trim();
+
+    if (trimmedQuery === "" || trimmedQuery.length < 2) {
       setFilteredMedicines([]);
     } else {
-      const lowerQuery = medicineQuery.toLowerCase();
-      const filtered = medicines
-        .filter((m) => m.toLowerCase().includes(lowerQuery))
-        .slice(0, 100); // 최대 100개만 표시
+      const lowerQuery = trimmedQuery.toLowerCase();
+      const filtered = medicines.filter((m) =>
+        m.toLowerCase().includes(lowerQuery)
+      );
       setFilteredMedicines(filtered);
     }
   }, [medicineQuery, medicines]);
@@ -106,7 +108,7 @@ export const PharmacyFilter: React.FC<PharmacyFilterProps> = ({
           <Label>약품 검색</Label>
           <Input
             id="medicine-search"
-            placeholder="약품명을 입력하세요"
+            placeholder="약품명을 두 글자 이상 입력하세요"
             value={medicineQuery}
             onChange={(e) => setMedicineQuery(e.target.value)}
           />
@@ -144,11 +146,12 @@ export const PharmacyFilter: React.FC<PharmacyFilterProps> = ({
                   {med}
                 </button>
               ))}
-              {filteredMedicines.length === 0 && (
-                <div className="px-2 py-1 text-sm text-muted-foreground">
-                  검색 결과 없음
-                </div>
-              )}
+              {filteredMedicines.length === 0 &&
+                medicineQuery.trim().length >= 2 && (
+                  <div className="px-2 py-1 text-sm text-muted-foreground">
+                    검색 결과 없음
+                  </div>
+                )}
             </div>
           )}
         </div>
