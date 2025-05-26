@@ -37,7 +37,7 @@ export default function WritePage() {
         body: JSON.stringify({
           title: title.current?.value,
           content: editorState.current,
-          htmlContent: htmlContent,
+          content_html: htmlContent,
           tags,
           userId: '20250522',
         }),
