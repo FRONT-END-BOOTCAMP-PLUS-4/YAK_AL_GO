@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaQuestionRepository } from '@/backend/infra/repositories/prisma/PrismaQuestionRepository';
 import { CreateQuestionDto } from '@/backend/application/usecases/question/dto/QuestionDto';
-import { CreateQuestionUseCase } from '@/backend/application/usecases/question/CreateQuestionUseCase';
-import { GetAllQuestionsUseCase } from '@/backend/application/usecases/question/GetAllQuestionsUseCase';
+import { CreateQuestionUseCase } from '@/backend/application/usecases/question/CreateQuestionUsecase';
+import { GetAllQuestionsUseCase } from '@/backend/application/usecases/question/GetAllQuestionsUsecase';
 import prisma from '@/lib/prisma';
 
 const questionRepository = new PrismaQuestionRepository(prisma);
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const dto: CreateQuestionDto = {
       title: body.title,
       content: body.content,
-      content_html: body.content_html,
+      contentHTML: body.contentHTML,
       tags: body.tags,
       userId: body.userId,
     };

@@ -9,7 +9,7 @@ export class CreateQuestionUseCase {
     const question = new Question({
       title: dto.title,
       content: dto.content,
-      content_html: dto.content_html,
+      contentHTML: dto.contentHTML,
       userId: dto.userId,
     });
 
@@ -21,11 +21,10 @@ export class CreateQuestionUseCase {
       id: created.id,
       title: created.title,
       content: created.content,
-      content_html: created.content_html,
+      contentHTML: created.contentHTML,
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
       userId: created.userId,
-      tags: dto.tags,
       answers: [],
     };
   }

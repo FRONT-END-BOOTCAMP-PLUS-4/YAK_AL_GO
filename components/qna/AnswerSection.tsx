@@ -5,20 +5,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Editor } from '@/components/blocks/editor-x/editor';
+import { postAnswer } from '@/lib/queries/postAnswer';
 
 interface AnswerSectionProps {
-  questionId: string;
-  onAnswerSubmit?: (content: string) => void;
+  questionId: number;
 }
 
-export function AnswerSection({ questionId, onAnswerSubmit }: AnswerSectionProps) {
+export function AnswerSection({ questionId }: AnswerSectionProps) {
   const [isAnswerExpanded, setIsAnswerExpanded] = useState(false);
   const [answerContent, setAnswerContent] = useState('');
 
   const handleSubmit = () => {
-    if (onAnswerSubmit) {
-      onAnswerSubmit(answerContent);
-    }
+    postAnswer({
+      content: answerContent,
+      contentHTML: answerContent,
+      userId: '1',
+      qnaId: questionId,
+    });
     setIsAnswerExpanded(false);
     setAnswerContent('');
   };

@@ -4,14 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AnswerSection } from '@/components/qna/AnswerSection';
 import { ContentRenderer } from '@/components/qna/ContentRenderer';
-import { ArrowLeft, User, Clock, ThumbsUp } from 'lucide-react';
+import { ArrowLeft, User, Clock } from 'lucide-react';
 import { formatDate } from '@/lib/community/formatDate';
 import { getQuestion } from '@/lib/queries/getQuestion';
 
 export default async function QuestionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: questionId } = await params;
   const question = await getQuestion(questionId);
-
+  console.log(question);
   return (
     <div className="container py-8">
       <div className="flex flex-col gap-6">
@@ -52,11 +52,11 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
             </div>
           </CardHeader>
           <CardContent>
-            <ContentRenderer contentHtml={question.content_html} />
+            <ContentRenderer contentHtml={question.contentHTML} />
           </CardContent>
         </Card>
 
-        <AnswerSection questionId={questionId} />
+        <AnswerSection questionId={parseInt(questionId)} />
 
         {question.answers && question.answers.length > 0 && (
           <div className="space-y-4">
@@ -70,7 +70,7 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{answer.userId}</span>
                           <Badge variant="default" className="bg-primary">
-                            {answer.role}
+                            {answer.user?.memberType}
                           </Badge>
                         </div>
                         <div className="text-sm text-muted-foreground">
@@ -78,12 +78,7 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
                         </div>
                       </div>
                       {/* <p className="whitespace-pre-line">{answer.content}</p> */}
-                      <div className="flex items-center gap-2 mt-4">
-                        <Button variant="outline" size="sm" className="gap-1">
-                          <ThumbsUp className="h-4 w-4" />
-                          도움이 됐어요 {answer.likes || 0}
-                        </Button>
-                      </div>
+                      <ContentRenderer contentHtml={answer.contentHTML} />
                     </div>
                   </div>
                 </CardContent>
