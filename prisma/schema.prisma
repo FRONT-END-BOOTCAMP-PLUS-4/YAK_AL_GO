@@ -208,3 +208,4 @@ model users {
   user_medis   user_medis[]
   pharmacies   pharmacies?    @relation(fields: [hpid], references: [hpid])
 }
+
