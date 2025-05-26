@@ -19,6 +19,7 @@ declare module 'next-auth' {
     needsSignup?: boolean;
     birthyear?: number;
     member_type?: number;
+    created_at?: Date;
   }
 
   interface Session {
@@ -31,6 +32,7 @@ declare module 'next-auth' {
       needsSignup: boolean;
       birthyear?: number;
       member_type?: number;
+      created_at?: Date;
     } & DefaultSession['user'];
   }
   interface JWT {
@@ -42,5 +44,6 @@ declare module 'next-auth' {
     needsSignup?: boolean;
     birthyear?: number;
     member_type?: number;
+    created_at?: Date;
   }
 }

@@ -61,19 +61,11 @@ export default function SignupStep1Page() {
     console.log(formData);
     // 폼 데이터 유효성 검사
     if (userType === "general") {
-      setFormData((prev) => ({
-            ...prev,
-            member_type : 0
-          }));
       if (!formData.birthyear) {
         setError("나이, 항목을 입력해주세요.")
         return
       }
     } else {
-        setFormData((prev) => ({
-        ...prev,
-        member_type : 1
-      }));
       if (!formData.hpid) {
         setError("약국 ID 항목을 입력해주세요.")
         return
