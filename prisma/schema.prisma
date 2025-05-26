@@ -10,14 +10,14 @@ datasource db {
 
 model answers {
   id          Int       @id @default(autoincrement())
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @default(now())
-  deleted_at  DateTime?
-  is_accepted Boolean   @default(false)
-  userId      String
-  qnaId       Int
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @default(now()) @map("updated_at")
+  deletedAt  DateTime?  @map("deleted_at")
+  isAccepted Boolean    @default(false) @map("is_accepted")
+  userId      String    @map("user_id")
+  qnaId       Int       @map("qna_id")
   content     Json
-  content_html String?
+  contentHTML String?   @map("content_html")
   qnas        qnas      @relation(fields: [qnaId], references: [id])
   users       users     @relation(fields: [userId], references: [id])
 }
@@ -25,11 +25,11 @@ model answers {
 model comments {
   id         Int       @id @default(autoincrement())
   content    String
-  created_at DateTime  @default(now())
-  updated_at DateTime  @default(now())
-  deleted_at DateTime?
-  userId     String
-  postId     Int
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @default(now()) @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+  userId     String    @map("user_id")
+  postId     Int       @map("post_id")
   posts      posts     @relation(fields: [postId], references: [id])
   users      users     @relation(fields: [userId], references: [id])
 }
@@ -119,10 +119,10 @@ model pharmacies {
   users       users[]
 }
 
-model post_tags {
+model posts_tags {
   id     Int   @id @default(autoincrement())
-  tagId  Int
-  postId Int
+  tagId  Int   @map("tag_id")
+  postId Int   @map("post_id")
   posts  posts @relation(fields: [postId], references: [id])
   tags   tags  @relation(fields: [tagId], references: [id])
 }
@@ -130,44 +130,44 @@ model post_tags {
 model posts {
   id         Int         @id @default(autoincrement())
   title      String      @db.VarChar(255)
-  created_at DateTime    @default(now())
-  updated_at DateTime    @default(now())
-  deleted_at DateTime?
-  userId     String
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @default(now()) @map("updated_at")
+  deletedAt  DateTime?   @map("deleted_at")
+  userId     String      @map("user_id")
   content    Json
-  content_html String?
+  contentHTML String? @map("content_html")
   comments   comments[]
-  post_tags  post_tags[]
+  postTags  posts_tags[]
   users      users       @relation(fields: [userId], references: [id])
 }
 
 model qna_tags {
   id    Int  @id @default(autoincrement())
-  tagId Int
-  qnaId Int
-  qnas  qnas @relation(fields: [qnaId], references: [id])
-  tags  tags @relation(fields: [tagId], references: [id])
+  tagId Int  @map("tag_id")
+  qnaId Int  @map("qna_id")
+  qnas  qnas @relation(fields: [qnaId], references: [id], onDelete: Cascade)
+  tags  tags @relation(fields: [tagId], references: [id], onDelete: Cascade)
 }
 
 model qnas {
   id         Int        @id @default(autoincrement())
   title      String     @db.VarChar(255)
-  created_at DateTime   @default(now())
-  updated_at DateTime   @default(now())
-  deleted_at DateTime?
-  userId     String
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @default(now()) @map("updated_at")
+  deletedAt  DateTime?  @map("deleted_at")
+  userId     String     @map("user_id")
   content    Json
-  content_html String?
-  answers    answers[]
-  qna_tags   qna_tags[]
+  contentHTML String?   @map("content_html")
+  answers    answers[]  
+  qnaTags    qna_tags[] 
   users      users      @relation(fields: [userId], references: [id])
 }
 
-model tags {
+model tags {   
   id        Int         @id @default(autoincrement())
-  tag_name  String      @db.VarChar(100)
-  post_tags post_tags[]
-  qna_tags  qna_tags[]
+  tagName  String      @db.VarChar(100)
+  postTags posts_tags[]
+  qnaTags  qna_tags[]
 }
 
 model user_healths {
