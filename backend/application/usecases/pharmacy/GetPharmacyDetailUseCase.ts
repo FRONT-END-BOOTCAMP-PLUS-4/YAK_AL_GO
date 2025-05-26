@@ -1,4 +1,4 @@
-import type { PharmacyDto, PharmacyDetailDto, PharmacyOperatingHoursDto } from "../../../dto/pharmacy.dto"
+import type { PharmacyDto, PharmacyDetailDto, PharmacyOperatingHoursDto } from "./dto/PharmacyDto"
 import { CheckPharmacyOpenStatusUseCase } from "./CheckPharmacyOpenStatusUseCase"
 
 export class GetPharmacyDetailUseCase {

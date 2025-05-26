@@ -7,7 +7,7 @@ import type {
   PharmacySearchResponseDto,
   PharmacyDetailDto,
   PharmacyDto,
-} from "../../dto/pharmacy.dto"
+} from "../usecases/pharmacy/dto/PharmacyDto"
 
 export class PharmacyService {
   private getPharmaciesUseCase: GetPharmaciesUseCase

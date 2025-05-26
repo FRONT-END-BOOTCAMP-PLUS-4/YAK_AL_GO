@@ -1,7 +1,7 @@
 // 클린 아키텍처로 이동된 함수들을 위한 래퍼
 import { CalculateDistanceUseCase } from "../../../backend/application/usecases/pharmacy/CalculateDistanceUseCase"
 import { CheckPharmacyOpenStatusUseCase } from "../../../backend/application/usecases/pharmacy/CheckPharmacyOpenStatusUseCase"
-import type { PharmacyDto } from "../../../backend/dto/pharmacy.dto"
+import type { PharmacyDto } from "../../application/usecases/pharmacy/dto/PharmacyDto"
 
 const calculateDistanceUseCase = new CalculateDistanceUseCase()
 const checkPharmacyOpenStatusUseCase = new CheckPharmacyOpenStatusUseCase()

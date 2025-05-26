@@ -1,4 +1,4 @@
-import type { PharmacyDto, PharmacySearchRequestDto, PharmacySearchResponseDto } from "../../../dto/pharmacy.dto"
+import type { PharmacyDto, PharmacySearchRequestDto, PharmacySearchResponseDto } from "./dto/PharmacyDto"
 import prisma from "../../../../lib/prisma"
 import { CalculateDistanceUseCase } from "./CalculateDistanceUseCase"
 import { CheckPharmacyOpenStatusUseCase } from "./CheckPharmacyOpenStatusUseCase"
