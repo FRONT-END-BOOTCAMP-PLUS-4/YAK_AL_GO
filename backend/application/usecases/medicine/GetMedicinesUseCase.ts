@@ -1,4 +1,4 @@
-import type { MedicineDto } from "../../../dto/pharmacy.dto"
+import type { MedicineDto } from "../pharmacy/dto/PharmacyDto"
 import prisma from "../../../../lib/prisma"
 
 export class GetMedicinesUseCase {

@@ -1,4 +1,4 @@
-import type { PharmacyDto } from "../../../dto/pharmacy.dto"
+import type { PharmacyDto } from "./dto/PharmacyDto"
 
 export class CheckPharmacyOpenStatusUseCase {
   execute(pharmacy: PharmacyDto, day: number, hour: number, minute: number): boolean {

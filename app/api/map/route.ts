@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { GetPharmaciesUseCase } from "../../../backend/application/usecases/pharmacy/GetPharmaciesUseCase"
-import type { PharmacySearchRequestDto } from "../../../backend/dto/pharmacy.dto"
+import type { PharmacySearchRequestDto } from "../../../backend/application/usecases/pharmacy/dto/PharmacyDto"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)

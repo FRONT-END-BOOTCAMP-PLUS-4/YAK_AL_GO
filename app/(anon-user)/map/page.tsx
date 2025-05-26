@@ -104,7 +104,7 @@ export default function MapPage() {
           setPharmacies(sortedPharmacies);
         }
 
-        const medicinesRes = await fetch("/api/medicines");
+        const medicinesRes = await fetch("/api/map/medicines");
         const medicinesData = await medicinesRes.json();
 
         if (Array.isArray(medicinesData)) {
