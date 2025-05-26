@@ -17,6 +17,7 @@ model answers {
   userId      String
   qnaId       Int
   content     Json
+  content_html String?
   qnas        qnas      @relation(fields: [qnaId], references: [id])
   users       users     @relation(fields: [userId], references: [id])
 }
@@ -134,6 +135,7 @@ model posts {
   deleted_at DateTime?
   userId     String
   content    Json
+  content_html String?
   comments   comments[]
   post_tags  post_tags[]
   users      users       @relation(fields: [userId], references: [id])
@@ -155,6 +157,7 @@ model qnas {
   deleted_at DateTime?
   userId     String
   content    Json
+  content_html String?
   answers    answers[]
   qna_tags   qna_tags[]
   users      users      @relation(fields: [userId], references: [id])
@@ -188,7 +191,7 @@ model user_medis {
 
 model users {
   id           String         @id @default(uuid())
-  email        String?        @db.VarChar(255)
+  email        String?        @unique @db.VarChar(255)
   photo        String?        @db.VarChar(255)
   name         String?        @db.VarChar(100)
   birthyear    Int?
