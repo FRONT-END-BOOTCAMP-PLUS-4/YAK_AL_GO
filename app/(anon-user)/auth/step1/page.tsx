@@ -32,7 +32,7 @@ export default function SignupStep1Page() {
     photo: "",
     name : "",
     birthyear: "",
-    member_type: "", // general, pharmacist
+    member_type: 0, // general : 0, pharmacist : 1
     pregnent : 0, // 0없음 1임산부
     allergy :  0, // 0없음 2알레르기
     hypertension : 0, // 0없음 3고혈압
@@ -52,39 +52,35 @@ export default function SignupStep1Page() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  // 체크박스 핸들러
-  const handleCheckboxChange = (value: string, field: string) => {
-    setFormData((prev) => {
-      const currentValues = prev[field as keyof typeof prev] as string[]
-      return {
-        ...prev,
-        [field]: currentValues.includes(value)
-          ? currentValues.filter((item) => item !== value)
-          : [...currentValues, value]
-      }
-    })
-  }
+ 
 
-  // 셀렉트 핸들러
-  const handleSelectChange = (value: string, field: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+
 
   // 다음 단계로 이동
   const handleNextStep = async () => {
+    console.log(formData);
     // 폼 데이터 유효성 검사
     if (userType === "general") {
+      setFormData((prev) => ({
+            ...prev,
+            member_type : 0
+          }));
       if (!formData.birthyear) {
         setError("나이, 항목을 입력해주세요.")
         return
       }
     } else {
+        setFormData((prev) => ({
+        ...prev,
+        member_type : 1
+      }));
       if (!formData.hpid) {
         setError("약국 ID 항목을 입력해주세요.")
         return
       }
 
     }
+    
     // 여기서 JWT와 세션 업데이트를 위한 api 호출
     const response = await fetch("/api/auth/update-session", {
       method : "POST",
@@ -142,12 +138,21 @@ if (status === "loading") {
 
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue={userType} onValueChange={(value) => setUserType(value as "general" | "pharmacist")}>
+          <Tabs 
+          defaultValue={userType} 
+          onValueChange={(value) => {
+            setUserType(value as "general" | "pharmacist")
+            setFormData((prev) => ({
+              ...prev,
+              member_type: value === "general" ? 0 : 1, // 0: 일반 회원, 1: 약사
+            }))
+          }}
+          >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="general">일반 회원</TabsTrigger>
               <TabsTrigger value="pharmacist">약사</TabsTrigger>
             </TabsList>
-
+          
             <TabsContent value="general" className="space-y-4 mt-4">
               {/* 일반 회원 폼 */}
               <div className="space-y-2">
@@ -283,10 +288,10 @@ if (status === "loading") {
             <TabsContent value="pharmacist" className="space-y-4 mt-4">
               {/* 약사 회원 폼 */}
               <div className="space-y-2">
-                <Label htmlFor="pharmacyId">약국 ID (HPID)</Label>
+                <Label htmlFor="hpid">약국 ID (HPID)</Label>
                 <Input
-                  id="pharmacyId"
-                  name="pharmacyId"
+                  id="hpid"
+                  name="hpid"
                   placeholder="약국 ID를 입력하세요"
                   value={formData.hpid}
                   onChange={handleInputChange}
