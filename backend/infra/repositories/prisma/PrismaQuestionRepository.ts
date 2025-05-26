@@ -16,6 +16,7 @@ export class PrismaQuestionRepository implements QuestionRepository {
       data: {
         title: question.title,
         content: question.content,
+        content_html: question.content_html,
         userId: question.userId,
       },
     });
@@ -171,6 +172,7 @@ export class PrismaQuestionRepository implements QuestionRepository {
       id: prismaQuestion.id,
       title: prismaQuestion.title,
       content: prismaQuestion.content,
+      content_html: prismaQuestion.content_html,
       createdAt: prismaQuestion.created_at,
       updatedAt: prismaQuestion.updated_at,
       deletedAt: prismaQuestion.deleted_at,

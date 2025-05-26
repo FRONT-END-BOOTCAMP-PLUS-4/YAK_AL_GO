@@ -1,6 +1,6 @@
 import { Question } from '../entities/QuestionEntity';
 import { Tag } from '../entities/TagEntity';
-import { QuestionResponseDto } from '@/backend/dto/QuestionDto';
+import { QuestionResponseDto } from '@/backend/application/usecases/question/dto/QuestionDto';
 export interface PaginationParams {
   page: number;
   limit: number;

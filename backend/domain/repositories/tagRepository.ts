@@ -1,5 +1,5 @@
 import { Tag } from '@/backend/domain/entities/TagEntity';
-import { CreateTagDto } from '@/backend/dto/TagDto';
+import { CreateTagDto } from '@/backend/application/usecases/tag/dto/TagDto';
 
 export interface TagRepository {
   findAll(): Promise<Tag[]>;

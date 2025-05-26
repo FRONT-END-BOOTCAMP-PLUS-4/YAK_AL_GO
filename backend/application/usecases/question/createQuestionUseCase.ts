@@ -9,6 +9,7 @@ export class CreateQuestionUseCase {
     const question = new Question({
       title: dto.title,
       content: dto.content,
+      content_html: dto.content_html,
       userId: dto.userId,
     });
 
@@ -20,6 +21,7 @@ export class CreateQuestionUseCase {
       id: created.id,
       title: created.title,
       content: created.content,
+      content_html: created.content_html,
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
       userId: created.userId,
