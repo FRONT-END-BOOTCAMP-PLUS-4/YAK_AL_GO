@@ -43,3 +43,8 @@ next-env.d.ts
 
 # prisma
 /prisma/generated/
+
+# cursor and memory-bank (local only)
+.cursorrules
+.cursor/
+memory-bank/
