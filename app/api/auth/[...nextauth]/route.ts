@@ -35,8 +35,8 @@ const handler = NextAuth({
           // 회원가입이 되어있는 사용자
           token.id = dbUser.id;
           token.email = email;
+          token.photo = dbUser.photo;
           token.name = dbUser.name;
-          token.role = dbUser.member_type;
           token.birthyear = dbUser.birthyear;
           token.member_type = dbUser.member_type;
           // created_at추가 보류 => 타입 오류 발생 가능
@@ -59,8 +59,8 @@ const handler = NextAuth({
       // jwt에서 세션으로 값 전달
       session.user.id = token.id as string;
       session.user.email = token.email as string;
+      session.user.photo = token.photo as string;
       session.user.name = token.name as string;
-      session.user.role = token.role as number;
       session.user.birthyear = token.birthyear as number;
       session.user.member_type = token.member_type as number;
       session.user.hpid = token.hpid as string;
