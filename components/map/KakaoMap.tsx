@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Map, MapMarker } from "react-kakao-maps-sdk";
 
 // KakaoMapProps 타입 정의 수정
@@ -18,6 +18,13 @@ type KakaoMapProps = {
   onCenterChanged: (center: { lat: number; lng: number }) => void;
 };
 
+// 전역 타입 선언
+declare global {
+  interface Window {
+    kakao: any;
+  }
+}
+
 // KakaoMap 컴포넌트 수정
 const KakaoMap = (props: KakaoMapProps) => {
   const {
@@ -34,15 +41,40 @@ const KakaoMap = (props: KakaoMapProps) => {
   // 이전에 선택된 약국 인덱스를 저장
   const prevSelectedRef = useRef<number | null>(null);
   const mapRef = useRef<kakao.maps.Map>(null);
+  
+  // 카카오맵 SDK 로딩 상태 관리
+  const [isKakaoLoaded, setIsKakaoLoaded] = useState(false);
+
+  // 카카오맵 SDK 로딩 확인
+  useEffect(() => {
+    const checkKakaoMaps = () => {
+      if (window.kakao && window.kakao.maps) {
+        // 이미 로드된 경우
+        if (window.kakao.maps.Map) {
+          setIsKakaoLoaded(true);
+        } else {
+          // autoload=false인 경우 수동으로 로드
+          window.kakao.maps.load(() => {
+            setIsKakaoLoaded(true);
+          });
+        }
+      } else {
+        // 아직 로드되지 않은 경우 재시도
+        setTimeout(checkKakaoMaps, 100);
+      }
+    };
+
+    checkKakaoMaps();
+  }, []);
 
   useEffect(() => {
-    if (mapRef.current) {
+    if (mapRef.current && isKakaoLoaded) {
       // 지도 중심을 props로 받은 mapCenter로 설정
       mapRef.current.setCenter(
-        new kakao.maps.LatLng(mapCenter.lat, mapCenter.lng)
+        new window.kakao.maps.LatLng(mapCenter.lat, mapCenter.lng)
       );
     }
-  }, [mapCenter]);
+  }, [mapCenter, isKakaoLoaded]);
 
   // 약국 선택 변경 감지
   useEffect(() => {
@@ -51,6 +83,18 @@ const KakaoMap = (props: KakaoMapProps) => {
       prevSelectedRef.current = selected;
     }
   }, [selected]);
+
+  // SDK가 로드되지 않았으면 로딩 표시
+  if (!isKakaoLoaded) {
+    return (
+      <div className="flex items-center justify-center h-full bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600">지도를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
@@ -65,7 +109,11 @@ const KakaoMap = (props: KakaoMapProps) => {
         onDrag={() => {
           onSelect(null);
         }}
-        onZoomChanged={() => {
+        onZoomChanged={(map) => {
+          onCenterChanged({
+            lat: map.getCenter().getLat(),
+            lng: map.getCenter().getLng(),
+          });
           onSelect(null);
         }}
         onDragEnd={(map) => {
