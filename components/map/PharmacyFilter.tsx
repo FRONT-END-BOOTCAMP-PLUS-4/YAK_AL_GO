@@ -103,7 +103,7 @@ export const PharmacyFilter: React.FC<PharmacyFilterProps> = ({
       <div className="space-y-4">
         {/* 약품 검색 입력창 */}
         <div className="space-y-2">
-          <Label htmlFor="medicine-search">약품 검색</Label>
+          <Label>약품 검색</Label>
           <Input
             id="medicine-search"
             placeholder="약품명을 입력하세요"
@@ -158,7 +158,7 @@ export const PharmacyFilter: React.FC<PharmacyFilterProps> = ({
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="days">
               <AccordionTrigger className="py-2">
-                요일 (다중 선택 가능)
+                <Label>요일 (다중 선택 가능)</Label>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-2 gap-2 pt-2">
