@@ -31,11 +31,16 @@ export default function SignupStep1Page() {
     email: "",
     photo: "",
     name : "",
-    birthyear: 5,
-    membertype : 5,
-    healthConditions: [] as string[],
+    birthyear: "",
+    member_type: "", // general, pharmacist
+    pregnent : 0, // 0없음 1임산부
+    allergy :  0, // 0없음 2알레르기
+    hypertension : 0, // 0없음 3고혈압
+    diabetes : 0, // 0없음 4당뇨
+    heartDisease : 0, // 0없음 5심장질환
+    liverDisease : 0, // 0없음 6간질환
+    kidneyDisease : 0, // 0없음 7신장질환
     hpid: "",
-
   })
 
 
@@ -130,7 +135,7 @@ if (status === "loading") {
               </Link>
             </Button>
             <CardTitle className="text-2xl font-bold"> 
-              {/* userType정의의 */}
+              {/* userType정의 */}
               {userType === "general" ? "회원가입 (1/2)" : "회원가입 (1/1)"}
             </CardTitle>
           </div>
@@ -148,11 +153,11 @@ if (status === "loading") {
               <div className="space-y-2">
                 <Label htmlFor="age">나이</Label>
                 <Input
-                  id="age"
-                  name="age"
-                  type="number"
+                  id="birthyear"
+                  name="birthyear"
+                  type="number" // form 형태는 str? 
                   placeholder="나이를 입력하세요"
-                  value={formData.birthyear} // 값 초기화화
+                  value={formData.birthyear} // 값 초기화
                   onChange={handleInputChange}
                   required // 필수 입력
                 />
@@ -163,13 +168,12 @@ if (status === "loading") {
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="pregnant"
-                      checked={formData.healthConditions.includes("pregnant")}
+                      checked={formData.pregnent === 1}
                       onCheckedChange={(checked) => {
-                        if (checked) {
-                          handleCheckboxChange("pregnant", "healthConditions")
-                        } else {
-                          handleCheckboxChange("pregnant", "healthConditions")
-                        }
+                        setFormData((prev) => ({
+                          ...prev,
+                          pregnent: checked ? 1 : 0 // 1이면 임산부, 0이면 아니오
+                        }));
                       }}
                     />
                     <Label htmlFor="pregnant">임산부</Label>
@@ -177,13 +181,12 @@ if (status === "loading") {
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="allergy"
-                      checked={formData.healthConditions.includes("allergy")}
+                      checked={formData.allergy === 2}
                       onCheckedChange={(checked) => {
-                        if (checked) {
-                          handleCheckboxChange("allergy", "healthConditions")
-                        } else {
-                          handleCheckboxChange("allergy", "healthConditions")
-                        }
+                        setFormData((prev) => ({
+                          ...prev,
+                          allergy: checked ? 2 : 0 // 2이면 알레르기 있음, 0이면 없음
+                        }));
                       }}
                     />
                     <Label htmlFor="allergy">알레르기</Label>
@@ -191,19 +194,89 @@ if (status === "loading") {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="conditions">질병 정보</Label>
-                <Select onValueChange={(value) => handleSelectChange(value, "healthConditions")}>
-                  <SelectTrigger id="conditions">
-                    <SelectValue placeholder="질병 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="hypertension">고혈압</SelectItem>
-                    <SelectItem value="diabetes">당뇨</SelectItem>
-                    <SelectItem value="heart">심장질환</SelectItem>
-                    <SelectItem value="liver">간질환</SelectItem>
-                    <SelectItem value="kidney">신장질환</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="disease">질병 정보</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="hypertension"
+                      // formData.hypertension 값에 따라 체크 상태 설정
+                      checked={formData.hypertension === 3} // 1이면 체크됨
+                      onCheckedChange={(checked) => {
+                        // 체크 상태에 따라 formData.hypertension 업데이트
+                        setFormData((prev) => ({
+                          ...prev,
+                          hypertension: checked ? 3 : 0, // 체크되면 1, 아니면 0
+                        }));
+                      }}
+                    />
+                    <Label htmlFor="hypertension">고혈압</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="diabetes"
+                      // formData.diabetes 값에 따라 체크 상태 설정
+                      checked={formData.diabetes === 4} // 1이면 체크됨
+                      onCheckedChange={(checked) => {
+                        // 체크 상태에 따라 formData.diabetes 업데이트
+                        setFormData((prev) => ({
+                          ...prev,
+                          diabetes: checked ? 4 : 0, // 체크되면 1, 아니면 0
+                        }));
+                      }}
+                    />
+                    <Label htmlFor="diabetes">당뇨</Label>
+                  </div>
+                  {/* 심장질환 체크박스 */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="heartDisease"
+                      // formData.heartDisease 값에 따라 체크 상태 설정
+                      checked={formData.heartDisease === 5} // 1이면 체크됨
+                      onCheckedChange={(checked) => {
+                        // 체크 상태에 따라 formData.heartDisease 업데이트
+                        setFormData((prev) => ({
+                          ...prev,
+                          heartDisease: checked ? 5 : 0, // 체크되면 1, 아니면 0
+                        }));
+                      }}
+                    />
+                    <Label htmlFor="heartDisease">심장질환</Label>
+                  </div>
+
+                  {/* 간질환 체크박스 */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="liverDisease"
+                      // formData.liverDisease 값에 따라 체크 상태 설정
+                      checked={formData.liverDisease === 6} // 1이면 체크됨
+                      onCheckedChange={(checked) => {
+                        // 체크 상태에 따라 formData.liverDisease 업데이트
+                        setFormData((prev) => ({
+                          ...prev,
+                          liverDisease: checked ? 6 : 0, // 체크되면 1, 아니면 0
+                        }));
+                      }}
+                    />
+                    <Label htmlFor="liverDisease">간질환</Label>
+                  </div>
+
+                  {/* 신장질환 체크박스 */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="kidneyDisease"
+                      // formData.kidneyDisease 값에 따라 체크 상태 설정
+                      checked={formData.kidneyDisease === 7} // 1이면 체크됨
+                      onCheckedChange={(checked) => {
+                        // 체크 상태에 따라 formData.kidneyDisease 업데이트
+                        setFormData((prev) => ({
+                          ...prev,
+                          kidneyDisease: checked ? 7 : 0, // 체크되면 1, 아니면 0
+                        }));
+                      }}
+                    />
+                    <Label htmlFor="kidneyDisease">신장질환</Label>
+                  </div>
+                </div>
               </div>
             </TabsContent>
 
