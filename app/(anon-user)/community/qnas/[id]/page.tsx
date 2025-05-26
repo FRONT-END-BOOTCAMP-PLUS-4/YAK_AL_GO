@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AnswerSection } from '@/components/qna/AnswerSection';
 import { ContentRenderer } from '@/components/qna/ContentRenderer';
-import { ArrowLeft, User, Clock, ThumbsUp, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Clock, ThumbsUp } from 'lucide-react';
 import { formatDate } from '@/lib/community/formatDate';
 import { getQuestion } from '@/lib/queries/getQuestion';
 
@@ -52,7 +52,7 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
             </div>
           </CardHeader>
           <CardContent>
-            <ContentRenderer content={question.content} />
+            <ContentRenderer contentHtml={question.content_html} />
           </CardContent>
         </Card>
 
