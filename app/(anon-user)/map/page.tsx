@@ -80,9 +80,7 @@ export default function MapPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const pharmaciesUrl = selectedMedicine
-          ? `/api/map?medicine=${encodeURIComponent(selectedMedicine)}`
-          : "/api/map";
+        const pharmaciesUrl = "/api/map";
 
         const pharmaciesRes = await fetch(pharmaciesUrl);
         const pharmaciesData = await pharmaciesRes.json();
@@ -131,6 +129,19 @@ export default function MapPage() {
     }
   }, [mapCenter]);
 
+  // Filter pharmacies based on search query and filters
+  useEffect(() => {
+    filterPharmacies();
+  }, [
+    searchQuery,
+    selectedDays,
+    selectedHour,
+    selectedMinute,
+    pharmacies,
+    showOnlyOpen,
+    selectedMedicine,
+  ]);
+
   // 약국을 거리순으로 정렬하는 함수
   const sortPharmaciesByDistance = (
     pharmaciesToSort: PharmacyType[],
@@ -152,19 +163,6 @@ export default function MapPage() {
       return distA - distB;
     });
   };
-
-  // Filter pharmacies based on search query and filters
-  useEffect(() => {
-    filterPharmacies();
-  }, [
-    searchQuery,
-    selectedDays,
-    selectedHour,
-    selectedMinute,
-    pharmacies,
-    showOnlyOpen,
-    selectedMedicine,
-  ]);
 
   // 선택된 요일과 시간에 약국이 영업 중인지 확인하는 함수 (다중 요일 지원)
   const checkPharmacyOpenAtSelectedDaysAndTime = (
@@ -227,7 +225,7 @@ export default function MapPage() {
       filtered = filtered.filter((pharmacy) => pharmacy.isOpen);
     }
 
-    // 필터링 후에도 거리순 정렬 유지
+    // 거리 정렬 후 가까운 10개만 추리기
     filtered.sort((a, b) => {
       const distA = calculateDistance(
         mapCenter.lat,
@@ -244,7 +242,10 @@ export default function MapPage() {
       return distA - distB;
     });
 
-    setFilteredPharmacies(filtered);
+    // 상위 10개만
+    const topNearby = filtered.slice(0, 20);
+
+    setFilteredPharmacies(topNearby);
   };
 
   const resetFilters = () => {
@@ -253,7 +254,6 @@ export default function MapPage() {
     setSelectedDays([now.getDay().toString()]);
     setSelectedHour(now.getHours().toString());
     setSelectedMinute(now.getMinutes().toString());
-    setShowFilterPopover(false);
   };
 
   const getCurrentLocation = () => {
@@ -449,12 +449,9 @@ export default function MapPage() {
           <div className="order-2 md:order-1">
             <PharmacyList
               filteredPharmacies={filteredPharmacies}
-              selectedPharmacyIndex={selectedPharmacyIndex}
               handleSelectPharmacy={handleSelectPharmacy}
-              selectedMedicine={selectedMedicine}
               getTodayHours={getTodayHours}
               formatDistance={formatDistance}
-              getPharmacyMedicines={getPharmacyMedicines}
             />
           </div>
 
@@ -482,7 +479,6 @@ export default function MapPage() {
                   {selectedPharmacy && (
                     <PharmacyDetail
                       selectedPharmacy={selectedPharmacy}
-                      selectedMedicine={selectedMedicine}
                       getTodayHours={getTodayHours}
                       formatWeekdayHours={formatWeekdayHours}
                       onClose={handleClosePharmacyDetail}

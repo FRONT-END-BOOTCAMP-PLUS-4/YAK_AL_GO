@@ -15,7 +15,6 @@ import type { PharmacyType } from "@/types/map/types";
 
 interface PharmacyDetailProps {
   selectedPharmacy: PharmacyType;
-  selectedMedicine: string;
   getTodayHours: (pharmacy: PharmacyType) => string;
   formatWeekdayHours: (
     startTimeStr: string | null | undefined,
@@ -26,7 +25,6 @@ interface PharmacyDetailProps {
 
 export const PharmacyDetail: React.FC<PharmacyDetailProps> = ({
   selectedPharmacy,
-  selectedMedicine,
   getTodayHours,
   formatWeekdayHours,
   onClose,
@@ -58,15 +56,7 @@ export const PharmacyDetail: React.FC<PharmacyDetailProps> = ({
         <p className="text-sm font-medium">보유 약품</p>
         <div className="flex flex-wrap gap-1 mt-1">
           {selectedPharmacy.inventories.map((inventory) => (
-            <Badge
-              key={inventory.id}
-              variant="outline"
-              className={
-                inventory.medicines.item_name === selectedMedicine
-                  ? "bg-primary text-primary-foreground"
-                  : ""
-              }
-            >
+            <Badge key={inventory.id} variant="outline">
               {inventory.medicines.item_name}
             </Badge>
           ))}
@@ -193,19 +183,7 @@ export const PharmacyDetail: React.FC<PharmacyDetailProps> = ({
                 <h4 className="font-medium">보유 약품</h4>
                 <div className="flex flex-wrap gap-1 mt-1 max-h-[150px] overflow-y-auto">
                   {selectedPharmacy.inventories.map((inventory) => (
-                    <Badge
-                      key={inventory.id}
-                      variant={
-                        inventory.medicines.item_name === selectedMedicine
-                          ? "default"
-                          : "outline"
-                      }
-                      className={
-                        inventory.medicines.item_name === selectedMedicine
-                          ? "bg-primary"
-                          : ""
-                      }
-                    >
+                    <Badge key={inventory.id}>
                       {inventory.medicines.item_name}
                     </Badge>
                   ))}
