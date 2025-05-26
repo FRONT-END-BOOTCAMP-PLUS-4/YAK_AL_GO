@@ -1,55 +1,78 @@
 import axios from 'axios';
 import { PrismaClient } from '@/prisma/generated/index';
 
+/**
+ * DUR 의약품 데이터 인터페이스
+ * 공공데이터포털 DUR 품목정보 API 응답 데이터 구조 정의
+ */
 export interface DurMedicineDataInterface {
-  ITEM_SEQ: string;
-  ITEM_NAME: string;
-  ENTP_NAME?: string;
-  ITEM_PERMIT_DATE?: string;
-  ETC_OTC_CODE?: string;
-  CLASS_NO?: string;
-  CHART?: string;
-  BAR_CODE?: string;
-  MATERIAL_NAME?: string;
-  EE_DOC_ID?: string;
-  BIZRNO?: string;
-  CANCEL_DATE?: string;
-  CANCEL_NAME?: string;
-  CHANGE_DATE?: string;
-  EDI_CODE?: string;
-  INSERT_FILE?: string;
-  NB_DOC_ID?: string;
-  PACK_UNIT?: string;
-  REEXAM_DATE?: string;
-  REEXAM_TARGET?: string;
-  STORAGE_METHOD?: string;
-  TYPE_CODE?: string;
-  TYPE_NAME?: string;
-  UD_DOC_ID?: string;
-  VALID_TERM?: string;
+  ITEM_SEQ: string; // 품목일련번호 (Primary Key)
+  ITEM_NAME: string; // 품목명
+  ENTP_NAME?: string; // 업체명
+  ITEM_PERMIT_DATE?: string; // 허가일자
+  ETC_OTC_CODE?: string; // 전문/일반의약품 구분코드
+  CLASS_NO?: string; // 분류번호
+  CHART?: string; // 성상
+  BAR_CODE?: string; // 표준코드
+  MATERIAL_NAME?: string; // 원료성분
+  EE_DOC_ID?: string; // 효능효과 문서ID
+  BIZRNO?: string; // 사업자등록번호
+  CANCEL_DATE?: string; // 취소일자
+  CANCEL_NAME?: string; // 취소사유
+  CHANGE_DATE?: string; // 변경일자
+  EDI_CODE?: string; // EDI 코드
+  INSERT_FILE?: string; // 첨부파일
+  NB_DOC_ID?: string; // 용법용량 문서ID
+  PACK_UNIT?: string; // 포장단위
+  REEXAM_DATE?: string; // 재심사일자
+  REEXAM_TARGET?: string; // 재심사대상
+  STORAGE_METHOD?: string; // 저장방법
+  TYPE_CODE?: string; // 제형코드
+  TYPE_NAME?: string; // 제형명
+  UD_DOC_ID?: string; // 사용상주의사항 문서ID
+  VALID_TERM?: string; // 유효기간
 }
 
+/**
+ * 공공데이터포털 API 응답 구조 인터페이스
+ * 표준 공공데이터 API 응답 형식 정의
+ */
 export interface ApiResponseInterface {
   header: {
-    resultCode: string;
-    resultMsg: string;
+    resultCode: string; // 결과코드 (00: 성공)
+    resultMsg: string; // 결과메시지
   };
   body: {
-    totalCount: number;
-    items: DurMedicineDataInterface[];
-    numOfRows: number;
-    pageNo: number;
+    totalCount: number; // 전체 데이터 건수
+    items: DurMedicineDataInterface[]; // 실제 데이터 배열
+    numOfRows: number; // 한 페이지 결과 수
+    pageNo: number; // 페이지 번호
   };
 }
 
+/**
+ * 의약품 데이터 동기화 서비스 클래스
+ * 공공데이터포털 DUR 품목정보 API와 연동하여 의약품 데이터를 관리
+ */
 class MedicineDataService {
+  // 공공데이터포털 DUR 품목정보 API 엔드포인트
   private readonly API_BASE_URL =
     'https://apis.data.go.kr/1471000/DURPrdlstInfoService03/getDurPrdlstInfoList03';
-  private readonly API_KEY: string;
-  private readonly prisma: PrismaClient;
-  private readonly MAX_ROWS_PER_REQUEST = 100;
-  private readonly REQUEST_DELAY = 200; // API 호출 간격 (ms)
 
+  // API 인증키 (공공데이터포털에서 발급)
+  private readonly API_KEY: string;
+
+  // 데이터베이스 클라이언트 (Prisma ORM)
+  private readonly prisma: PrismaClient;
+
+  // API 호출 설정값들
+  private readonly MAX_ROWS_PER_REQUEST = 100; // 한 번에 요청할 최대 데이터 건수
+  private readonly REQUEST_DELAY = 200; // API 호출 간격 (ms) - Rate Limiting 준수
+
+  /**
+   * 생성자 - 서비스 초기화
+   * @param apiKey 공공데이터포털 API 키
+   */
   constructor(apiKey: string) {
     if (!apiKey) {
       throw new Error('API_KEY가 설정되지 않았습니다.');
@@ -59,12 +82,16 @@ class MedicineDataService {
     this.API_KEY = decodeURIComponent(apiKey);
     this.prisma = new PrismaClient();
 
-    console.log(`🔑 원본 API 키 길이: ${apiKey.length}자`);
-    console.log(`🔑 디코딩된 API 키 길이: ${this.API_KEY.length}자`);
+    console.log(`원본 API 키 길이: ${apiKey.length}자`);
+    console.log(`디코딩된 API 키 길이: ${this.API_KEY.length}자`);
   }
 
   /**
    * 소량 테스트용 DUR 품목정보 데이터 동기화
+   * 개발/테스트 환경에서 소량의 데이터로 API 연동 테스트
+   * @param pageNo 페이지 번호
+   * @param numOfRows 요청할 데이터 건수
+   * @returns 동기화 결과 정보
    */
   async syncLimitedMedicineData(
     pageNo: number,
@@ -75,10 +102,12 @@ class MedicineDataService {
     message: string;
   }> {
     try {
-      console.log(`🧪 테스트 동기화 시작: 페이지 ${pageNo}, 건수 ${numOfRows}`);
+      console.log(`테스트 동기화 시작: 페이지 ${pageNo}, 건수 ${numOfRows}`);
 
+      // API 호출하여 데이터 조회
       const response = await this.fetchDurMedicineData(pageNo, numOfRows);
 
+      // 응답 데이터 검증
       if (!response.body.items || response.body.items.length === 0) {
         return {
           success: false,
@@ -87,11 +116,12 @@ class MedicineDataService {
         };
       }
 
+      // 데이터베이스에 저장
       const saveResult = await this.saveMedicineDataToDB(response.body.items);
 
-      console.log(`✅ 테스트 완료: ${response.body.items.length}건 처리`);
+      console.log(`테스트 완료: ${response.body.items.length}건 처리`);
       console.log(
-        `📊 결과: 성공 ${saveResult.successCount}, 실패 ${saveResult.errorCount}, 생성 ${saveResult.createdCount}, 업데이트 ${saveResult.updatedCount}, 스킵 ${saveResult.skippedCount}`
+        `결과: 성공 ${saveResult.successCount}, 실패 ${saveResult.errorCount}, 생성 ${saveResult.createdCount}, 업데이트 ${saveResult.updatedCount}, 스킵 ${saveResult.skippedCount}`
       );
 
       return {
@@ -100,7 +130,7 @@ class MedicineDataService {
         message: `테스트 동기화 완료: ${response.body.items.length}건 처리 | 생성: ${saveResult.createdCount}건, 업데이트: ${saveResult.updatedCount}건, 스킵: ${saveResult.skippedCount}건, 실패: ${saveResult.errorCount}건`,
       };
     } catch (error) {
-      console.error('💥 테스트 동기화 중 오류 발생:', error);
+      console.error('테스트 동기화 중 오류 발생:', error);
       return {
         success: false,
         totalProcessed: 0,
@@ -111,6 +141,8 @@ class MedicineDataService {
 
   /**
    * 전체 DUR 품목정보 데이터를 조회하여 데이터베이스에 저장
+   * 공공데이터포털의 모든 의약품 데이터를 페이지별로 순차 처리
+   * @returns 전체 동기화 결과 정보
    */
   async syncAllMedicineData(): Promise<{
     success: boolean;
@@ -118,15 +150,16 @@ class MedicineDataService {
     message: string;
   }> {
     try {
-      console.log('🚀 DUR 품목정보 전체 동기화를 시작합니다...');
+      console.log('DUR 품목정보 전체 동기화를 시작합니다...');
 
       // 첫 번째 요청으로 전체 건수 확인
       const firstResponse = await this.fetchDurMedicineData(1, 1);
       const totalCount = firstResponse.body.totalCount;
       const totalPages = Math.ceil(totalCount / this.MAX_ROWS_PER_REQUEST);
 
-      console.log(`📊 전체 데이터 건수: ${totalCount}건, 예상 페이지 수: ${totalPages}페이지`);
+      console.log(`전체 데이터 건수: ${totalCount}건, 예상 페이지 수: ${totalPages}페이지`);
 
+      // 진행 상황 추적 변수들
       let totalProcessed = 0;
       let totalErrorCount = 0;
       let totalCreatedCount = 0;
@@ -137,23 +170,26 @@ class MedicineDataService {
       for (let page = 1; page <= totalPages; page++) {
         try {
           console.log(
-            `⏳ ${page}/${totalPages} 페이지 처리 중... (${(((page - 1) / totalPages) * 100).toFixed(1)}%)`
+            `${page}/${totalPages} 페이지 처리 중... (${(((page - 1) / totalPages) * 100).toFixed(1)}%)`
           );
 
+          // 현재 페이지 데이터 조회
           const response = await this.fetchDurMedicineData(page, this.MAX_ROWS_PER_REQUEST);
 
           if (response.body.items && response.body.items.length > 0) {
+            // 데이터베이스에 저장
             const saveResult = await this.saveMedicineDataToDB(response.body.items);
             totalProcessed += response.body.items.length;
 
+            // 결과 집계
             totalErrorCount += saveResult.errorCount;
             totalCreatedCount += saveResult.createdCount;
             totalUpdatedCount += saveResult.updatedCount;
             totalSkippedCount += saveResult.skippedCount;
 
-            console.log(`✅ ${page} 페이지 완료: ${response.body.items.length}건 처리`);
+            console.log(`${page} 페이지 완료: ${response.body.items.length}건 처리`);
             console.log(
-              `📊 페이지 결과: 생성 ${saveResult.createdCount}, 업데이트 ${saveResult.updatedCount}, 스킵 ${saveResult.skippedCount}, 실패 ${saveResult.errorCount}`
+              `페이지 결과: 생성 ${saveResult.createdCount}, 업데이트 ${saveResult.updatedCount}, 스킵 ${saveResult.skippedCount}, 실패 ${saveResult.errorCount}`
             );
           }
 
@@ -162,7 +198,7 @@ class MedicineDataService {
             await this.delay(this.REQUEST_DELAY);
           }
         } catch (error) {
-          console.error(`❌ ${page} 페이지 처리 중 오류 발생:`, error);
+          console.error(`${page} 페이지 처리 중 오류 발생:`, error);
           totalErrorCount += this.MAX_ROWS_PER_REQUEST;
 
           // 연속 오류 발생 시 더 긴 지연
@@ -170,9 +206,9 @@ class MedicineDataService {
         }
       }
 
-      console.log(`🎉 전체 동기화 완료: 총 ${totalProcessed}건 처리`);
+      console.log(`전체 동기화 완료: 총 ${totalProcessed}건 처리`);
       console.log(
-        `📊 최종 결과: 생성 ${totalCreatedCount}건, 업데이트 ${totalUpdatedCount}건, 스킵 ${totalSkippedCount}건, 실패 ${totalErrorCount}건`
+        `최종 결과: 생성 ${totalCreatedCount}건, 업데이트 ${totalUpdatedCount}건, 스킵 ${totalSkippedCount}건, 실패 ${totalErrorCount}건`
       );
 
       return {
@@ -181,7 +217,7 @@ class MedicineDataService {
         message: `DUR 품목정보 동기화가 완료되었습니다. 총 ${totalProcessed}건 처리 | 생성: ${totalCreatedCount}건, 업데이트: ${totalUpdatedCount}건, 스킵: ${totalSkippedCount}건, 실패: ${totalErrorCount}건`,
       };
     } catch (error) {
-      console.error('💥 DUR 품목정보 동기화 중 오류 발생:', error);
+      console.error('DUR 품목정보 동기화 중 오류 발생:', error);
       return {
         success: false,
         totalProcessed: 0,
@@ -192,12 +228,17 @@ class MedicineDataService {
 
   /**
    * DUR 품목정보 API 호출
+   * 공공데이터포털 API에 HTTP 요청을 보내고 응답을 처리
+   * @param pageNo 조회할 페이지 번호
+   * @param numOfRows 한 페이지당 조회할 데이터 건수
+   * @returns API 응답 데이터
    */
   private async fetchDurMedicineData(
     pageNo: number,
     numOfRows: number
   ): Promise<ApiResponseInterface> {
     try {
+      // API 요청 파라미터 설정
       const params = {
         serviceKey: this.API_KEY,
         pageNo: pageNo.toString(),
@@ -205,12 +246,13 @@ class MedicineDataService {
         type: 'json',
       };
 
-      console.log(`🔗 API 호출: 페이지 ${pageNo}, 요청 건수 ${numOfRows}`);
-      console.log(`🔗 API URL: ${this.API_BASE_URL}`);
-      console.log(`🔑 API 키 길이: ${this.API_KEY.length}자`);
-      console.log(`🔑 API 키 앞 30자: ${this.API_KEY.substring(0, 30)}...`);
-      console.log('📋 요청 파라미터:', JSON.stringify(params, null, 2));
+      console.log(`API 호출: 페이지 ${pageNo}, 요청 건수 ${numOfRows}`);
+      console.log(`API URL: ${this.API_BASE_URL}`);
+      console.log(`API 키 길이: ${this.API_KEY.length}자`);
+      console.log(`API 키 앞 30자: ${this.API_KEY.substring(0, 30)}...`);
+      console.log('요청 파라미터:', JSON.stringify(params, null, 2));
 
+      // HTTP GET 요청 실행
       const response = await axios.get(this.API_BASE_URL, {
         params,
         timeout: 30000, // 30초 타임아웃
@@ -220,12 +262,12 @@ class MedicineDataService {
         },
       });
 
-      // XML 에러 응답 처리
+      // XML 에러 응답 처리 (API 키 오류 등)
       if (
         typeof response.data === 'string' &&
         response.data.includes('<OpenAPI_ServiceResponse>')
       ) {
-        console.error('❌ API에서 XML 에러 응답 반환:', response.data);
+        console.error('API에서 XML 에러 응답 반환:', response.data);
 
         if (response.data.includes('SERVICE_KEY_IS_NOT_REGISTERED_ERROR')) {
           throw new Error(
@@ -242,23 +284,25 @@ class MedicineDataService {
 
       const data = response.data as ApiResponseInterface;
 
-      // JSON 응답 구조 확인
+      // JSON 응답 구조 검증
       if (!data || !data.header) {
-        console.error('⚠️ 예상과 다른 API 응답 구조:', data);
+        console.error('예상과 다른 API 응답 구조:', data);
         throw new Error('API 응답 구조가 예상과 다릅니다.');
       }
 
+      // API 결과 코드 확인
       if (data.header.resultCode !== '00') {
-        console.error(`❌ API 에러 코드: ${data.header.resultCode}`);
-        console.error(`❌ API 에러 메시지: ${data.header.resultMsg}`);
+        console.error(`API 에러 코드: ${data.header.resultCode}`);
+        console.error(`API 에러 메시지: ${data.header.resultMsg}`);
         throw new Error(`API 오류: ${data.header.resultMsg}`);
       }
 
-      console.log(`✅ API 응답 성공: ${data.body.items?.length || 0}건 수신`);
+      console.log(`API 응답 성공: ${data.body.items?.length || 0}건 수신`);
       return data;
     } catch (error) {
-      console.error('💥 API 호출 상세 에러:', error);
+      console.error('API 호출 상세 에러:', error);
 
+      // Axios 에러 상세 정보 출력
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as {
           response?: {
@@ -282,6 +326,9 @@ class MedicineDataService {
 
   /**
    * 의약품 데이터를 데이터베이스에 저장 (스마트 업데이트)
+   * 기존 데이터와 비교하여 생성/업데이트/스킵을 지능적으로 처리
+   * @param items API에서 받은 의약품 데이터 배열
+   * @returns 저장 결과 통계
    */
   private async saveMedicineDataToDB(items: DurMedicineDataInterface[]): Promise<{
     successCount: number;
@@ -290,21 +337,24 @@ class MedicineDataService {
     updatedCount: number;
     skippedCount: number;
   }> {
+    // 결과 통계 변수들
     let successCount = 0;
     let errorCount = 0;
     let createdCount = 0;
     let updatedCount = 0;
     let skippedCount = 0;
 
+    // 각 의약품 데이터를 순차 처리
     for (const item of items) {
       try {
-        // 기존 데이터 확인
+        // 기존 데이터 확인 (Primary Key: item_seq)
         const existingItem = await this.prisma.medicines.findUnique({
           where: {
             item_seq: item.ITEM_SEQ,
           },
         });
 
+        // API 데이터를 DB 스키마에 맞게 변환
         const newData = {
           item_name: item.ITEM_NAME || '',
           entp_name: item.ENTP_NAME || null,
@@ -341,7 +391,7 @@ class MedicineDataService {
             },
           });
           createdCount++;
-          console.log(`🆕 새 데이터 생성: ${item.ITEM_SEQ}`);
+          console.log(`새 데이터 생성: ${item.ITEM_SEQ}`);
         } else {
           // 데이터 변경 확인
           const hasChanges = this.hasDataChanged(existingItem, newData);
@@ -358,17 +408,17 @@ class MedicineDataService {
               },
             });
             updatedCount++;
-            console.log(`🔄 데이터 업데이트: ${item.ITEM_SEQ}`);
+            console.log(`데이터 업데이트: ${item.ITEM_SEQ}`);
           } else {
             // 동일한 데이터는 스킵
             skippedCount++;
-            console.log(`⏭️ 동일 데이터 스킵: ${item.ITEM_SEQ}`);
+            console.log(`동일 데이터 스킵: ${item.ITEM_SEQ}`);
           }
         }
 
         successCount++;
       } catch (error) {
-        console.error(`💥 의약품 데이터 저장 실패 (ITEM_SEQ: ${item.ITEM_SEQ}):`, error);
+        console.error(`의약품 데이터 저장 실패 (ITEM_SEQ: ${item.ITEM_SEQ}):`, error);
         errorCount++;
       }
     }
@@ -384,11 +434,16 @@ class MedicineDataService {
 
   /**
    * 데이터 변경 여부 확인
+   * 기존 데이터와 새 데이터를 필드별로 비교하여 변경사항 감지
+   * @param existingData 기존 데이터베이스 데이터
+   * @param newData 새로운 API 데이터
+   * @returns 변경 여부 (true: 변경됨, false: 동일함)
    */
   private hasDataChanged(
     existingData: Record<string, unknown>,
     newData: Record<string, unknown>
   ): boolean {
+    // 비교할 문자열 필드들
     const compareFields = [
       'item_name',
       'entp_name',
@@ -415,12 +470,12 @@ class MedicineDataService {
     // 문자열 필드 비교
     for (const field of compareFields) {
       if (existingData[field] !== newData[field]) {
-        console.log(`📝 필드 변경 감지 (${field}): "${existingData[field]}" → "${newData[field]}"`);
+        console.log(`필드 변경 감지 (${field}): "${existingData[field]}" → "${newData[field]}"`);
         return true;
       }
     }
 
-    // 날짜 필드 비교
+    // 날짜 필드 비교 (타임스탬프로 변환하여 비교)
     const dateFields = ['item_permit_date', 'cancel_date', 'change_date', 'reexam_date'];
     for (const field of dateFields) {
       const existingDate =
@@ -428,9 +483,7 @@ class MedicineDataService {
       const newDate = newData[field] instanceof Date ? (newData[field] as Date).getTime() : null;
 
       if (existingDate !== newDate) {
-        console.log(
-          `📅 날짜 필드 변경 감지 (${field}): ${existingData[field]} → ${newData[field]}`
-        );
+        console.log(`날짜 필드 변경 감지 (${field}): ${existingData[field]} → ${newData[field]}`);
         return true;
       }
     }
@@ -440,6 +493,9 @@ class MedicineDataService {
 
   /**
    * 날짜 문자열을 Date 객체로 변환
+   * 다양한 날짜 형식을 처리하여 표준 Date 객체로 변환
+   * @param dateString 변환할 날짜 문자열
+   * @returns Date 객체 또는 null (파싱 실패 시)
    */
   private parseDate(dateString?: string): Date | null {
     if (!dateString) return null;
@@ -484,17 +540,19 @@ class MedicineDataService {
         }
       }
 
-      // 다른 형식의 날짜 처리
+      // 다른 형식의 날짜 처리 (표준 Date 생성자 사용)
       const date = new Date(dateString);
       return Number.isNaN(date.getTime()) ? null : date;
     } catch {
-      console.warn(`⚠️ 날짜 파싱 실패: ${dateString}`);
+      console.warn(`날짜 파싱 실패: ${dateString}`);
       return null;
     }
   }
 
   /**
    * 지연 함수
+   * API 호출 간격 조절을 위한 비동기 대기 함수
+   * @param ms 대기할 시간 (밀리초)
    */
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -502,6 +560,7 @@ class MedicineDataService {
 
   /**
    * 데이터베이스 연결 종료
+   * Prisma 클라이언트 연결을 안전하게 종료
    */
   async disconnect(): Promise<void> {
     await this.prisma.$disconnect();
