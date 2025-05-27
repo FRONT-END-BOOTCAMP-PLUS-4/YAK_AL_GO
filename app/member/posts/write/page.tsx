@@ -1,58 +1,91 @@
 'use client';
-
+// UI 컴포넌트들
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
+// tag 관련 컴포넌트들
+import { TagSelect } from '@/components/qna/TagSelect';
+import { Tag } from '@/backend/domain/entities/TagEntity';
+
+// 훅들
+import { useRef, useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+// editor 관련 데이터
 import { initialValue } from '@/app/member/qnas/write/editorInitialValue';
 import { SerializedEditorState } from 'lexical';
+import { getEditorHtmlFromJSON } from '@/lib/community/getEditorHtmlFromJSON';
 
-import { Editor } from '@/components/blocks/editor-y/editor';
+// 질문 생성시 데이터 캐시 무효화
+import { POSTS_QUERY_KEY } from '@/lib/constants/queryKeys';
+import { useQueryClient } from '@tanstack/react-query';
 
+// Editor 컴포넌트 SSR 비활성화
+const Editor = dynamic(() => import('@/components/blocks/editor-y/editor').then((mod) => mod.Editor), {
+  ssr: false,
+  loading: () => <div className="h-72 w-full animate-pulse rounded-lg bg-muted" />,
+});
+
+// 질문 작성 페이지
 export default function WritePage() {
-  const router = useRouter();
-  const [title, setTitle] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
-  const [isComposing, setIsComposing] = useState(false);
+  // 태그 선택 상태
+  const [tags, setTags] = useState<Tag[]>([]);
+  // 제목 입력 상태
+  const title = useRef<HTMLInputElement>(null);
+  // editor 상태
   const editorState = useRef<SerializedEditorState>(initialValue);
 
-  const handleAddTag = () => {
-    if (tagInput && !tags.includes(tagInput)) {
-      setTags([...tags, tagInput]);
-      setTagInput('');
-    }
-  };
+  // 라우터, 쿼리 클라이언트
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isComposing) {
-      e.preventDefault();
-      handleAddTag();
-    }
-  };
-
+  // 질문 작성 함수
   const handleSubmit = async (e: React.FormEvent) => {
+    const htmlContent = getEditorHtmlFromJSON(editorState.current);
+
+    // 폼 제출 방지
     e.preventDefault();
-    // TODO: Implement form submission
-    console.log({ title, tags, editorState: editorState.current });
-    router.push('/community');
+    try {
+      // 질문 생성 요청
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: title.current?.value,
+          content: editorState.current,
+          contentHTML: htmlContent,
+          tags,
+          userId: '20250522',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create post');
+      }
+
+      const result = await response.json();
+
+      // 무한 쿼리 완전히 리셋하고 새로고침
+      await queryClient.resetQueries({ queryKey: POSTS_QUERY_KEY });
+
+      // 게시물 탭이 활성화된 상태로 커뮤니티 페이지로 이동
+      router.push('/community?tab=posts');
+    } catch (error) {
+      console.error('Error submitting post:', error);
+    }
   };
 
   return (
     <div className="container py-8">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold">질문 작성</h1>
-          <p className="text-muted-foreground">약에 관한 궁금한 점을 전문가에게 물어보세요.</p>
+          <h1 className="text-3xl font-bold">게시물 작성</h1>
+          <p className="text-muted-foreground">약에 관해 이야기하고 싶은 내용을 자유롭게 공유하세요.</p>
         </div>
-
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <Card>
             <CardContent className="p-6">
@@ -61,49 +94,22 @@ export default function WritePage() {
                   <label htmlFor="title" className="text-sm font-medium">
                     제목
                   </label>
-                  <Input
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="제목을 입력하세요"
-                    required
-                  />
+                  <Input id="title" ref={title} placeholder="제목을 입력하세요" required />
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium">태그</label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      onCompositionStart={() => setIsComposing(true)}
-                      onCompositionEnd={() => setIsComposing(false)}
-                      placeholder="태그를 입력하세요"
-                    />
-                    <Button type="button" onClick={handleAddTag}>
-                      추가
-                    </Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => handleRemoveTag(tag)}>
-                        {tag} ×
-                      </Badge>
-                    ))}
-                  </div>
+                  <TagSelect selectedTags={tags} onTagsChange={setTags} />
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium">내용</label>
-                  <Editor
-                    editorSerializedState={editorState.current}
-                    onSerializedChange={(value) => (editorState.current = value)}
-                  />
+                  <Suspense fallback={<div className="h-72 w-full animate-pulse rounded-lg bg-muted" />}>
+                    <Editor
+                      editorSerializedState={editorState.current}
+                      onSerializedChange={(value) => (editorState.current = value)}
+                    />
+                  </Suspense>
                 </div>
               </div>
             </CardContent>

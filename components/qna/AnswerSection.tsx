@@ -10,6 +10,8 @@ import { initialValue } from '@/app/member/qnas/write/editorInitialValue';
 import { useRef } from 'react';
 import { SerializedEditorState } from 'lexical';
 import { getEditorHtmlFromJSON } from '@/lib/community/getEditorHtmlFromJSON';
+import { QUESTIONS_QUERY_KEY } from '@/lib/constants/queryKeys';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AnswerSectionProps {
   questionId: number;
@@ -19,6 +21,7 @@ interface AnswerSectionProps {
 export function AnswerSection({ questionId }: AnswerSectionProps) {
   const [isAnswerExpanded, setIsAnswerExpanded] = useState(false);
   const editorState = useRef<SerializedEditorState>(initialValue);
+  const queryClient = useQueryClient();
 
   // 답변 등록 함수
   const handleSubmit = () => {
@@ -30,7 +33,8 @@ export function AnswerSection({ questionId }: AnswerSectionProps) {
     });
     setIsAnswerExpanded(false);
     editorState.current = initialValue;
-    window.location.reload(); // 답변 등록 후 페이지 새로고침
+    queryClient.resetQueries({ queryKey: QUESTIONS_QUERY_KEY });
+    window.location.reload();
   };
 
   return (
