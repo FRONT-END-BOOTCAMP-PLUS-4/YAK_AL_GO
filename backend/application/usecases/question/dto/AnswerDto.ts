@@ -6,10 +6,10 @@ export interface AnswerResponseDto {
   questionId: number;
   createdAt?: Date;
   updatedAt?: Date;
-  user?: {
+  users?: {
     id: string;
     name: string;
-    memberType: string;
+    member_type: number;
   };
 }
 

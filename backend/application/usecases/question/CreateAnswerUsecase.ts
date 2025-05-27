@@ -9,7 +9,7 @@ export class CreateAnswerUsecase {
   async execute(dto: CreateAnswerDto): Promise<AnswerResponseDto> {
     const answer = new Answer({
       content: dto.content,
-      content_html: dto.contentHTML,
+      contentHTML: dto.contentHTML,
       userId: dto.userId,
       qnaId: dto.qnaId,
     });
@@ -18,7 +18,7 @@ export class CreateAnswerUsecase {
     return {
       id: created.id,
       content: created.content,
-      contentHTML: created.content_html,
+      contentHTML: created.contentHTML,
       userId: created.userId,
       questionId: created.qnaId,
     };

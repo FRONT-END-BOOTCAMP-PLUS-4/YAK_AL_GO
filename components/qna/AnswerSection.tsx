@@ -6,24 +6,31 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Editor } from '@/components/blocks/editor-x/editor';
 import { postAnswer } from '@/lib/queries/postAnswer';
+import { initialValue } from '@/app/member/qnas/write/editorInitialValue';
+import { useRef } from 'react';
+import { SerializedEditorState } from 'lexical';
+import { getEditorHtmlFromJSON } from '@/lib/community/getEditorHtmlFromJSON';
 
 interface AnswerSectionProps {
   questionId: number;
 }
 
+// 답변 작성 컴포넌트
 export function AnswerSection({ questionId }: AnswerSectionProps) {
   const [isAnswerExpanded, setIsAnswerExpanded] = useState(false);
-  const [answerContent, setAnswerContent] = useState('');
+  const editorState = useRef<SerializedEditorState>(initialValue);
 
+  // 답변 등록 함수
   const handleSubmit = () => {
     postAnswer({
-      content: answerContent,
-      contentHTML: answerContent,
-      userId: '1',
+      content: editorState.current,
+      contentHTML: getEditorHtmlFromJSON(editorState.current),
+      userId: '20250522', // 임시 유저 아이디
       qnaId: questionId,
     });
     setIsAnswerExpanded(false);
-    setAnswerContent('');
+    editorState.current = initialValue;
+    window.location.reload(); // 답변 등록 후 페이지 새로고침
   };
 
   return (
@@ -45,9 +52,8 @@ export function AnswerSection({ questionId }: AnswerSectionProps) {
         <CardContent>
           <div className="space-y-4">
             <Editor
-              onChange={(editorState) => {
-                setAnswerContent(editorState.toString());
-              }}
+              editorSerializedState={editorState.current}
+              onSerializedChange={(value) => (editorState.current = value)}
             />
             <div className="flex justify-end">
               <Button onClick={handleSubmit}>답변 등록</Button>

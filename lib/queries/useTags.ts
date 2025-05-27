@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Tag } from '@/backend/domain/entities/TagEntity';
+import { TAGS_QUERY_KEY } from '@/lib/constants/queryKeys';
 
 async function fetchTags(): Promise<Tag[]> {
   const response = await fetch('/api/tags');
@@ -11,7 +12,7 @@ async function fetchTags(): Promise<Tag[]> {
 
 export function useTags() {
   return useQuery({
-    queryKey: ['tags'],
+    queryKey: TAGS_QUERY_KEY,
     queryFn: fetchTags,
   });
 }
