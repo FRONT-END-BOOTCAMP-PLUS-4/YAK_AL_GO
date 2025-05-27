@@ -254,6 +254,7 @@ export default function MapPage() {
     setSelectedDays([now.getDay().toString()]);
     setSelectedHour(now.getHours().toString());
     setSelectedMinute(now.getMinutes().toString());
+    setSearchQuery("");
   };
 
   const getCurrentLocation = () => {

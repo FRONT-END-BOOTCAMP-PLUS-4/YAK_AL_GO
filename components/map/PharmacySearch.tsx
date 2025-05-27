@@ -1,33 +1,34 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search, Navigation, Filter } from "lucide-react"
-import { Popover, PopoverTrigger } from "@/components/ui/popover"
-import { PharmacyFilter } from "./PharmacyFilter"
+import type React from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Navigation, Filter } from "lucide-react";
+import { Popover, PopoverTrigger } from "@/components/ui/popover";
+import { PharmacyFilter } from "./PharmacyFilter";
+import { X } from "lucide-react";
 
 interface PharmacySearchProps {
-  searchQuery: string
-  setSearchQuery: (query: string) => void
-  getCurrentLocation: () => void
-  showFilterPopover: boolean
-  setShowFilterPopover: (show: boolean) => void
-  selectedMedicine: string
-  setSelectedMedicine: (medicine: string) => void
-  selectedDays: string[] // 배열로 변경
-  setSelectedDays: (days: string[]) => void // 배열로 변경
-  selectedHour: string
-  setSelectedHour: (hour: string) => void
-  selectedMinute: string
-  setSelectedMinute: (minute: string) => void
-  showOnlyOpen: boolean
-  setShowOnlyOpen: (show: boolean) => void
-  resetFilters: () => void
-  medicines: string[]
-  mapCenter: { lat: number; lng: number }
-  setMapCenter: (center: { lat: number; lng: number }) => void
-  locationUpdateSourceRef: React.MutableRefObject<"user" | "map" | "init">
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  getCurrentLocation: () => void;
+  showFilterPopover: boolean;
+  setShowFilterPopover: (show: boolean) => void;
+  selectedMedicine: string;
+  setSelectedMedicine: (medicine: string) => void;
+  selectedDays: string[]; // 배열로 변경
+  setSelectedDays: (days: string[]) => void; // 배열로 변경
+  selectedHour: string;
+  setSelectedHour: (hour: string) => void;
+  selectedMinute: string;
+  setSelectedMinute: (minute: string) => void;
+  showOnlyOpen: boolean;
+  setShowOnlyOpen: (show: boolean) => void;
+  resetFilters: () => void;
+  medicines: string[];
+  mapCenter: { lat: number; lng: number };
+  setMapCenter: (center: { lat: number; lng: number }) => void;
+  locationUpdateSourceRef: React.MutableRefObject<"user" | "map" | "init">;
 }
 
 export const PharmacySearch: React.FC<PharmacySearchProps> = ({
@@ -55,12 +56,24 @@ export const PharmacySearch: React.FC<PharmacySearchProps> = ({
   return (
     <div className="flex flex-col gap-4 sm:flex-row">
       <div className="flex w-full items-center space-x-2">
-        <Input
-          type="text"
-          placeholder="약국 이름, 주소, 약품명 검색"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div className="relative w-full">
+          <Input
+            type="text"
+            placeholder="약국 이름, 주소, 약품명 검색"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-8" // 오른쪽 여백 확보
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Clear search"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
       </div>
       <Button className="flex gap-2" onClick={getCurrentLocation}>
         <Navigation className="h-4 w-4" />내 위치
@@ -68,13 +81,13 @@ export const PharmacySearch: React.FC<PharmacySearchProps> = ({
       <Popover
         open={showFilterPopover}
         onOpenChange={(open) => {
-          setShowFilterPopover(open)
+          setShowFilterPopover(open);
           // 지도 중심 변경 방지를 위한 플래그 설정
-          locationUpdateSourceRef.current = "map"
+          locationUpdateSourceRef.current = "map";
 
           // 현재 지도 중심 유지
-          const currentCenter = { ...mapCenter }
-          setMapCenter(currentCenter)
+          const currentCenter = { ...mapCenter };
+          setMapCenter(currentCenter);
         }}
       >
         <PopoverTrigger asChild>
@@ -99,5 +112,5 @@ export const PharmacySearch: React.FC<PharmacySearchProps> = ({
         />
       </Popover>
     </div>
-  )
-}
+  );
+};
