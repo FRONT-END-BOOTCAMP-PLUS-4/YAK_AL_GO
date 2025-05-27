@@ -3,10 +3,9 @@
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Navigation, Filter } from "lucide-react";
+import { Navigation, Filter, X } from "lucide-react";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { PharmacyFilter } from "./PharmacyFilter";
-import { X } from "lucide-react";
 
 interface PharmacySearchProps {
   searchQuery: string;
