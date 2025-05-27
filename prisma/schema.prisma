@@ -10,10 +10,10 @@ datasource db {
 
 model answers {
   id          Int       @id @default(autoincrement())
-  createdAt  DateTime   @default(now()) @map("created_at")
-  updatedAt  DateTime   @default(now()) @map("updated_at")
-  deletedAt  DateTime?  @map("deleted_at")
-  isAccepted Boolean    @default(false) @map("is_accepted")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  isAccepted  Boolean   @default(false) @map("is_accepted")
   userId      String    @map("user_id")
   qnaId       Int       @map("qna_id")
   content     Json
@@ -23,15 +23,15 @@ model answers {
 }
 
 model comments {
-  id         Int       @id @default(autoincrement())
-  content    String
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @default(now()) @map("updated_at")
-  deletedAt  DateTime? @map("deleted_at")
-  userId     String    @map("user_id")
-  postId     Int       @map("post_id")
-  posts      posts     @relation(fields: [postId], references: [id])
-  users      users     @relation(fields: [userId], references: [id])
+  id        Int       @id @default(autoincrement())
+  content   String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  userId    String    @map("user_id")
+  postId    Int       @map("post_id")
+  posts     posts     @relation(fields: [postId], references: [id])
+  users     users     @relation(fields: [userId], references: [id])
 }
 
 model healths {
@@ -57,35 +57,43 @@ model medi_times {
 }
 
 model medicines {
-  item_seq         String        @id
-  item_name        String        @db.VarChar(255)
-  entp_name        String?       @db.VarChar(255)
-  item_permit_date DateTime?
-  etc_otc_code     String?       @db.VarChar(50)
-  class_no         String?       @db.VarChar(100)
-  chart            String?
-  bar_code         String?       @db.VarChar(50)
-  material_name    String?
-  ee_doc_id        String?       @db.VarChar(255)
-  bizrno           String?       @db.VarChar(20)
-  cancel_date      DateTime?
-  cancel_name      String?       @db.VarChar(100)
-  change_date      DateTime?
-  created_at       DateTime      @default(now())
-  edi_code         String?       @db.VarChar(50)
-  insert_file      String?       @db.VarChar(255)
-  nb_doc_id        String?       @db.VarChar(255)
-  pack_unit        String?       @db.VarChar(255)
-  reexam_date      DateTime?
-  reexam_target    String?       @db.VarChar(255)
-  storage_method   String?       @db.VarChar(255)
-  type_code        String?       @db.VarChar(10)
-  type_name        String?       @db.VarChar(100)
-  ud_doc_id        String?       @db.VarChar(255)
-  updated_at       DateTime      @updatedAt
-  valid_term       String?       @db.VarChar(100)
-  inventories      inventories[]
-  user_medis       user_medis[]
+  item_seq                String                    @id
+  item_name               String                    @db.VarChar(255)
+  entp_name               String?                   @db.VarChar(255)
+  item_permit_date        DateTime?
+  etc_otc_code            String?                   @db.VarChar(50)
+  class_no                String?                   @db.VarChar(100)
+  chart                   String?
+  bar_code                String?                   @db.VarChar(50)
+  material_name           String?
+  ee_doc_id               String?                   @db.VarChar(255)
+  bizrno                  String?                   @db.VarChar(20)
+  cancel_date             DateTime?
+  cancel_name             String?                   @db.VarChar(100)
+  change_date             DateTime?
+  created_at              DateTime                  @default(now())
+  edi_code                String?                   @db.VarChar(50)
+  insert_file             String?                   @db.VarChar(255)
+  nb_doc_id               String?                   @db.VarChar(255)
+  pack_unit               String?                   @db.VarChar(255)
+  reexam_date             DateTime?
+  reexam_target           String?                   @db.VarChar(255)
+  storage_method          String?                   @db.VarChar(255)
+  type_code               String?                   @db.VarChar(10)
+  type_name               String?                   @db.VarChar(100)
+  ud_doc_id               String?                   @db.VarChar(255)
+  updated_at              DateTime                  @updatedAt
+  valid_term              String?                   @db.VarChar(100)
+  inventories             inventories[]
+  medi_age_limits         medi_age_limits[]
+  medi_dose_cautions      medi_dose_cautions[]
+  medi_duplicate_effects  medi_duplicate_effects[]
+  medi_elderly_cautions   medi_elderly_cautions[]
+  medi_interactions       medi_interactions[]
+  medi_period_warnings    medi_period_warnings[]
+  medi_pregnancy_warnings medi_pregnancy_warnings[]
+  medi_sr_warnings        medi_sr_warnings[]
+  user_medis              user_medis[]
 
   @@index([item_name])
   @@index([entp_name])
@@ -128,17 +136,17 @@ model posts_tags {
 }
 
 model posts {
-  id         Int         @id @default(autoincrement())
-  title      String      @db.VarChar(255)
-  createdAt  DateTime    @default(now()) @map("created_at")
-  updatedAt  DateTime    @default(now()) @map("updated_at")
-  deletedAt  DateTime?   @map("deleted_at")
-  userId     String      @map("user_id")
-  content    Json
-  contentHTML String? @map("content_html")
-  comments   comments[]
-  postTags  posts_tags[]
-  users      users       @relation(fields: [userId], references: [id])
+  id          Int          @id @default(autoincrement())
+  title       String       @db.VarChar(255)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @default(now()) @map("updated_at")
+  deletedAt   DateTime?    @map("deleted_at")
+  userId      String       @map("user_id")
+  content     Json
+  contentHTML String?      @map("content_html")
+  comments    comments[]
+  users       users        @relation(fields: [userId], references: [id])
+  postTags    posts_tags[]
 }
 
 model qna_tags {
@@ -150,22 +158,22 @@ model qna_tags {
 }
 
 model qnas {
-  id         Int        @id @default(autoincrement())
-  title      String     @db.VarChar(255)
-  createdAt  DateTime   @default(now()) @map("created_at")
-  updatedAt  DateTime   @default(now()) @map("updated_at")
-  deletedAt  DateTime?  @map("deleted_at")
-  userId     String     @map("user_id")
-  content    Json
-  contentHTML String?   @map("content_html")
-  answers    answers[]  
-  qnaTags    qna_tags[] 
-  users      users      @relation(fields: [userId], references: [id])
+  id          Int        @id @default(autoincrement())
+  title       String     @db.VarChar(255)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @default(now()) @map("updated_at")
+  deletedAt   DateTime?  @map("deleted_at")
+  userId      String     @map("user_id")
+  content     Json
+  contentHTML String?    @map("content_html")
+  answers     answers[]
+  qnaTags     qna_tags[]
+  users       users      @relation(fields: [userId], references: [id])
 }
 
-model tags {   
-  id        Int         @id @default(autoincrement())
-  tagName  String      @db.VarChar(100)
+model tags {
+  id       Int          @id @default(autoincrement())
+  tagName  String       @db.VarChar(100)
   postTags posts_tags[]
   qnaTags  qna_tags[]
 }
@@ -207,4 +215,293 @@ model users {
   user_healths user_healths[]
   user_medis   user_medis[]
   pharmacies   pharmacies?    @relation(fields: [hpid], references: [hpid])
+}
+
+model medi_interactions {
+  id                       Int       @id @default(autoincrement())
+  dur_seq                  String?   @db.VarChar(50)
+  type_code                String?   @db.VarChar(10)
+  type_name                String?   @db.VarChar(50)
+  mix                      String?   @db.VarChar(20)
+  ingr_code                String?   @db.VarChar(50)
+  ingr_kor_name            String?   @db.VarChar(255)
+  ingr_eng_name            String?   @db.VarChar(255)
+  mix_ingr                 String?
+  item_seq                 String    @db.VarChar(50)
+  item_name                String    @db.VarChar(255)
+  entp_name                String?   @db.VarChar(255)
+  chart                    String?
+  form_code                String?   @db.VarChar(50)
+  etc_otc_code             String?   @db.VarChar(10)
+  class_code               String?   @db.VarChar(50)
+  form_name                String?   @db.VarChar(100)
+  etc_otc_name             String?   @db.VarChar(50)
+  class_name               String?   @db.VarChar(255)
+  main_ingr                String?
+  mixture_dur_seq          String?   @db.VarChar(50)
+  mixture_mix              String?   @db.VarChar(20)
+  mixture_ingr_code        String?   @db.VarChar(50)
+  mixture_ingr_kor_name    String?   @db.VarChar(255)
+  mixture_ingr_eng_name    String?   @db.VarChar(255)
+  mixture_item_seq         String?   @db.VarChar(50)
+  mixture_item_name        String?   @db.VarChar(255)
+  mixture_entp_name        String?   @db.VarChar(255)
+  mixture_form_code        String?   @db.VarChar(50)
+  mixture_etc_otc_code     String?   @db.VarChar(10)
+  mixture_class_code       String?   @db.VarChar(50)
+  mixture_form_name        String?   @db.VarChar(100)
+  mixture_etc_otc_name     String?   @db.VarChar(50)
+  mixture_class_name       String?   @db.VarChar(255)
+  mixture_main_ingr        String?
+  notification_date        String?   @db.VarChar(20)
+  prohbt_content           String?
+  remark                   String?
+  item_permit_date         String?   @db.VarChar(20)
+  mixture_item_permit_date String?   @db.VarChar(20)
+  mixture_chart            String?
+  change_date              String?   @db.VarChar(20)
+  mixture_change_date      String?   @db.VarChar(20)
+  bizrno                   String?   @db.VarChar(20)
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @updatedAt
+  medicines                medicines @relation(fields: [item_seq], references: [item_seq])
+
+  @@unique([item_seq, dur_seq])
+  @@index([item_seq])
+  @@index([mixture_item_seq])
+  @@index([ingr_code])
+  @@index([mixture_ingr_code])
+}
+
+model medi_age_limits {
+  id                 Int       @id @default(autoincrement())
+  type_name          String?   @db.VarChar(50)
+  mix_type           String?   @db.VarChar(20)
+  ingr_code          String?   @db.VarChar(50)
+  ingr_eng_name      String?   @db.VarChar(255)
+  ingr_name          String?   @db.VarChar(255)
+  mix_ingr           String?
+  form_name          String?   @db.VarChar(100)
+  item_seq           String    @db.VarChar(50)
+  item_name          String    @db.VarChar(255)
+  item_permit_date   String?   @db.VarChar(20)
+  entp_name          String?   @db.VarChar(255)
+  chart              String?
+  class_code         String?   @db.VarChar(50)
+  class_name         String?   @db.VarChar(255)
+  etc_otc_name       String?   @db.VarChar(50)
+  main_ingr          String?
+  notification_date  String?   @db.VarChar(20)
+  prohbt_content     String?
+  remark             String?
+  ingr_eng_name_full String?   @db.VarChar(500)
+  change_date        String?   @db.VarChar(20)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  medicines          medicines @relation(fields: [item_seq], references: [item_seq])
+
+  @@unique([item_seq, ingr_code])
+  @@index([item_seq])
+  @@index([ingr_code])
+  @@index([type_name])
+}
+
+model medi_pregnancy_warnings {
+  id                 Int       @id @default(autoincrement())
+  type_name          String?   @db.VarChar(50)
+  mix_type           String?   @db.VarChar(20)
+  ingr_code          String?   @db.VarChar(50)
+  ingr_eng_name      String?   @db.VarChar(255)
+  ingr_name          String?   @db.VarChar(255)
+  mix_ingr           String?
+  form_name          String?   @db.VarChar(100)
+  item_seq           String    @db.VarChar(50)
+  item_name          String    @db.VarChar(255)
+  item_permit_date   String?   @db.VarChar(20)
+  entp_name          String?   @db.VarChar(255)
+  chart              String?
+  class_code         String?   @db.VarChar(50)
+  class_name         String?   @db.VarChar(255)
+  etc_otc_name       String?   @db.VarChar(50)
+  main_ingr          String?
+  notification_date  String?   @db.VarChar(20)
+  prohbt_content     String?
+  remark             String?
+  ingr_eng_name_full String?   @db.VarChar(500)
+  change_date        String?   @db.VarChar(20)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  medicines          medicines @relation(fields: [item_seq], references: [item_seq])
+
+  @@unique([item_seq, ingr_code])
+  @@index([item_seq])
+  @@index([ingr_code])
+  @@index([type_name])
+}
+
+model medi_elderly_cautions {
+  id                 Int       @id @default(autoincrement())
+  type_name          String?   @db.VarChar(50)
+  mix_type           String?   @db.VarChar(20)
+  ingr_code          String?   @db.VarChar(50)
+  ingr_eng_name      String?   @db.VarChar(255)
+  ingr_name          String?   @db.VarChar(255)
+  mix_ingr           String?
+  form_name          String?   @db.VarChar(100)
+  item_seq           String    @db.VarChar(50)
+  item_name          String    @db.VarChar(255)
+  item_permit_date   String?   @db.VarChar(20)
+  entp_name          String?   @db.VarChar(255)
+  chart              String?
+  class_code         String?   @db.VarChar(50)
+  class_name         String?   @db.VarChar(255)
+  etc_otc_name       String?   @db.VarChar(50)
+  main_ingr          String?
+  notification_date  String?   @db.VarChar(20)
+  prohbt_content     String?
+  remark             String?
+  ingr_eng_name_full String?   @db.VarChar(500)
+  change_date        String?   @db.VarChar(20)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  medicines          medicines @relation(fields: [item_seq], references: [item_seq])
+
+  @@unique([item_seq, ingr_code])
+  @@index([item_seq])
+  @@index([ingr_code])
+  @@index([type_name])
+}
+
+model medi_dose_cautions {
+  id                 Int       @id @default(autoincrement())
+  type_name          String?   @db.VarChar(50)
+  mix_type           String?   @db.VarChar(20)
+  ingr_code          String?   @db.VarChar(50)
+  ingr_eng_name      String?   @db.VarChar(255)
+  ingr_name          String?   @db.VarChar(255)
+  mix_ingr           String?
+  form_name          String?   @db.VarChar(100)
+  item_seq           String    @db.VarChar(50)
+  item_name          String    @db.VarChar(255)
+  item_permit_date   String?   @db.VarChar(20)
+  entp_name          String?   @db.VarChar(255)
+  chart              String?
+  class_code         String?   @db.VarChar(50)
+  class_name         String?   @db.VarChar(255)
+  etc_otc_name       String?   @db.VarChar(50)
+  main_ingr          String?
+  notification_date  String?   @db.VarChar(20)
+  prohbt_content     String?
+  remark             String?
+  ingr_eng_name_full String?   @db.VarChar(500)
+  change_date        String?   @db.VarChar(20)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  medicines          medicines @relation(fields: [item_seq], references: [item_seq])
+
+  @@unique([item_seq, ingr_code])
+  @@index([item_seq])
+  @@index([ingr_code])
+  @@index([type_name])
+}
+
+model medi_period_warnings {
+  id                 Int       @id @default(autoincrement())
+  type_name          String?   @db.VarChar(50)
+  mix_type           String?   @db.VarChar(20)
+  ingr_code          String?   @db.VarChar(50)
+  ingr_eng_name      String?   @db.VarChar(255)
+  ingr_name          String?   @db.VarChar(255)
+  mix_ingr           String?
+  form_name          String?   @db.VarChar(100)
+  item_seq           String    @db.VarChar(50)
+  item_name          String    @db.VarChar(255)
+  item_permit_date   String?   @db.VarChar(20)
+  entp_name          String?   @db.VarChar(255)
+  chart              String?
+  class_code         String?   @db.VarChar(50)
+  class_name         String?   @db.VarChar(255)
+  etc_otc_name       String?   @db.VarChar(50)
+  main_ingr          String?
+  notification_date  String?   @db.VarChar(20)
+  prohbt_content     String?
+  remark             String?
+  ingr_eng_name_full String?   @db.VarChar(500)
+  change_date        String?   @db.VarChar(20)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  medicines          medicines @relation(fields: [item_seq], references: [item_seq])
+
+  @@unique([item_seq, ingr_code])
+  @@index([item_seq])
+  @@index([ingr_code])
+  @@index([type_name])
+}
+
+model medi_duplicate_effects {
+  id                 Int       @id @default(autoincrement())
+  dur_seq            String?   @db.VarChar(50)
+  effect_name        String?   @db.VarChar(255)
+  type_name          String?   @db.VarChar(50)
+  ingr_code          String?   @db.VarChar(50)
+  ingr_name          String?   @db.VarChar(255)
+  ingr_eng_name      String?   @db.VarChar(255)
+  form_code_name     String?   @db.VarChar(100)
+  mix                String?   @db.VarChar(20)
+  mix_ingr           String?
+  item_seq           String    @db.VarChar(50)
+  item_name          String    @db.VarChar(255)
+  item_permit_date   String?   @db.VarChar(20)
+  chart              String?
+  entp_name          String?   @db.VarChar(255)
+  form_code          String?   @db.VarChar(50)
+  form_name          String?   @db.VarChar(100)
+  etc_otc_code       String?   @db.VarChar(10)
+  etc_otc_name       String?   @db.VarChar(50)
+  class_code         String?   @db.VarChar(50)
+  class_name         String?   @db.VarChar(255)
+  main_ingr          String?
+  notification_date  String?   @db.VarChar(20)
+  prohbt_content     String?
+  remark             String?
+  ingr_eng_name_full String?   @db.VarChar(500)
+  change_date        String?   @db.VarChar(20)
+  bizrno             String?   @db.VarChar(20)
+  sers_name          String?   @db.VarChar(255)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  medicines          medicines @relation(fields: [item_seq], references: [item_seq])
+
+  @@unique([item_seq, dur_seq])
+  @@index([item_seq])
+  @@index([effect_name])
+  @@index([ingr_code])
+  @@index([sers_name])
+}
+
+model medi_sr_warnings {
+  id               Int       @id @default(autoincrement())
+  type_name        String?   @db.VarChar(50)
+  item_seq         String    @db.VarChar(50)
+  item_name        String    @db.VarChar(255)
+  item_permit_date String?   @db.VarChar(20)
+  form_code_name   String?   @db.VarChar(100)
+  entp_name        String?   @db.VarChar(255)
+  chart            String?
+  class_code       String?   @db.VarChar(50)
+  class_name       String?   @db.VarChar(255)
+  etc_otc_name     String?   @db.VarChar(50)
+  mix              String?   @db.VarChar(20)
+  main_ingr        String?
+  prohbt_content   String?
+  remark           String?
+  change_date      String?   @db.VarChar(20)
+  bizrno           String?   @db.VarChar(20)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  medicines        medicines @relation(fields: [item_seq], references: [item_seq])
+
+  @@unique([item_seq, type_name])
+  @@index([item_seq])
+  @@index([type_name])
 }
