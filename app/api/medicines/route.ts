@@ -72,18 +72,8 @@ export async function GET(request: NextRequest) {
       orderBy: {
         updated_at: 'desc', // 최신 업데이트 순으로 정렬
       },
-      select: {
-        // 필요한 필드만 선택하여 성능 최적화
-        item_seq: true, // 품목일련번호 (Primary Key)
-        item_name: true, // 의약품명
-        entp_name: true, // 업체명
-        item_permit_date: true, // 허가일자
-        etc_otc_code: true, // 전문/일반의약품 구분
-        material_name: true, // 원료성분
-        storage_method: true, // 저장방법
-        valid_term: true, // 유효기간
-        updated_at: true, // 최종 업데이트 시간
-      },
+      // 모든 컬럼 조회 (select 제거하여 전체 필드 반환)
+      // select 절을 제거하면 모든 필드가 자동으로 포함됨
     });
 
     // 페이지네이션 정보 계산
@@ -131,7 +121,7 @@ export async function GET(request: NextRequest) {
  * - mode=full: 전체 데이터 동기화 (모든 페이지, 시간 소요)
  *
  * 환경 변수 요구사항:
- * - PUBLIC_DATA_API_KEY: 공공데이터포털 API 인증키
+ * - PUBLIC_DATA_API_KEY: 공공데이터포털 API 인증키 (디코딩된 상태로 저장)
  *
  * 응답 형식:
  * {
@@ -167,8 +157,7 @@ export async function POST(request: NextRequest) {
     // 동기화 시작 로그 출력 (디버깅 및 모니터링용)
     console.log(`DUR 의약품 데이터 동기화 요청 시작... (모드: ${mode})`);
     console.log(`API 키 길이: ${apiKey.length}자`);
-    console.log(`API 키 앞부분: ${apiKey.substring(0, 20)}...`);
-    console.log(`API 키 뒷부분: ...${apiKey.slice(-10)}`);
+    console.log(`API 키 앞부분: ${apiKey.substring(0, 30)}...`);
 
     // MedicineDataService 인스턴스 생성 (API 키 검증 포함)
     const medicineService = new MedicineDataService(apiKey);
