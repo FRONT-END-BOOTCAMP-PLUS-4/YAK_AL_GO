@@ -101,7 +101,6 @@ export default function InventoryPage() {
     async function loadMedicines() {
       const res = await fetch("/api/inventory/medicines");
       const data = await res.json();
-      console.log("약 데이터:", data); // ✅ 추가
       setAllMedicines(data);
     }
 
@@ -198,7 +197,7 @@ export default function InventoryPage() {
   };
 
   const handleAddMedicine = async () => {
-    if (!selectedItemSeq || !addStock) return;
+    if (!selectedItemSeq || addStock < 0) return;
 
     try {
       const res = await fetch("/api/inventory", {
@@ -217,13 +216,10 @@ export default function InventoryPage() {
         return;
       }
 
-      // 성공 시 다시 로딩
-      const updated = await res.json();
-      console.log("추가된 재고:", updated);
-
       setSelectedItemSeq("");
       setAddStock(0);
       setShowAddDialog(false);
+      setMedicineQuery("");
 
       // 재로드
       const refreshed = await fetch(`/api/inventory?hpid=${HPID}`);
@@ -376,7 +372,7 @@ export default function InventoryPage() {
             <div className="relative w-full">
               <Input
                 type="text"
-                placeholder="약국 이름, 주소, 약품명 검색"
+                placeholder="약품명, 제조사, 유형 검색"
                 value={searchQuery}
                 onChange={handleSearch}
                 className="pr-8" // 오른쪽 여백 확보
