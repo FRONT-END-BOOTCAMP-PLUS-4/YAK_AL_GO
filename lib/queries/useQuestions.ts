@@ -1,7 +1,6 @@
 // @lib/react-query/useQuestions.ts
 import { useInfiniteQuery } from '@tanstack/react-query';
-
-export const QUESTIONS_QUERY_KEY = ['questions'] as const;
+import { QUESTIONS_QUERY_KEY } from '@/lib/constants/queryKeys';
 
 const fetchQuestions = async ({ pageParam = 1 }) => {
   const response = await fetch(`/api/questions?page=${pageParam}&limit=10`);

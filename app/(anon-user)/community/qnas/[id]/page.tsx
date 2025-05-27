@@ -10,8 +10,10 @@ import { getQuestion } from '@/lib/queries/getQuestion';
 
 export default async function QuestionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: questionId } = await params;
+  // 질문 정보 조회: 질문, 답변, 태그, 유저 등의 정보를 담고 있다.
   const question = await getQuestion(questionId);
-  console.log(question);
+
+  // 답변 등록 버튼을 누르면 AnswerSection 컴포넌트가 렌더링된다. 답변 등록 후 페이지 새로고침된다.
   return (
     <div className="container py-8">
       <div className="flex flex-col gap-6">
@@ -68,9 +70,9 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{answer.userId}</span>
+                          <span className="font-medium">{answer.users?.name}</span>
                           <Badge variant="default" className="bg-primary">
-                            {answer.user?.memberType}
+                            {answer.users?.member_type === 0 && '약사'}
                           </Badge>
                         </div>
                         <div className="text-sm text-muted-foreground">
