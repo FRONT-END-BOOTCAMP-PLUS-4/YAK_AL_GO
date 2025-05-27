@@ -45,7 +45,7 @@ const initialInventory = [
     company: "동아제약",
     type: "감기약",
     stock: 12,
-    status: "low",
+    status: "normal",
   },
   {
     id: 3,
@@ -241,7 +241,6 @@ export default function InventoryPage() {
   const lowStockItems = inventory.filter(
     (item) => item.status === "low" || item.status === "out"
   );
-  const expiringItems = inventory.filter((item) => item.status === "expiring");
 
   return (
     <div className="container py-8">
@@ -614,59 +613,47 @@ export default function InventoryPage() {
                 <CardTitle className="text-lg">재고 현황</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>총 약품 수</span>
-                    <span className="font-bold">{inventory.length}개</span>
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span>총 약품 수</span>
+                      <span className="font-bold">{inventory.length}개</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>재고 부족 약품</span>
+                      <span className="font-bold text-yellow-500">
+                        {lowStockItems.length}개
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span>재고 부족 약품</span>
-                    <span className="font-bold text-yellow-500">
-                      {lowStockItems.length}개
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>만료 임박 약품</span>
-                    <span className="font-bold text-orange-500">
-                      {expiringItems.length}개
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">재고 부족 알림</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {lowStockItems.length > 0 ? (
-                    lowStockItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between p-2 border rounded-md"
-                      >
-                        <div>
-                          <p className="font-medium">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            현재: {item.stock}
-                          </p>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditMedicine(item.id)}
+                  <div className="space-y-3">
+                    {lowStockItems.length > 0 ? (
+                      lowStockItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between p-2 border rounded-md"
                         >
-                          수정
-                        </Button>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-muted-foreground">
-                      재고 부족 약품이 없습니다.
-                    </p>
-                  )}
+                          <div>
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              현재: {item.stock}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditMedicine(item.id)}
+                          >
+                            수정
+                          </Button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-center text-muted-foreground">
+                        재고 부족 약품이 없습니다.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
