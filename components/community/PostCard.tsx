@@ -5,13 +5,14 @@ import { MessageSquare, User, Clock } from 'lucide-react';
 import { formatDate } from '@/lib/community/formatDate';
 import { getContentText } from '@/lib/community/getContentText';
 import { useMemo } from 'react';
+import { TagResponseDto } from '@/backend/application/usecases/tag/dto/TagDto';
 
 interface PostCardProps {
   post: {
     id: string;
     title: string;
     content: any;
-    tags?: string[];
+    tags?: TagResponseDto[];
     userId: string;
     createdAt: string;
     commentCount: number;
@@ -28,12 +29,14 @@ export const PostCard = ({ post }: PostCardProps) => {
           <div className="flex items-start gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline">자유게시판</Badge>
+                <Badge variant="default" className="bg-green-600">
+                  자유게시판
+                </Badge>
                 <div className="flex flex-wrap gap-1">
                   {post.tags &&
-                    post.tags.map((tag: string) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
+                    post.tags.map((tag: TagResponseDto) => (
+                      <Badge key={tag.id} variant="outline" className="text-xs">
+                        {tag.name}
                       </Badge>
                     ))}
                 </div>

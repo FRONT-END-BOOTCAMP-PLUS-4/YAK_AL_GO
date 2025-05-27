@@ -69,8 +69,12 @@ export default function WritePage() {
 
       const result = await response.json();
       console.log('Question created:', result);
-      queryClient.invalidateQueries({ queryKey: QUESTIONS_QUERY_KEY });
-      router.push('/community');
+
+      // 무한 쿼리 완전히 리셋하고 새로고침
+      await queryClient.resetQueries({ queryKey: QUESTIONS_QUERY_KEY });
+
+      // 질문 탭이 활성화된 상태로 커뮤니티 페이지로 이동
+      router.push('/community?tab=qnas');
     } catch (error) {
       console.error('Error submitting question:', error);
     }

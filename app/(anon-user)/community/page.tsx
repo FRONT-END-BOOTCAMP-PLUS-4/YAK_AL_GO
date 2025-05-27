@@ -9,13 +9,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useQuestions } from '@/lib/queries/useQuestions';
+import { usePosts } from '@/lib/queries/usePosts';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import { QuestionCard } from '@/components/community/QuestionCard';
 import { PostCard } from '@/components/community/PostCard';
 import { QnaSkeleton } from '@/components/community/QnaSkeleton';
 
 export default function CommunityPage() {
-  const [activeTab, setActiveTab] = useState('qnas');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // URL 파라미터에서 탭 값 가져오기 (기본값: 'qnas')
+  const tabFromUrl = searchParams.get('tab') || 'qnas';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
 
   // 전문가 Q&A 데이터 조회
   const {
@@ -23,22 +30,58 @@ export default function CommunityPage() {
     fetchNextPage: fetchNextQnas,
     hasNextPage: hasNextQnas,
     isFetchingNextPage: isFetchingNextQnas,
+    refetch: refetchQuestions,
   } = useQuestions();
+
+  // 자유게시판 데이터 조회
+  const {
+    data: postsData,
+    fetchNextPage: fetchNextPosts,
+    hasNextPage: hasNextPosts,
+    isFetchingNextPage: isFetchingNextPosts,
+    refetch: refetchPosts,
+  } = usePosts();
 
   // 전문가 Q&A 데이터 조회 결과 페이지네이션 처리
   const questions = qnas?.pages.flatMap((page: any) => page?.questions || []) || [];
 
   // 자유게시판 데이터 조회 결과 페이지네이션 처리
-  const posts: any[] = [];
-  const isLoading = isFetchingNextQnas;
+  const posts = postsData?.pages.flatMap((page: any) => page?.posts || []) || [];
+
+  const isLoading = activeTab === 'qnas' ? isFetchingNextQnas : isFetchingNextPosts;
+  const hasNext = activeTab === 'qnas' ? hasNextQnas : hasNextPosts;
+  const fetchNext = activeTab === 'qnas' ? fetchNextQnas : fetchNextPosts;
+
+  // URL 파라미터 변경 시 탭 상태 업데이트
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab') || 'qnas';
+    setActiveTab(tabFromUrl);
+  }, [searchParams]);
+
+  // 탭 변경 시 URL 업데이트 및 데이터 새로고침
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+
+    // URL 파라미터 업데이트
+    const params = new URLSearchParams(searchParams);
+    params.set('tab', value);
+    router.push(`/community?${params.toString()}`);
+
+    // 해당 탭의 데이터 새로고침
+    if (value === 'posts') {
+      refetchPosts();
+    } else if (value === 'qnas') {
+      refetchQuestions();
+    }
+  };
 
   // 무한 스크롤 로딩 감지하는 ref 설정
   const loadMoreRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNextQnas && hasNextQnas) {
-          fetchNextQnas();
+        if (entries[0].isIntersecting && !isLoading && hasNext) {
+          fetchNext();
         }
       },
       { threshold: 0.1 }
@@ -55,7 +98,7 @@ export default function CommunityPage() {
       }
       observer.disconnect();
     };
-  }, [isFetchingNextQnas, fetchNextQnas, hasNextQnas]);
+  }, [isLoading, fetchNext, hasNext]);
 
   return (
     <div className="container py-8">
@@ -82,7 +125,7 @@ export default function CommunityPage() {
           </Button>
         </div>
 
-        <Tabs defaultValue="qnas" className="w-full" onValueChange={(value) => setActiveTab(value)}>
+        <Tabs value={activeTab} className="w-full" onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="qnas">전문가 Q&A</TabsTrigger>
             <TabsTrigger value="posts">자유게시판</TabsTrigger>
@@ -105,8 +148,10 @@ export default function CommunityPage() {
               {posts.length > 0 ? (
                 posts.map((post) => <PostCard key={post.id} post={post} />)
               ) : (
-                <div className="flex justify-center items-center h-full">
-                  <p className="text-muted-foreground">게시글이 없습니다.</p>
+                <div className="flex flex-col gap-4">
+                  <QnaSkeleton />
+                  <QnaSkeleton />
+                  <QnaSkeleton />
                 </div>
               )}
             </div>
