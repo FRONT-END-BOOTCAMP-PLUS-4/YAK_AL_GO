@@ -154,10 +154,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 동기화 시작 로그 출력 (디버깅 및 모니터링용)
-    console.log(`DUR 의약품 데이터 동기화 요청 시작... (모드: ${mode})`);
-    console.log(`API 키 길이: ${apiKey.length}자`);
-    console.log(`API 키 앞부분: ${apiKey.substring(0, 30)}...`);
+
 
     // MedicineDataService 인스턴스 생성 (API 키 검증 포함)
     const medicineService = new MedicineDataService(apiKey);
@@ -173,12 +170,9 @@ export async function POST(request: NextRequest) {
       // 동기화 모드에 따른 분기 처리
       if (mode === 'full') {
         // 전체 데이터 동기화 실행
-        console.log('전체 데이터 동기화 시작...');
-        console.log('주의: 전체 동기화는 시간이 오래 걸릴 수 있습니다.');
         result = await medicineService.syncAllMedicineData();
       } else {
         // 소량 테스트 동기화 실행 (개발/테스트용)
-        console.log('소량 테스트 데이터 동기화 시작...');
         result = await medicineService.syncLimitedMedicineData(1, 10); // 1페이지, 10건만
       }
 
