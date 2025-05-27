@@ -122,8 +122,8 @@ export default function SignupStep2Page() {
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
             <div className="flex items-center space-x-2">
-              <div className="h-2 w-8 rounded-full bg-primary"></div>
-              <div className="h-2 w-8 rounded-full bg-primary"></div>
+              <div className="h-2 w-8 rounded-full bg-primary"/>
+              <div className="h-2 w-8 rounded-full bg-primary"/>
             </div>
           </div>
 
