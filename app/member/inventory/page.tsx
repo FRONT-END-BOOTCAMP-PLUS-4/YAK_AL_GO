@@ -153,21 +153,32 @@ export default function InventoryPage() {
     }
   };
 
-  const handleSaveEdit = (id: number) => {
-    const updatedInventory = inventory.map((item) => {
-      if (item.id === id) {
-        return {
-          ...item,
-          ...editFormData,
-          status: determineStatus(editFormData.stock),
-        };
-      }
-      return item;
-    });
+  const handleSaveEdit = async (id: number) => {
+    try {
+      const res = await fetch("/api/inventory", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, stock: Number(editFormData.stock) }),
+      });
 
-    setInventory(updatedInventory);
-    setFilteredInventory(updatedInventory);
-    setEditingItem(null);
+      if (!res.ok) throw new Error("Failed to update");
+
+      const updatedInventory = inventory.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              stock: Number(editFormData.stock),
+              status: determineStatus(Number(editFormData.stock)),
+            }
+          : item
+      );
+
+      setInventory(updatedInventory);
+      setFilteredInventory(updatedInventory);
+      setEditingItem(null);
+    } catch (error) {
+      console.error("수정 실패:", error);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -179,15 +190,28 @@ export default function InventoryPage() {
     setShowDeleteDialog(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (itemToDelete !== null) {
-      const updatedInventory = inventory.filter(
-        (item) => item.id !== itemToDelete
-      );
-      setInventory(updatedInventory);
-      setFilteredInventory(updatedInventory);
-      setShowDeleteDialog(false);
-      setItemToDelete(null);
+      try {
+        const res = await fetch("/api/inventory", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: itemToDelete }),
+        });
+
+        if (!res.ok) throw new Error("Failed to delete");
+
+        const updatedInventory = inventory.filter(
+          (item) => item.id !== itemToDelete
+        );
+        setInventory(updatedInventory);
+        setFilteredInventory(updatedInventory);
+      } catch (error) {
+        console.error("삭제 실패:", error);
+      } finally {
+        setShowDeleteDialog(false);
+        setItemToDelete(null);
+      }
     }
   };
 
@@ -336,20 +360,20 @@ export default function InventoryPage() {
                 </TabsList>
                 <TabsContent value="all" className="mt-4">
                   <div className="rounded-md border">
-                    <div className="grid grid-cols-6 gap-4 border-b bg-muted/50 p-4 font-medium">
-                      <div>약품명</div>
-                      <div>제조사</div>
-                      <div>유형</div>
-                      <div>재고</div>
-                      <div>상태</div>
-                      <div>관리</div>
+                    <div className="grid grid-cols-[2fr_2fr_2fr_1fr_1fr_1fr] gap-4 border-b bg-muted/50 p-4 font-medium">
+                      <div className="text-center">약품명</div>
+                      <div className="text-center">제조사</div>
+                      <div className="text-center">유형</div>
+                      <div className="text-center">재고</div>
+                      <div className="text-center">상태</div>
+                      <div className="text-center">관리</div>
                     </div>
                     <div className="divide-y">
                       {filteredInventory.length > 0 ? (
                         filteredInventory.map((item) => (
                           <div
                             key={item.id}
-                            className="grid grid-cols-6 gap-4 p-4 items-center"
+                            className="grid grid-cols-[2fr_2fr_2fr_1fr_1fr_1fr] gap-4 p-4 items-center"
                           >
                             {editingItem === item.id ? (
                               // Edit mode
@@ -390,9 +414,13 @@ export default function InventoryPage() {
                                 <div className="font-medium">{item.name}</div>
                                 <div className="text-sm">{item.company}</div>
                                 <div className="text-sm">{item.type}</div>
-                                <div className="text-sm">{item.stock}</div>
-                                <div>{getStatusBadge(item.status)}</div>
-                                <div className="flex gap-2">
+                                <div className="text-sm text-center">
+                                  {item.stock}
+                                </div>
+                                <div className="text-center">
+                                  {getStatusBadge(item.status)}
+                                </div>
+                                <div className="flex justify-center gap-2">
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -422,13 +450,13 @@ export default function InventoryPage() {
                 </TabsContent>
                 <TabsContent value="low" className="mt-4">
                   <div className="rounded-md border">
-                    <div className="grid grid-cols-6 gap-4 border-b bg-muted/50 p-4 font-medium">
-                      <div>약품명</div>
-                      <div>제조사</div>
-                      <div>유형</div>
-                      <div>재고</div>
-                      <div>상태</div>
-                      <div>관리</div>
+                    <div className="grid grid-cols-[2fr_2fr_2fr_1fr_1fr_1fr] gap-4 border-b bg-muted/50 p-4 font-medium">
+                      <div className="text-center">약품명</div>
+                      <div className="text-center">제조사</div>
+                      <div className="text-center">유형</div>
+                      <div className="text-center">재고</div>
+                      <div className="text-center">상태</div>
+                      <div className="text-center">관리</div>
                     </div>
                     <div className="divide-y">
                       {filteredInventory
@@ -439,14 +467,18 @@ export default function InventoryPage() {
                         .map((item) => (
                           <div
                             key={item.id}
-                            className="grid grid-cols-6 gap-4 p-4 items-center"
+                            className="grid grid-cols-[2fr_2fr_2fr_1fr_1fr_1fr] gap-4 p-4 items-center"
                           >
                             <div className="font-medium">{item.name}</div>
                             <div className="text-sm">{item.company}</div>
                             <div className="text-sm">{item.type}</div>
-                            <div className="text-sm">{item.stock}</div>
-                            <div>{getStatusBadge(item.status)}</div>
-                            <div className="flex gap-2">
+                            <div className="text-sm text-center">
+                              {item.stock}
+                            </div>
+                            <div className="text-center">
+                              {getStatusBadge(item.status)}
+                            </div>
+                            <div className="flex justify-center gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -469,13 +501,13 @@ export default function InventoryPage() {
                 </TabsContent>
                 <TabsContent value="normal" className="mt-4">
                   <div className="rounded-md border">
-                    <div className="grid grid-cols-6 gap-4 border-b bg-muted/50 p-4 font-medium">
-                      <div>약품명</div>
-                      <div>제조사</div>
-                      <div>유형</div>
-                      <div>재고</div>
-                      <div>상태</div>
-                      <div>관리</div>
+                    <div className="grid grid-cols-[2fr_2fr_2fr_1fr_1fr_1fr] gap-4 border-b bg-muted/50 p-4 font-medium">
+                      <div className="text-center">약품명</div>
+                      <div className="text-center">제조사</div>
+                      <div className="text-center">유형</div>
+                      <div className="text-center">재고</div>
+                      <div className="text-center">상태</div>
+                      <div className="text-center">관리</div>
                     </div>
                     <div className="divide-y">
                       {filteredInventory
@@ -483,14 +515,18 @@ export default function InventoryPage() {
                         .map((item) => (
                           <div
                             key={item.id}
-                            className="grid grid-cols-6 gap-4 p-4 items-center"
+                            className="grid grid-cols-[2fr_2fr_2fr_1fr_1fr_1fr] gap-4 p-4 items-center"
                           >
                             <div className="font-medium">{item.name}</div>
                             <div className="text-sm">{item.company}</div>
                             <div className="text-sm">{item.type}</div>
-                            <div className="text-sm">{item.stock}</div>
-                            <div>{getStatusBadge(item.status)}</div>
-                            <div className="flex gap-2">
+                            <div className="text-sm text-center">
+                              {item.stock}
+                            </div>
+                            <div className="text-center">
+                              {getStatusBadge(item.status)}
+                            </div>
+                            <div className="flex justify-center gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"

@@ -1,40 +1,60 @@
 // app/api/inventory/route.ts
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma"; // 경로는 실제 프로젝트에 맞게 조정
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const hpid = searchParams.get("hpid");
+export async function GET(req: NextRequest) {
+  const hpid = req.nextUrl.searchParams.get("hpid");
+  if (!hpid) return NextResponse.json([], { status: 400 });
 
-  if (!hpid) {
-    return NextResponse.json({ error: "Missing hpid" }, { status: 400 });
+  const data = await prisma.inventories.findMany({
+    where: { hpid },
+    include: { medicines: true },
+  });
+
+  const formatted = data.map((item) => ({
+    id: item.id,
+    name: item.medicines.item_name,
+    company: item.medicines.entp_name ?? "",
+    type: item.medicines.type_name ?? "기타",
+    stock: item.quantity,
+  }));
+
+  return NextResponse.json(formatted);
+}
+
+export async function PATCH(req: NextRequest) {
+  const { id, stock } = await req.json();
+
+  if (typeof id !== "number" || typeof stock !== "number") {
+    return NextResponse.json({ error: "Invalid data" }, { status: 400 });
   }
 
   try {
-    const inventory = await prisma.inventories.findMany({
-      where: { hpid },
-      include: {
-        medicines: {
-          select: {
-            item_name: true,
-            entp_name: true,
-            class_no: true,
-          },
-        },
-      },
+    const updated = await prisma.inventories.update({
+      where: { id },
+      data: { quantity: stock },
     });
-
-    const formatted = inventory.map((item: typeof inventory[number]) => ({
-      id: item.id,
-      name: item.medicines.item_name,
-      company: item.medicines.entp_name ?? "",
-      type: item.medicines.class_no ?? "",
-      stock: item.quantity,
-    }));
-
-    return NextResponse.json(formatted);
+    return NextResponse.json(updated);
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("PATCH error:", error);
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const { id } = await req.json();
+
+  if (typeof id !== "number") {
+    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+  }
+
+  try {
+    await prisma.inventories.delete({
+      where: { id },
+    });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE error:", error);
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   }
 }
