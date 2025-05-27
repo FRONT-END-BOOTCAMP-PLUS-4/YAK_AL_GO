@@ -28,7 +28,7 @@ export interface DurMedicineDataInterface {
   REEXAM_TARGET?: string; // 재심사대상
   STORAGE_METHOD?: string; // 저장방법
   TYPE_CODE?: string; // 제형코드
-  TYPE_NAME?: string; // 제형명
+  'TYPE_NAME  '?: string; // 제형명 (API 응답에서 필드명에 공백 포함)
   UD_DOC_ID?: string; // 사용상주의사항 문서ID
   VALID_TERM?: string; // 유효기간
 }
@@ -71,19 +71,19 @@ class MedicineDataService {
 
   /**
    * 생성자 - 서비스 초기화
-   * @param apiKey 공공데이터포털 API 키
+   * @param apiKey 공공데이터포털 API 키 (디코딩된 상태)
    */
   constructor(apiKey: string) {
     if (!apiKey) {
       throw new Error('API_KEY가 설정되지 않았습니다.');
     }
 
-    // API 키 URL 디코딩 (공공데이터포털 API 키 특수문자 처리)
-    this.API_KEY = decodeURIComponent(apiKey);
+    // API 키 직접 사용 (ENV에서 디코딩된 키를 받음)
+    this.API_KEY = apiKey;
     this.prisma = new PrismaClient();
 
-    console.log(`원본 API 키 길이: ${apiKey.length}자`);
-    console.log(`디코딩된 API 키 길이: ${this.API_KEY.length}자`);
+    console.log(`API 키 길이: ${this.API_KEY.length}자`);
+    console.log(`API 키 앞 30자: ${this.API_KEY.substring(0, 30)}...`);
   }
 
   /**
@@ -377,7 +377,7 @@ class MedicineDataService {
           reexam_target: item.REEXAM_TARGET || null,
           storage_method: item.STORAGE_METHOD || null,
           type_code: item.TYPE_CODE || null,
-          type_name: item.TYPE_NAME || null,
+          type_name: item['TYPE_NAME  '] || null,
           ud_doc_id: item.UD_DOC_ID || null,
           valid_term: item.VALID_TERM || null,
         };
