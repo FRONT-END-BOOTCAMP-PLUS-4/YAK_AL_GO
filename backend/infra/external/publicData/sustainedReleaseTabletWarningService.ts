@@ -5,13 +5,22 @@ import axios from 'axios';
  * 공공데이터포털 DUR 서방정분할주의 API 응답 데이터 구조 정의
  */
 export interface SustainedReleaseTabletWarningDataInterface {
+  TYPE_NAME?: string; // 타입명 (분할주의)
   ITEM_SEQ: string; // 품목일련번호
   ITEM_NAME: string; // 품목명
-  ENTP_NAME?: string; // 업체명
-  SEOBANGJEONG_PARTITN_ATENT_CONTENT?: string; // 서방정분할주의내용
-  EXEC_DEPT?: string; // 실행부서
-  REGIST_DT?: string; // 등록일자
   ITEM_PERMIT_DATE?: string; // 허가일자
+  FORM_CODE_NAME?: string; // 제형 코드명
+  ENTP_NAME?: string; // 업체명
+  CHART?: string; // 성상
+  CLASS_CODE?: string; // 분류 코드
+  CLASS_NAME?: string; // 분류명
+  ETC_OTC_NAME?: string; // 전문/일반 구분명
+  MIX?: string; // 단일/복합 구분
+  MAIN_INGR?: string; // 주성분
+  PROHBT_CONTENT?: string; // 금기내용
+  REMARK?: string; // 비고
+  CHANGE_DATE?: string; // 변경일자
+  BIZRNO?: string; // 사업자등록번호
 }
 
 /**

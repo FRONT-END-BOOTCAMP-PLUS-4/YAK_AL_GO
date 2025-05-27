@@ -5,13 +5,34 @@ import axios from 'axios';
  * 공공데이터포털 DUR 효능군중복 API 응답 데이터 구조 정의
  */
 export interface EfficacyDuplicationDataInterface {
+  DUR_SEQ?: string; // DUR 일련번호
+  EFFECT_NAME?: string; // 효능명 (예: "혈압강하작용의약품")
+  TYPE_NAME?: string; // 타입명 (효능군중복)
+  INGR_CODE?: string; // 성분 코드
+  INGR_NAME?: string; // 성분명
+  INGR_ENG_NAME?: string; // 성분 영문명
+  FORM_CODE_NAME?: string; // 제형 코드명
+  MIX?: string; // 단일/복합 구분
+  MIX_INGR?: string; // 혼합 성분
   ITEM_SEQ: string; // 품목일련번호
   ITEM_NAME: string; // 품목명
-  ENTP_NAME?: string; // 업체명
-  EFCY_DPLCT_CONTENT?: string; // 효능군중복내용
-  EXEC_DEPT?: string; // 실행부서
-  REGIST_DT?: string; // 등록일자
   ITEM_PERMIT_DATE?: string; // 허가일자
+  CHART?: string; // 성상
+  ENTP_NAME?: string; // 업체명
+  FORM_CODE?: string; // 제형 코드
+  FORM_NAME?: string; // 제형명
+  ETC_OTC_CODE?: string; // 전문/일반 구분 코드
+  ETC_OTC_NAME?: string; // 전문/일반 구분명
+  CLASS_CODE?: string; // 분류 코드
+  CLASS_NAME?: string; // 분류명
+  MAIN_INGR?: string; // 주성분
+  NOTIFICATION_DATE?: string; // 고시일자
+  PROHBT_CONTENT?: string; // 금기내용
+  REMARK?: string; // 비고
+  INGR_ENG_NAME_FULL?: string; // 성분 영문명 전체
+  CHANGE_DATE?: string; // 변경일자
+  BIZRNO?: string; // 사업자등록번호
+  SERS_NAME?: string; // 시리즈명 (예: "CCB:Dihydro pyridines")
 }
 
 /**
