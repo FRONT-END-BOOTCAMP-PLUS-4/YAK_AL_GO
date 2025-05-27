@@ -28,6 +28,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type InventoryItem = {
   id: number;
@@ -58,9 +70,43 @@ export default function InventoryPage() {
     type: "",
     stock: 0,
   });
+  const [allMedicines, setAllMedicines] = useState<
+    {
+      item_seq: string;
+      item_name: string;
+      entp_name: string;
+      type_name: string;
+    }[]
+  >([]);
+  const [selectedItemSeq, setSelectedItemSeq] = useState<string>("");
+  const [addStock, setAddStock] = useState(0);
+  const [medicineQuery, setMedicineQuery] = useState("");
+  const [filteredMedicines, setFilteredMedicines] = useState<
+    {
+      item_seq: string;
+      item_name: string;
+      entp_name: string;
+      type_name: string;
+    }[]
+  >([]);
+  const [companyFilter, setCompanyFilter] = useState<string[]>([]);
+  const [typeFilter, setTypeFilter] = useState<string[]>([]);
+  const companyList = Array.from(
+    new Set(inventory.map((item) => item.company))
+  );
+  const typeList = Array.from(new Set(inventory.map((item) => item.type)));
   const HPID = "C1108718";
 
   useEffect(() => {
+    async function loadMedicines() {
+      const res = await fetch("/api/inventory/medicines");
+      const data = await res.json();
+      console.log("약 데이터:", data); // ✅ 추가
+      setAllMedicines(data);
+    }
+
+    loadMedicines();
+
     async function fetchInventory() {
       try {
         const res = await fetch(`/api/inventory?hpid=${HPID}`);
@@ -80,6 +126,39 @@ export default function InventoryPage() {
 
     fetchInventory();
   }, []);
+
+  useEffect(() => {
+    const trimmed = medicineQuery.trim();
+
+    if (trimmed === "" || trimmed.length < 2) {
+      setFilteredMedicines([]);
+    } else {
+      const lower = trimmed.toLowerCase();
+      const result = allMedicines.filter(
+        (m) =>
+          m.item_name.toLowerCase().includes(lower) ||
+          m.entp_name.toLowerCase().includes(lower)
+      );
+      setFilteredMedicines(result);
+    }
+  }, [medicineQuery, allMedicines]);
+
+  useEffect(() => {
+    const filtered = inventory.filter((item) => {
+      const matchCompany =
+        companyFilter.length === 0 || companyFilter.includes(item.company);
+      const matchType =
+        typeFilter.length === 0 || typeFilter.includes(item.type);
+      const matchSearch =
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.type.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchCompany && matchType && matchSearch;
+    });
+
+    setFilteredInventory(filtered);
+  }, [inventory, searchQuery, companyFilter, typeFilter]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -118,26 +197,53 @@ export default function InventoryPage() {
     });
   };
 
-  const handleAddMedicine = () => {
-    const newId = Math.max(...inventory.map((item) => item.id)) + 1;
-    const newItem = {
-      id: newId,
-      ...newMedicine,
-      status: determineStatus(newMedicine.stock),
-    };
+  const handleAddMedicine = async () => {
+    if (!selectedItemSeq || !addStock) return;
 
-    const updatedInventory = [...inventory, newItem];
-    setInventory(updatedInventory);
-    setFilteredInventory(updatedInventory);
-    setShowAddDialog(false);
+    try {
+      const res = await fetch("/api/inventory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemSeq: selectedItemSeq,
+          hpid: HPID,
+          quantity: Number(addStock),
+        }),
+      });
 
-    // Reset form
-    setNewMedicine({
-      name: "",
-      company: "",
-      type: "",
-      stock: 0,
-    });
+      if (!res.ok) {
+        const error = await res.json();
+        alert("추가 실패: " + error.error);
+        return;
+      }
+
+      // 성공 시 다시 로딩
+      const updated = await res.json();
+      console.log("추가된 재고:", updated);
+
+      setSelectedItemSeq("");
+      setAddStock(0);
+      setShowAddDialog(false);
+
+      // 재로드
+      const refreshed = await fetch(`/api/inventory?hpid=${HPID}`);
+      const newData: InventoryItem[] = await refreshed.json();
+
+      setInventory(
+        newData.map((item: InventoryItem) => ({
+          ...item,
+          status: determineStatus(item.stock),
+        }))
+      );
+      setFilteredInventory(
+        newData.map((item: InventoryItem) => ({
+          ...item,
+          status: determineStatus(item.stock),
+        }))
+      );
+    } catch (err) {
+      console.error("재고 추가 실패:", err);
+    }
   };
 
   const handleEditMedicine = (id: number) => {
@@ -245,6 +351,16 @@ export default function InventoryPage() {
     (item) => item.status === "low" || item.status === "out"
   );
 
+  const toggleFilter = (
+    value: string,
+    list: string[],
+    setter: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    setter(
+      list.includes(value) ? list.filter((v) => v !== value) : [...list, value]
+    );
+  };
+
   return (
     <div className="container py-8">
       <div className="flex flex-col gap-6">
@@ -289,38 +405,46 @@ export default function InventoryPage() {
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="medicine-name">약품명</Label>
+                  <Label>약품 검색</Label>
                   <Input
-                    id="medicine-name"
-                    placeholder="약품명을 입력하세요"
-                    value={newMedicine.name}
-                    onChange={handleInputChange}
+                    type="text"
+                    placeholder="약품명을 두 글자 이상 입력하세요"
+                    value={medicineQuery}
+                    onChange={(e) => setMedicineQuery(e.target.value)}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="medicine-company">제조사</Label>
-                  <Input
-                    id="medicine-company"
-                    placeholder="제조사를 입력하세요"
-                    value={newMedicine.company}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="medicine-type">유형</Label>
-                  <select
-                    id="medicine-type"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={newMedicine.type}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">유형 선택</option>
-                    <option value="진통제">진통제</option>
-                    <option value="감기약">감기약</option>
-                    <option value="소화제">소화제</option>
-                    <option value="항생제">항생제</option>
-                    <option value="기타">기타</option>
-                  </select>
+
+                  {selectedItemSeq && (
+                    <div className="text-sm text-muted-foreground mt-1">
+                      <Badge variant="outline">
+                        {allMedicines.find(
+                          (m) => m.item_seq === selectedItemSeq
+                        )?.item_name ?? "선택된 약품"}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {medicineQuery && (
+                    <div className="border rounded max-h-60 overflow-y-auto mt-2">
+                      {filteredMedicines.length > 0
+                        ? filteredMedicines.map((med) => (
+                            <button
+                              key={med.item_seq}
+                              className="w-full text-left px-2 py-1 hover:bg-gray-100 text-sm"
+                              onClick={() => {
+                                setSelectedItemSeq(med.item_seq);
+                                setMedicineQuery("");
+                              }}
+                            >
+                              {med.item_name} ({med.entp_name})
+                            </button>
+                          ))
+                        : medicineQuery.length >= 2 && (
+                            <div className="px-2 py-1 text-sm text-muted-foreground">
+                              검색 결과 없음
+                            </div>
+                          )}
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="medicine-stock">재고 수량</Label>
@@ -328,8 +452,8 @@ export default function InventoryPage() {
                     id="medicine-stock"
                     type="number"
                     placeholder="재고 수량을 입력하세요"
-                    value={newMedicine.stock.toString()}
-                    onChange={handleInputChange}
+                    value={addStock.toString()}
+                    onChange={(e) => setAddStock(Number(e.target.value))}
                   />
                 </div>
               </div>
@@ -340,10 +464,92 @@ export default function InventoryPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button variant="outline" className="flex gap-2">
-            <Filter className="h-4 w-4" />
-            필터
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="flex gap-2">
+                <Filter className="h-4 w-4" />
+                필터
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <div className="space-y-4">
+                {/* 제조사 필터 */}
+                <div className="space-y-2">
+                  <Label>제조사</Label>
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="companies">
+                      <AccordionTrigger>제조사 선택</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                          {companyList.map((company) => (
+                            <div
+                              key={company}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                checked={companyFilter.includes(company)}
+                                onCheckedChange={() =>
+                                  toggleFilter(
+                                    company,
+                                    companyFilter,
+                                    setCompanyFilter
+                                  )
+                                }
+                              />
+                              <Label className="text-sm">{company}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+
+                {/* 유형 필터 */}
+                <div className="space-y-2">
+                  <Label>유형</Label>
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="types">
+                      <AccordionTrigger>유형 선택</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                          {typeList.map((type) => (
+                            <div
+                              key={type}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                checked={typeFilter.includes(type)}
+                                onCheckedChange={() =>
+                                  toggleFilter(type, typeFilter, setTypeFilter)
+                                }
+                              />
+                              <Label className="text-sm">{type}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+
+                {/* 초기화 */}
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setCompanyFilter([]);
+                      setTypeFilter([]);
+                      setSearchQuery("");
+                    }}
+                  >
+                    초기화
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="grid gap-6 md:grid-cols-[1fr_300px]">
