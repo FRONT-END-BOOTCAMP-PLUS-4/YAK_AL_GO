@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     id: item.id,
     name: item.medicines.item_name,
     company: item.medicines.entp_name ?? "",
-    type: item.medicines.type_name ?? "기타",
+    type: item.medicines.class_no ?? "기타",
     stock: item.quantity,
   }));
 
@@ -56,5 +56,39 @@ export async function DELETE(req: NextRequest) {
   } catch (error) {
     console.error("DELETE error:", error);
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const { itemSeq, hpid, quantity } = await req.json();
+
+    if (!itemSeq || !hpid || typeof quantity !== "number") {
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+
+    const exists = await prisma.inventories.findFirst({
+      where: { itemSeq, hpid },
+    });
+
+    if (exists) {
+      return NextResponse.json(
+        { error: "Inventory already exists for this item." },
+        { status: 400 }
+      );
+    }
+
+    const result = await prisma.inventories.create({
+      data: {
+        itemSeq,
+        hpid,
+        quantity,
+      },
+    });
+
+    return NextResponse.json({ success: true, result });
+  } catch (error) {
+    console.error("POST /api/inventory error:", error);
+    return NextResponse.json({ error: "Failed to add inventory" }, { status: 500 });
   }
 }
