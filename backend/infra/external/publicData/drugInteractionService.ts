@@ -5,16 +5,52 @@ import axios from 'axios';
  * 공공데이터포털 DUR 병용금기 API 응답 데이터 구조 정의
  */
 export interface DrugInteractionDataInterface {
+  DUR_SEQ?: string; // DUR 일련번호
+  TYPE_CODE?: string; // 타입 코드
+  TYPE_NAME?: string; // 타입명 (병용금기)
+  MIX?: string; // 단일/복합 구분
+  INGR_CODE?: string; // 성분 코드
+  INGR_KOR_NAME?: string; // 성분 한글명
+  INGR_ENG_NAME?: string; // 성분 영문명
+  MIX_INGR?: string; // 혼합 성분
   ITEM_SEQ: string; // 품목일련번호
   ITEM_NAME: string; // 품목명
   ENTP_NAME?: string; // 업체명
+  CHART?: string; // 성상
+  FORM_CODE?: string; // 제형 코드
+  ETC_OTC_CODE?: string; // 전문/일반 구분 코드
+  CLASS_CODE?: string; // 분류 코드
+  FORM_NAME?: string; // 제형명
+  ETC_OTC_NAME?: string; // 전문/일반 구분명
+  CLASS_NAME?: string; // 분류명
+  MAIN_INGR?: string; // 주성분
+
+  // 병용금기 대상 약물 정보
+  MIXTURE_DUR_SEQ?: string; // 병용금기 DUR 일련번호
+  MIXTURE_MIX?: string; // 병용금기 단일/복합 구분
+  MIXTURE_INGR_CODE?: string; // 병용금기 성분 코드
+  MIXTURE_INGR_KOR_NAME?: string; // 병용금기 성분 한글명
+  MIXTURE_INGR_ENG_NAME?: string; // 병용금기 성분 영문명
   MIXTURE_ITEM_SEQ?: string; // 병용금기 품목일련번호
   MIXTURE_ITEM_NAME?: string; // 병용금기 품목명
   MIXTURE_ENTP_NAME?: string; // 병용금기 업체명
+  MIXTURE_FORM_CODE?: string; // 병용금기 제형 코드
+  MIXTURE_ETC_OTC_CODE?: string; // 병용금기 전문/일반 구분 코드
+  MIXTURE_CLASS_CODE?: string; // 병용금기 분류 코드
+  MIXTURE_FORM_NAME?: string; // 병용금기 제형명
+  MIXTURE_ETC_OTC_NAME?: string; // 병용금기 전문/일반 구분명
+  MIXTURE_CLASS_NAME?: string; // 병용금기 분류명
+  MIXTURE_MAIN_INGR?: string; // 병용금기 주성분
+
+  NOTIFICATION_DATE?: string; // 고시일자
   PROHBT_CONTENT?: string; // 금기내용
   REMARK?: string; // 비고
-  REGIST_DT?: string; // 등록일자
   ITEM_PERMIT_DATE?: string; // 허가일자
+  MIXTURE_ITEM_PERMIT_DATE?: string; // 병용금기 허가일자
+  MIXTURE_CHART?: string; // 병용금기 성상
+  CHANGE_DATE?: string; // 변경일자
+  MIXTURE_CHANGE_DATE?: string; // 병용금기 변경일자
+  BIZRNO?: string; // 사업자등록번호
 }
 
 /**

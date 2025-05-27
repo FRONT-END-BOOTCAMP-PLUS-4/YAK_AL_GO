@@ -5,13 +5,27 @@ import axios from 'axios';
  * 공공데이터포털 DUR 투여기간주의 API 응답 데이터 구조 정의
  */
 export interface AdministrationPeriodWarningDataInterface {
+  TYPE_NAME?: string; // 타입명 (투여기간주의)
+  MIX_TYPE?: string; // 단일/복합 구분
+  INGR_CODE?: string; // 성분 코드
+  INGR_ENG_NAME?: string; // 성분 영문명
+  INGR_NAME?: string; // 성분명
+  MIX_INGR?: string; // 혼합 성분
+  FORM_NAME?: string; // 제형명
   ITEM_SEQ: string; // 품목일련번호
   ITEM_NAME: string; // 품목명
-  ENTP_NAME?: string; // 업체명
-  MDCTN_PD_ATENT_CONTENT?: string; // 투여기간주의내용
-  EXEC_DEPT?: string; // 실행부서
-  REGIST_DT?: string; // 등록일자
   ITEM_PERMIT_DATE?: string; // 허가일자
+  ENTP_NAME?: string; // 업체명
+  CHART?: string; // 성상
+  CLASS_CODE?: string; // 분류 코드
+  CLASS_NAME?: string; // 분류명
+  ETC_OTC_NAME?: string; // 전문/일반 구분명
+  MAIN_INGR?: string; // 주성분
+  NOTIFICATION_DATE?: string; // 고시일자
+  PROHBT_CONTENT?: string; // 금기내용
+  REMARK?: string; // 비고
+  INGR_ENG_NAME_FULL?: string; // 성분 영문명 전체
+  CHANGE_DATE?: string; // 변경일자
 }
 
 /**
