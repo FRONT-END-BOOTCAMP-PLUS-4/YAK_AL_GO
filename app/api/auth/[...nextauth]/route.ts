@@ -10,33 +10,24 @@ const handler = NextAuth({
     KaKaoProvider({
       clientId: process.env.KAKAO_CLIENT_ID as string,
       clientSecret: process.env.KAKAO_CLIENT_SECRET as string,
-      profile(profile) {
-        return {
-          id: profile.id,
-          email: profile.kakao_account?.email,
-          name: profile.kakao_account?.profile?.nickname,
-          image: profile.kakao_account?.profile?.thumbnail_image_url,
-        };
-      },
     }),
   ],
   callbacks: {
     async jwt({ token, account, profile }) {
       // 로그인 후 최초 jwt 콜백
       if (account && profile) {
-        const email = profile.kakao_account?.email;
+        token.email = profile.kakao_account?.email;
+        token.name = profile.kakao_account?.profile?.nickname;
+        token.photo = profile.kakao_account?.profile?.thumbnail_image_url;
 
         // DB접근
+        const email = profile.kakao_account?.email;
         const dbUser = await prisma.users.findUnique({
           where: { email },
         });
 
         if (dbUser) {
           // 회원가입이 되어있는 사용자
-          token.id = dbUser.id;
-          token.email = email;
-          token.photo = dbUser.photo;
-          token.name = dbUser.name;
           token.birthyear = dbUser.birthyear;
           token.member_type = dbUser.member_type;
           // created_at추가 보류 => 타입 오류 발생 가능

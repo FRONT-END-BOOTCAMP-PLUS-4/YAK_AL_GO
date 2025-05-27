@@ -11,13 +11,12 @@ export async function POST(req: Request) {
   }
 
   // body 데이터를 토큰에 추가
-  token.id = body.id;
+
   token.email = body.email;
   token.photo = body.photo;
   token.name = body.name;
   token.birthyear = body.birthyear;
   token.member_type = body.member_type;
-  token.healthConditions = body.healthConditions;
   token.hpid = body.hpid;
 
   // profile.kakao_account 데이터를 토큰에 추가
