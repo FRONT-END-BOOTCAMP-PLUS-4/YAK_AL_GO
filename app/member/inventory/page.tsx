@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,60 +29,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Mock data for inventory
-const initialInventory = [
-  {
-    id: 1,
-    name: "타이레놀",
-    company: "한국얀센",
-    type: "진통제",
-    stock: 45,
-    status: "normal",
-  },
-  {
-    id: 2,
-    name: "판콜에이",
-    company: "동아제약",
-    type: "감기약",
-    stock: 12,
-    status: "normal",
-  },
-  {
-    id: 3,
-    name: "게보린",
-    company: "삼진제약",
-    type: "진통제",
-    stock: 30,
-    status: "normal",
-  },
-  {
-    id: 4,
-    name: "베아제",
-    company: "대웅제약",
-    type: "소화제",
-    stock: 50,
-    status: "normal",
-  },
-  {
-    id: 5,
-    name: "훼스탈골드",
-    company: "한독",
-    type: "소화제",
-    stock: 5,
-    status: "low",
-  },
-  {
-    id: 6,
-    name: "판피린",
-    company: "동아제약",
-    type: "진통제",
-    stock: 0,
-    status: "out",
-  },
-];
+type InventoryItem = {
+  id: number;
+  name: string;
+  company: string;
+  type: string;
+  stock: number;
+  status?: "normal" | "low" | "out";
+};
 
 export default function InventoryPage() {
-  const [inventory, setInventory] = useState(initialInventory);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredInventory, setFilteredInventory] = useState(inventory);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -101,6 +58,28 @@ export default function InventoryPage() {
     type: "",
     stock: 0,
   });
+  const HPID = "C1108718";
+
+  useEffect(() => {
+    async function fetchInventory() {
+      try {
+        const res = await fetch(`/api/inventory?hpid=${HPID}`);
+        const data: InventoryItem[] = await res.json();
+
+        const dataWithStatus = data.map((item) => ({
+          ...item,
+          status: determineStatus(item.stock),
+        }));
+
+        setInventory(dataWithStatus);
+        setFilteredInventory(dataWithStatus);
+      } catch (error) {
+        console.error("Failed to fetch inventory", error);
+      }
+    }
+
+    fetchInventory();
+  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -212,13 +191,13 @@ export default function InventoryPage() {
     }
   };
 
-  const determineStatus = (stock: number) => {
+  const determineStatus = (stock: number): "normal" | "low" | "out" => {
     if (stock === 0) return "out";
     if (stock < 10) return "low";
     return "normal";
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: "normal" | "low" | "out" | undefined) => {
     switch (status) {
       case "normal":
         return <Badge className="bg-green-500">정상</Badge>;
@@ -375,36 +354,9 @@ export default function InventoryPage() {
                             {editingItem === item.id ? (
                               // Edit mode
                               <>
-                                <div>
-                                  <Input
-                                    id="edit-name"
-                                    value={editFormData.name}
-                                    onChange={handleEditInputChange}
-                                    className="h-8 text-sm"
-                                  />
-                                </div>
-                                <div>
-                                  <Input
-                                    id="edit-company"
-                                    value={editFormData.company}
-                                    onChange={handleEditInputChange}
-                                    className="h-8 text-sm"
-                                  />
-                                </div>
-                                <div>
-                                  <select
-                                    id="edit-type"
-                                    value={editFormData.type}
-                                    onChange={handleEditInputChange}
-                                    className="h-8 text-sm w-full rounded-md border border-input"
-                                  >
-                                    <option value="진통제">진통제</option>
-                                    <option value="감기약">감기약</option>
-                                    <option value="소화제">소화제</option>
-                                    <option value="항생제">항생제</option>
-                                    <option value="기타">기타</option>
-                                  </select>
-                                </div>
+                                <div className="font-medium">{item.name}</div>
+                                <div className="text-sm">{item.company}</div>
+                                <div className="text-sm">{item.type}</div>
                                 <div>
                                   <Input
                                     id="edit-stock"
@@ -484,50 +436,6 @@ export default function InventoryPage() {
                           (item) =>
                             item.status === "low" || item.status === "out"
                         )
-                        .map((item) => (
-                          <div
-                            key={item.id}
-                            className="grid grid-cols-6 gap-4 p-4 items-center"
-                          >
-                            <div className="font-medium">{item.name}</div>
-                            <div className="text-sm">{item.company}</div>
-                            <div className="text-sm">{item.type}</div>
-                            <div className="text-sm">{item.stock}</div>
-                            <div>{getStatusBadge(item.status)}</div>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEditMedicine(item.id)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDeleteClick(item.id)}
-                              >
-                                <Trash className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </TabsContent>
-                <TabsContent value="expiring" className="mt-4">
-                  <div className="rounded-md border">
-                    <div className="grid grid-cols-6 gap-4 border-b bg-muted/50 p-4 font-medium">
-                      <div>약품명</div>
-                      <div>제조사</div>
-                      <div>유형</div>
-                      <div>재고</div>
-                      <div>상태</div>
-                      <div>관리</div>
-                    </div>
-                    <div className="divide-y">
-                      {filteredInventory
-                        .filter((item) => item.status === "expiring")
                         .map((item) => (
                           <div
                             key={item.id}
@@ -649,9 +557,7 @@ export default function InventoryPage() {
                         </div>
                       ))
                     ) : (
-                      <p className="text-center text-muted-foreground">
-                        재고 부족 약품이 없습니다.
-                      </p>
+                      <></>
                     )}
                   </div>
                 </div>
