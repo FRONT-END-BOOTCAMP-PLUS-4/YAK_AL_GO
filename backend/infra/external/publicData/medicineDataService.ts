@@ -82,8 +82,7 @@ class MedicineDataService {
     this.API_KEY = apiKey;
     this.prisma = new PrismaClient();
 
-    console.log(`API 키 길이: ${this.API_KEY.length}자`);
-    console.log(`API 키 앞 30자: ${this.API_KEY.substring(0, 30)}...`);
+
   }
 
   /**
@@ -102,7 +101,6 @@ class MedicineDataService {
     message: string;
   }> {
     try {
-      console.log(`테스트 동기화 시작: 페이지 ${pageNo}, 건수 ${numOfRows}`);
 
       // API 호출하여 데이터 조회
       const response = await this.fetchDurMedicineData(pageNo, numOfRows);
@@ -118,11 +116,6 @@ class MedicineDataService {
 
       // 데이터베이스에 저장
       const saveResult = await this.saveMedicineDataToDB(response.body.items);
-
-      console.log(`테스트 완료: ${response.body.items.length}건 처리`);
-      console.log(
-        `결과: 성공 ${saveResult.successCount}, 실패 ${saveResult.errorCount}, 생성 ${saveResult.createdCount}, 업데이트 ${saveResult.updatedCount}, 스킵 ${saveResult.skippedCount}`
-      );
 
       return {
         success: true,
@@ -150,14 +143,12 @@ class MedicineDataService {
     message: string;
   }> {
     try {
-      console.log('DUR 품목정보 전체 동기화를 시작합니다...');
 
       // 첫 번째 요청으로 전체 건수 확인
       const firstResponse = await this.fetchDurMedicineData(1, 1);
       const totalCount = firstResponse.body.totalCount;
       const totalPages = Math.ceil(totalCount / this.MAX_ROWS_PER_REQUEST);
 
-      console.log(`전체 데이터 건수: ${totalCount}건, 예상 페이지 수: ${totalPages}페이지`);
 
       // 진행 상황 추적 변수들
       let totalProcessed = 0;
@@ -169,9 +160,6 @@ class MedicineDataService {
       // 페이지별로 데이터 조회 및 저장
       for (let page = 1; page <= totalPages; page++) {
         try {
-          console.log(
-            `${page}/${totalPages} 페이지 처리 중... (${(((page - 1) / totalPages) * 100).toFixed(1)}%)`
-          );
 
           // 현재 페이지 데이터 조회
           const response = await this.fetchDurMedicineData(page, this.MAX_ROWS_PER_REQUEST);
@@ -186,11 +174,6 @@ class MedicineDataService {
             totalCreatedCount += saveResult.createdCount;
             totalUpdatedCount += saveResult.updatedCount;
             totalSkippedCount += saveResult.skippedCount;
-
-            console.log(`${page} 페이지 완료: ${response.body.items.length}건 처리`);
-            console.log(
-              `페이지 결과: 생성 ${saveResult.createdCount}, 업데이트 ${saveResult.updatedCount}, 스킵 ${saveResult.skippedCount}, 실패 ${saveResult.errorCount}`
-            );
           }
 
           // API 호출 간격 조절 (rate limiting 준수)
@@ -205,11 +188,6 @@ class MedicineDataService {
           await this.delay(this.REQUEST_DELAY * 2);
         }
       }
-
-      console.log(`전체 동기화 완료: 총 ${totalProcessed}건 처리`);
-      console.log(
-        `최종 결과: 생성 ${totalCreatedCount}건, 업데이트 ${totalUpdatedCount}건, 스킵 ${totalSkippedCount}건, 실패 ${totalErrorCount}건`
-      );
 
       return {
         success: true,
@@ -246,12 +224,6 @@ class MedicineDataService {
         type: 'json',
       };
 
-      console.log(`API 호출: 페이지 ${pageNo}, 요청 건수 ${numOfRows}`);
-      console.log(`API URL: ${this.API_BASE_URL}`);
-      console.log(`API 키 길이: ${this.API_KEY.length}자`);
-      console.log(`API 키 앞 30자: ${this.API_KEY.substring(0, 30)}...`);
-      console.log('요청 파라미터:', JSON.stringify(params, null, 2));
-
       // HTTP GET 요청 실행
       const response = await axios.get(this.API_BASE_URL, {
         params,
@@ -286,21 +258,16 @@ class MedicineDataService {
 
       // JSON 응답 구조 검증
       if (!data || !data.header) {
-        console.error('예상과 다른 API 응답 구조:', data);
         throw new Error('API 응답 구조가 예상과 다릅니다.');
       }
 
       // API 결과 코드 확인
       if (data.header.resultCode !== '00') {
-        console.error(`API 에러 코드: ${data.header.resultCode}`);
-        console.error(`API 에러 메시지: ${data.header.resultMsg}`);
         throw new Error(`API 오류: ${data.header.resultMsg}`);
       }
 
-      console.log(`API 응답 성공: ${data.body.items?.length || 0}건 수신`);
       return data;
     } catch (error) {
-      console.error('API 호출 상세 에러:', error);
 
       // Axios 에러 상세 정보 출력
       if (error && typeof error === 'object' && 'response' in error) {
@@ -391,7 +358,6 @@ class MedicineDataService {
             },
           });
           createdCount++;
-          console.log(`새 데이터 생성: ${item.ITEM_SEQ}`);
         } else {
           // 데이터 변경 확인
           const hasChanges = this.hasDataChanged(existingItem, newData);
@@ -408,11 +374,9 @@ class MedicineDataService {
               },
             });
             updatedCount++;
-            console.log(`데이터 업데이트: ${item.ITEM_SEQ}`);
           } else {
             // 동일한 데이터는 스킵
             skippedCount++;
-            console.log(`동일 데이터 스킵: ${item.ITEM_SEQ}`);
           }
         }
 
@@ -470,7 +434,6 @@ class MedicineDataService {
     // 문자열 필드 비교
     for (const field of compareFields) {
       if (existingData[field] !== newData[field]) {
-        console.log(`필드 변경 감지 (${field}): "${existingData[field]}" → "${newData[field]}"`);
         return true;
       }
     }
@@ -483,7 +446,6 @@ class MedicineDataService {
       const newDate = newData[field] instanceof Date ? (newData[field] as Date).getTime() : null;
 
       if (existingDate !== newDate) {
-        console.log(`날짜 필드 변경 감지 (${field}): ${existingData[field]} → ${newData[field]}`);
         return true;
       }
     }
