@@ -42,10 +42,7 @@ export function AnswerSection({ questionId }: AnswerSectionProps) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Badge variant="default" className="bg-primary">
-              약사 답변
-            </Badge>
-            <h2 className="text-xl font-bold">답변 작성</h2>
+            <h2 className="text-lg font-bold">답변 작성</h2>
           </div>
           <Button variant="outline" onClick={() => setIsAnswerExpanded(!isAnswerExpanded)}>
             {isAnswerExpanded ? '접기' : '답변하기'}

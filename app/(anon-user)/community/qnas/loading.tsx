@@ -83,7 +83,7 @@ function AnswerSkeleton() {
 
 export default function Loading() {
   return (
-    <div className="container py-8">
+    <div className="container max-w-4xl py-8">
       <div className="flex flex-col gap-6">
         {/* 헤더 섹션 */}
         <div className="flex items-center gap-2">

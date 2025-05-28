@@ -32,7 +32,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
 
   // 댓글 등록 버튼을 누르면 CommentSection 컴포넌트가 렌더링된다. 댓글 등록 후 페이지 새로고침된다.
   return (
-    <div className="container py-8">
+    <div className="container max-w-4xl py-8">
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" asChild>
