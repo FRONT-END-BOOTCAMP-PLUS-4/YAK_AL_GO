@@ -8,7 +8,68 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { MedicineDataService } from '@/backend/infra/external/publicData/medicineDataService';
+import { MediListUsecase } from '@/backend/application/usecases/medicines/MediListUsecase';
+import { PrismaMediRepository } from '@/backend/infra/repositories/prisma/PrismaMediRepository';
+import type { MediListRequestDto } from '@/backend/application/usecases/medicines/dto/MediListDto';
+import { PrismaClient } from '@/prisma/generated/index';
 
+/**
+ * GET /api/medicines
+ * 의약품 목록 조회 API (페이지네이션 지원)
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+
+    // 쿼리 파라미터에서 요청 데이터 추출
+    const requestDto: MediListRequestDto = {
+      limit: Number(searchParams.get('limit')) || 100,
+      page: Number(searchParams.get('page')) || 1,
+      search: searchParams.get('search') || undefined,
+      category: searchParams.get('category') || undefined,
+      sortBy:
+        (searchParams.get('sortBy') as 'name' | 'reviews' | 'name_asc' | 'name_desc') || undefined,
+      cursor: searchParams.get('cursor') || undefined,
+    };
+
+    // Repository와 UseCase 인스턴스 생성 (실제 Prisma 클라이언트 사용)
+    const prismaClient = new PrismaClient();
+    const mediRepository = new PrismaMediRepository(prismaClient);
+    const mediListUsecase = new MediListUsecase(mediRepository);
+
+    // UseCase 실행
+    const result = await mediListUsecase.findAll(requestDto);
+
+    // 데이터베이스 연결 정리
+    await prismaClient.$disconnect();
+
+    // 페이지네이션 정보 계산
+    const totalCount = result.totalCount || 0;
+    const totalPages = Math.ceil(totalCount / requestDto.limit);
+    const currentPage = requestDto.page;
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        medicines: result.medicines,
+        hasMore: result.hasMore,
+        nextCursor: result.nextCursor,
+        totalCount,
+        currentPage,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    console.error('의약품 목록 조회 오류:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: '의약품 목록 조회 중 오류가 발생했습니다.',
+      },
+      { status: 500 }
+    );
+  }
+}
 
 /**
  * POST /api/medicines
@@ -26,19 +87,9 @@ import { MedicineDataService } from '@/backend/infra/external/publicData/medicin
  * 환경 변수 요구사항:
  * - PUBLIC_DATA_API_KEY: 공공데이터포털 API 인증키 (디코딩된 상태로 저장)
  *
- * 응답 형식:
- * {
- *   success: boolean,
- *   message: string,
- *   result: {
- *     success: boolean,
- *     totalProcessed: number,
- *     message: string
- *   }
- * }
  */
 // 동기화 작업 Post 진행 시 주석 제거
-export async function POST(request: NextRequest) {;
+export async function POST(request: NextRequest) {
   try {
     // URL에서 동기화 모드 파라미터 추출
     const { searchParams } = new URL(request.url);
@@ -57,8 +108,6 @@ export async function POST(request: NextRequest) {;
         { status: 500 }
       );
     }
-
-
 
     // MedicineDataService 인스턴스 생성 (API 키 검증 포함)
     const medicineService = new MedicineDataService(apiKey);

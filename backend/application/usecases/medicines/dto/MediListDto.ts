@@ -18,10 +18,11 @@ export interface MediBasicDto {
  * 의약품 목록 조회 요청 DTO
  */
 export interface MediListRequestDto {
-  limit: number; // 한 번에 로드할 데이터 개수 (기본 20)
+  limit: number; // 한 번에 로드할 데이터 개수 (기본 100)
+  page?: number; // 페이지 번호 (기본 1, 페이지네이션용)
   search?: string; // 검색어 (의약품명, 성분, 제조사 검색)
   category?: string; // 카테고리 필터 ("전체" | "진통제" | "감기약" | "소화제" | "항생제")
-  sortBy?: 'name' | 'reviews'; // 정렬 기준 (가나다순 | 리뷰 많은 순)
+  sortBy?: 'name' | 'reviews' | 'name_asc' | 'name_desc'; // 정렬 기준 (가나다순 오름차순/내림차순 | 리뷰 많은 순)
   cursor?: string; // 무한 스크롤용 커서 (마지막 itemSeq)
 }
 
@@ -32,7 +33,7 @@ export interface MediListResponseDto {
   medicines: MediBasicDto[]; // 의약품 목록
   hasMore: boolean; // 더 많은 데이터 존재 여부
   nextCursor?: string; // 다음 페이지 커서
-  totalCount?: number; // 검색 결과 총 개수 (옵션)
+  totalCount: number; // 검색 결과 총 개수
 }
 
 /**
