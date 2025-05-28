@@ -344,11 +344,6 @@ export default function MapPage() {
     return `${startTime} - ${endTime}`;
   };
 
-  // Get medicine names from pharmacy inventories
-  const getPharmacyMedicines = (pharmacy: PharmacyType) => {
-    return pharmacy.inventories.map((inv) => inv.medicines.item_name);
-  };
-
   // Handle pharmacy selection
   const handleSelectPharmacy = (index: number | null) => {
     setSelectedPharmacyIndex(index);
