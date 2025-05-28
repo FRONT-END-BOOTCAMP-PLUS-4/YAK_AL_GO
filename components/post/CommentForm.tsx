@@ -50,7 +50,6 @@ export function CommentForm({ postId, onCommentSubmitted }: CommentFormProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-lg font-semibold">댓글 작성</h3>
       <Textarea
         placeholder="댓글을 작성해주세요."
         value={commentText}
