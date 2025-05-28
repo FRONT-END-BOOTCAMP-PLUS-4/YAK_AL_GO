@@ -5,107 +5,10 @@
  * - GET: 저장된 의약품 데이터 조회 (페이지네이션, 검색 지원)
  * - POST: 공공데이터포털 DUR 품목정보 동기화 실행
  */
-
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@/prisma/generated/index';
 import { MedicineDataService } from '@/backend/infra/external/publicData/medicineDataService';
 
-// Prisma 데이터베이스 클라이언트 인스턴스
-const prisma = new PrismaClient();
-
-/**
- * GET /api/medicines
- * 저장된 의약품 데이터 조회 API
- *
- * 기능:
- * - 페이지네이션을 통한 대용량 데이터 처리
- * - 의약품명, 업체명, 원료성분으로 검색 지원
- * - 최신 업데이트 순으로 정렬
- *
- * 쿼리 파라미터:
- * - page: 페이지 번호 (기본값: 1)
- * - limit: 페이지당 항목 수 (기본값: 10, 최대: 100)
- * - search: 검색어 (의약품명, 업체명, 원료성분 대상)
- *
- * 응답 형식:
- * {
- *   success: boolean,
- *   data: {
- *     medicines: Array<Medicine>,
- *     pagination: PaginationInfo
- *   }
- * }
- */
-export async function GET(request: NextRequest) {
-  try {
-    // URL에서 쿼리 파라미터 추출
-    const { searchParams } = new URL(request.url);
-    const page = Number.parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(Number.parseInt(searchParams.get('limit') || '10'), 100); // 최대 100개로 제한
-    const search = searchParams.get('search') || '';
-
-    // 페이지네이션을 위한 스킵 계산
-    const skip = (page - 1) * limit;
-
-    // 검색 조건 구성 (대소문자 구분 없이 부분 일치 검색)
-    const whereCondition = search
-      ? {
-          OR: [
-            { item_name: { contains: search, mode: 'insensitive' as const } }, // 의약품명 검색
-            { entp_name: { contains: search, mode: 'insensitive' as const } }, // 업체명 검색
-            { material_name: { contains: search, mode: 'insensitive' as const } }, // 원료성분 검색
-          ],
-        }
-      : {}; // 검색어가 없으면 모든 데이터 조회
-
-    // 검색 조건에 맞는 총 데이터 개수 조회 (페이지네이션 정보 계산용)
-    const totalCount = await prisma.medicines.count({
-      where: whereCondition,
-    });
-
-    // 실제 의약품 데이터 조회 (페이지네이션 적용)
-    const medicines = await prisma.medicines.findMany({
-      where: whereCondition,
-      skip, // 건너뛸 레코드 수
-      take: limit, // 가져올 레코드 수
-      orderBy: {
-        updated_at: 'desc', // 최신 업데이트 순으로 정렬
-      },
-      // 모든 컬럼 조회 (select 제거하여 전체 필드 반환)
-      // select 절을 제거하면 모든 필드가 자동으로 포함됨
-    });
-
-    // 페이지네이션 정보 계산
-    const totalPages = Math.ceil(totalCount / limit);
-
-    // 성공 응답 반환 (표준 API 응답 형식)
-    return NextResponse.json({
-      success: true,
-      data: {
-        medicines, // 조회된 의약품 데이터 배열
-        pagination: {
-          // 페이지네이션 메타데이터
-          currentPage: page,
-          totalPages,
-          totalCount,
-          hasNextPage: page < totalPages, // 다음 페이지 존재 여부
-          hasPrevPage: page > 1, // 이전 페이지 존재 여부
-        },
-      },
-    });
-  } catch (error) {
-    // 에러 로깅 및 클라이언트에 안전한 에러 메시지 반환
-    console.error('의약품 데이터 조회 오류:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: '의약품 데이터 조회 중 오류가 발생했습니다.',
-      },
-      { status: 500 }
-    );
-  }
-}
 
 /**
  * POST /api/medicines
@@ -134,7 +37,8 @@ export async function GET(request: NextRequest) {
  *   }
  * }
  */
-export async function POST(request: NextRequest) {
+// 동기화 작업 Post 진행 시 주석 제거
+export async function POST(request: NextRequest) {;
   try {
     // URL에서 동기화 모드 파라미터 추출
     const { searchParams } = new URL(request.url);
