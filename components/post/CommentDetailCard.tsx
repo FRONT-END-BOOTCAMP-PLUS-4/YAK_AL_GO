@@ -1,6 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Clock } from 'lucide-react';
 import { formatDate } from '@/lib/community/formatDate';
 import { CommentOptionDropdown } from '@/components/post/CommentOptionDropdown';
