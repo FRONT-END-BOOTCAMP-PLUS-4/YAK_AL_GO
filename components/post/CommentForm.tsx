@@ -8,9 +8,10 @@ import { useQueryClient } from '@tanstack/react-query';
 
 interface CommentFormProps {
   postId: number;
+  onCommentSubmitted?: () => void;
 }
 
-export function CommentForm({ postId }: CommentFormProps) {
+export function CommentForm({ postId, onCommentSubmitted }: CommentFormProps) {
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
@@ -38,6 +39,7 @@ export function CommentForm({ postId }: CommentFormProps) {
 
       setCommentText('');
       queryClient.resetQueries({ queryKey: POSTS_QUERY_KEY });
+      onCommentSubmitted?.();
       window.location.reload();
     } catch (error) {
       console.error('Error submitting comment:', error);
