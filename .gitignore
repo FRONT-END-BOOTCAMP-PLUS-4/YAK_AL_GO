@@ -48,3 +48,7 @@ next-env.d.ts
 .cursorrules
 .cursor/
 memory-bank/
+
+# documentation (local only)
+README.md
+backend/medi-memory-bank.md
