@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { GetMedicinesUseCase } from "../../../../backend/application/usecases/medicine/GetMedicinesUseCase"
+import { GetMedicinesUseCase } from "../../../../backend/application/usecases/map/GetMedicinesUseCase"
 
 export async function GET() {
   try {
