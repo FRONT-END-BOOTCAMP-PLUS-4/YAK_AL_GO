@@ -20,11 +20,12 @@ export class MediListUsecase {
    * @param requestDto 화면에서 전달받은 요청 DTO
    * @returns 화면에 전달할 응답 DTO
    */
-  async execute(requestDto: MediListRequestDto): Promise<MediListResponseDto> {
+  async findAll(requestDto: MediListRequestDto): Promise<MediListResponseDto> {
     try {
       // DTO를 Repository 요청 형태로 변환
       const repositoryRequest: MediListRequest = {
         limit: requestDto.limit,
+        page: requestDto.page,
         search: requestDto.search,
         category: requestDto.category,
         sortBy: requestDto.sortBy,

@@ -1,9 +1,4 @@
 // 의약품 엔티티 정의
-
-/**
- * 의약품 도메인 엔티티
- * 비즈니스 로직의 핵심 데이터 구조를 정의
- */
 export class Medicine {
   constructor(
     public readonly itemSeq: string, // 품목일련번호 (Primary Key)
