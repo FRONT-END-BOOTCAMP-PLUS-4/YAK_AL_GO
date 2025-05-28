@@ -3,4 +3,4 @@ export type {
   PharmacyDto as PharmacyType,
   MedicineDto as Medicine,
   InventoryDto as Inventory,
-} from "../../backend/application/usecases/pharmacy/dto/PharmacyDto"
+} from '../../backend/application/usecases/map/dto/PharmacyDto';

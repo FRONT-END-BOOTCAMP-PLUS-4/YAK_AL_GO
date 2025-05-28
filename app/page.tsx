@@ -48,8 +48,11 @@ export default function Home() {
                       </div>
                       <div className="space-y-2">
                         <h3 className="text-xl font-bold">약국 찾기</h3>
-                        <Button className="w-full justify-start" variant="outline">
-                          <MapPin className="mr-2 h-4 w-4" />내 주변 약국 찾기
+                        <Button className="w-full justify-start" variant="outline" asChild>
+                          <Link href="/map">
+                            <MapPin className="mr-2 h-4 w-4" />
+                            내 주변 약국 찾기
+                          </Link>
                         </Button>
                       </div>
                       <div className="space-y-2">
