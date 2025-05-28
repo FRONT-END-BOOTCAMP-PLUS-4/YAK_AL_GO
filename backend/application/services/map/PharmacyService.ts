@@ -1,13 +1,13 @@
-import { GetPharmaciesUseCase } from "../usecases/pharmacy/GetPharmaciesUseCase"
-import { GetPharmacyDetailUseCase } from "../usecases/pharmacy/GetPharmacyDetailUseCase"
-import { CalculateDistanceUseCase } from "../usecases/pharmacy/CalculateDistanceUseCase"
-import { CheckPharmacyOpenStatusUseCase } from "../usecases/pharmacy/CheckPharmacyOpenStatusUseCase"
+import { GetPharmaciesUseCase } from "../../usecases/map/GetPharmaciesUseCase"
+import { GetPharmacyDetailUseCase } from "../../usecases/map/GetPharmacyDetailUseCase"
+import { CalculateDistanceUseCase } from "../../usecases/map/CalculateDistanceUseCase"
+import { CheckPharmacyOpenStatusUseCase } from "../../usecases/map/CheckPharmacyOpenStatusUseCase"
 import type {
   PharmacySearchRequestDto,
   PharmacySearchResponseDto,
   PharmacyDetailDto,
   PharmacyDto,
-} from "../usecases/pharmacy/dto/PharmacyDto"
+} from "../../usecases/map/dto/PharmacyDto"
 
 export class PharmacyService {
   private getPharmaciesUseCase: GetPharmaciesUseCase
