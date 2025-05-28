@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, User, Clock } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MessageSquare, Clock, Hash } from 'lucide-react';
 import { formatDate } from '@/lib/community/formatDate';
 import { getContentText } from '@/lib/community/getContentText';
 import { useMemo } from 'react';
@@ -22,40 +23,74 @@ interface QuestionCardProps {
 export const QuestionCard = ({ qna }: QuestionCardProps) => {
   const contentText = useMemo(() => getContentText(qna.content), [qna.content]);
 
+  // Mockup user profile image - 실제 구현시 유저 데이터에서 가져올 예정
+  const getUserInitials = (userId: string) => {
+    return userId.slice(0, 2).toUpperCase();
+  };
+
+  const mockProfileImage = `https://api.dicebear.com/7.x/avataaars/svg?seed=${qna.userId}`;
+
   return (
-    <Link href={`community/qnas/${qna.id}`}>
-      <Card className="h-full overflow-hidden transition-all hover:shadow-md">
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="default" className="bg-primary">
-                  전문가 Q&A
-                </Badge>
-                <div className="flex flex-wrap gap-1">
-                  {qna.tags &&
-                    qna.tags.map((tag: TagResponseDto) => (
-                      <Badge key={tag.id} variant="outline" className="text-xs">
-                        {tag.name}
-                      </Badge>
-                    ))}
+    <Link href={`community/qnas/${qna.id}`} className="block">
+      <Card className="h-full border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg overflow-hidden">
+        <CardContent className="p-0">
+          {/* Header */}
+          <div className="p-5 pb-4">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                <span className="text-xs font-medium text-primary">전문가 Q&A</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Clock className="h-3 w-3" />
+                {formatDate(qna.createdAt)}
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className="font-semibold text-base leading-tight mb-2 line-clamp-2 text-gray-900 dark:text-gray-100">
+              {qna.title}
+            </h3>
+
+            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3 leading-relaxed">{contentText}</p>
+
+            {/* Tags */}
+            {qna.tags && qna.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {qna.tags.map((tag: TagResponseDto) => (
+                  <div
+                    key={tag.id}
+                    className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+                    <Hash className="h-2.5 w-2.5" />
+                    {tag.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-3 py-2.5 bg-neutral-50/50 dark:bg-neutral-800/30 border-t border-neutral-200/40 dark:border-neutral-700/30">
+            <div className="flex items-center justify-between">
+              {/* User info */}
+              <div className="flex items-center gap-2">
+                <Avatar className="h-7 w-7">
+                  <AvatarImage src={mockProfileImage} alt={qna.userId} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                    {getUserInitials(qna.userId)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{qna.userId}</span>
+                  <span className="text-xs text-gray-500">질문자</span>
                 </div>
               </div>
-              <h3 className="font-bold text-lg">{qna.title}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{contentText}</p>
-              <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  {qna.userId}
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatDate(qna.createdAt)}
-                </div>
-                <div className="flex items-center gap-1">
-                  <MessageSquare className="h-3 w-3" />
-                  답변 {qna.answerCount}
-                </div>
+
+              {/* Stats */}
+              <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span className="font-medium">{qna.answerCount}</span>
+                <span className="text-xs">답변</span>
               </div>
             </div>
           </div>
