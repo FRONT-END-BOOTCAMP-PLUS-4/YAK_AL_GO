@@ -3,6 +3,18 @@ import { getQuestion } from '@/lib/queries/getQuestion';
 import { QuestionDetailHeader } from '@/components/qna/QuestionDetailHeader';
 import { QuestionDetailCard } from '@/components/qna/QuestionDetailCard';
 import { AnswerDetailList } from '@/components/qna/AnswerDetailList';
+import { AnswerDetailCard } from '@/components/qna/AnswerDetailCard';
+
+interface Answer {
+  id?: number | undefined;
+  contentHTML: string;
+  createdAt?: Date | undefined;
+  users?: {
+    id: string;
+    name?: string;
+    member_type?: number;
+  };
+}
 
 export default async function QuestionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: questionId } = await params;
@@ -27,7 +39,11 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
           <AnswerSection questionId={parseInt(questionId)} />
 
           {/* Answers */}
-          <AnswerDetailList answers={question.answers || []} currentUserId={currentUserId} />
+          <AnswerDetailList answerCount={question.answers?.length || 0}>
+            {question.answers?.map((answer: Answer, index: number) => (
+              <AnswerDetailCard key={answer.id ?? `answer-${index}`} answer={answer} currentUserId={currentUserId} />
+            ))}
+          </AnswerDetailList>
         </div>
       </div>
     </div>
