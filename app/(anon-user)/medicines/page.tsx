@@ -1,7 +1,6 @@
 'use client';
 
 import type React from 'react';
-
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, ArrowUpDown, Loader2, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  ArrowUpDown,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+} from 'lucide-react';
 
 /**
  * API 응답 타입 정의
@@ -54,95 +61,102 @@ export default function MedicinesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+
   // 설정값
   const ITEMS_PER_PAGE = 99; // 페이지당 표시할 데이터 수
 
   /**
    * API에서 의약품 데이터 가져오기 (페이지네이션)
    */
-  const fetchMedicinesFromApi = useCallback(async (
-    page = 1,
-    search?: string,
-    category?: string,
-    sortBy?: 'name' | 'reviews' | 'name_asc' | 'name_desc'
-  ) => {
-    setIsLoading(true);
-    
-    // 로딩 시간 부여를 위한 최소 대기 시간 (최적화된 빠른 응답)
-    const minLoadingTime = 250;
-    const startTime = Date.now();
-    
-    try {
-      const params = new URLSearchParams();
-      params.append('limit', ITEMS_PER_PAGE.toString());
-      params.append('page', page.toString());
-      
-      if (search) params.append('search', search);
-      if (category && category !== '전체') params.append('category', category);
-      if (sortBy) params.append('sortBy', sortBy);
+  const fetchMedicinesFromApi = useCallback(
+    async (
+      page = 1,
+      search?: string,
+      category?: string,
+      sortBy?: 'name' | 'reviews' | 'name_asc' | 'name_desc'
+    ) => {
+      setIsLoading(true);
 
-      const response = await fetch(`/api/medicines?${params.toString()}`);
-      const result: ApiResponse = await response.json();
+      // 로딩 시간 부여를 위한 최소 대기 시간 (최적화된 빠른 응답)
+      const minLoadingTime = 250;
+      const startTime = Date.now();
 
-      if (result.success) {
-        // 중복 제거
-        const uniqueMedicines = result.data.medicines.filter((item, index, self) => 
-          index === self.findIndex(t => t.itemSeq === item.itemSeq)
-        );
-        
-        setMedicines(uniqueMedicines);
-        setCurrentPage(result.data.currentPage || page);
-        setTotalPages(result.data.totalPages || 1);
-      } else {
-        console.error('API 오류:', result);
+      try {
+        const params = new URLSearchParams();
+        params.append('limit', ITEMS_PER_PAGE.toString());
+        params.append('page', page.toString());
+
+        if (search) params.append('search', search);
+        if (category && category !== '전체') params.append('category', category);
+        if (sortBy) params.append('sortBy', sortBy);
+
+        const response = await fetch(`/api/medicines?${params.toString()}`);
+        const result: ApiResponse = await response.json();
+
+        if (result.success) {
+          // 중복 제거
+          const uniqueMedicines = result.data.medicines.filter(
+            (item, index, self) => index === self.findIndex((t) => t.itemSeq === item.itemSeq)
+          );
+
+          setMedicines(uniqueMedicines);
+          setCurrentPage(result.data.currentPage || page);
+          setTotalPages(result.data.totalPages || 1);
+        } else {
+          console.error('API 오류:', result);
+          setMedicines([]);
+          setCurrentPage(1);
+          setTotalPages(1);
+        }
+      } catch (error) {
+        console.error('데이터 가져오기 오류:', error);
         setMedicines([]);
         setCurrentPage(1);
         setTotalPages(1);
+      } finally {
+        // 최소 로딩 시간 보장
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
+
+        setTimeout(() => {
+          setIsLoading(false);
+        }, remainingTime);
       }
-    } catch (error) {
-      console.error('데이터 가져오기 오류:', error);
-      setMedicines([]);
-      setCurrentPage(1);
-      setTotalPages(1);
-    } finally {
-      // 최소 로딩 시간 보장
-      const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
-      
-      setTimeout(() => {
-        setIsLoading(false);
-      }, remainingTime);
-    }
-  }, []);
+    },
+    []
+  );
 
   /**
    * 페이지 변경 핸들러
    */
-  const handlePageChange = useCallback((newPage: number) => {
-    if (newPage < 1 || newPage > totalPages || newPage === currentPage || isLoading) {
-      return;
-    }
-    
-    // 페이지 변경 시 즉시 상단으로 스크롤 (우선 실행)
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    setCurrentPage(newPage);
-    
-    const category = CATEGORY_MAP[activeTab];
-    const sortBy = sortOrder === 'asc' ? 'name_asc' : sortOrder === 'desc' ? 'name_desc' : undefined;
-    
-    fetchMedicinesFromApi(newPage, searchQuery, category, sortBy);
-    
-    // 추가 보장: 약간의 지연 후 다시 한 번 스크롤
-    setTimeout(() => {
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      if (newPage < 1 || newPage > totalPages || newPage === currentPage || isLoading) {
+        return;
+      }
+
+      // 페이지 변경 시 즉시 상단으로 스크롤 (우선 실행)
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
-  }, [totalPages, currentPage, isLoading, activeTab, sortOrder, searchQuery, fetchMedicinesFromApi]);
+
+      setCurrentPage(newPage);
+
+      const category = CATEGORY_MAP[activeTab];
+      const sortBy =
+        sortOrder === 'asc' ? 'name_asc' : sortOrder === 'desc' ? 'name_desc' : undefined;
+
+      fetchMedicinesFromApi(newPage, searchQuery, category, sortBy);
+
+      // 추가 보장: 약간의 지연 후 다시 한 번 스크롤
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
+    },
+    [totalPages, currentPage, isLoading, activeTab, sortOrder, searchQuery, fetchMedicinesFromApi]
+  );
 
   /**
    * 정렬 처리 함수
@@ -150,14 +164,15 @@ export default function MedicinesPage() {
   const handleSort = () => {
     const newSortOrder = sortOrder === null || sortOrder === 'desc' ? 'asc' : 'desc';
     setSortOrder(newSortOrder);
-    
+
     const category = CATEGORY_MAP[activeTab];
     // 정렬 방향을 포함한 sortBy 값 전달
-    const sortBy = newSortOrder === 'asc' ? 'name_asc' : newSortOrder === 'desc' ? 'name_desc' : undefined;
-    
+    const sortBy =
+      newSortOrder === 'asc' ? 'name_asc' : newSortOrder === 'desc' ? 'name_desc' : undefined;
+
     setCurrentPage(1);
     fetchMedicinesFromApi(1, searchQuery, category, sortBy);
-    
+
     // 정렬 변경 시 상단으로 스크롤
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -174,11 +189,12 @@ export default function MedicinesPage() {
    */
   const executeSearch = useCallback(() => {
     const category = CATEGORY_MAP[activeTab];
-    const sortBy = sortOrder === 'asc' ? 'name_asc' : sortOrder === 'desc' ? 'name_desc' : undefined;
-    
+    const sortBy =
+      sortOrder === 'asc' ? 'name_asc' : sortOrder === 'desc' ? 'name_desc' : undefined;
+
     setCurrentPage(1);
     fetchMedicinesFromApi(1, searchQuery, category, sortBy);
-    
+
     // 검색 실행 시 상단으로 스크롤
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab, sortOrder, searchQuery, fetchMedicinesFromApi]);
@@ -186,17 +202,21 @@ export default function MedicinesPage() {
   /**
    * 탭 변경 핸들러
    */
-  const handleTabChange = useCallback((newTab: string) => {
-    setActiveTab(newTab);
-    const category = CATEGORY_MAP[newTab];
-    const sortBy = sortOrder === 'asc' ? 'name_asc' : sortOrder === 'desc' ? 'name_desc' : undefined;
-    
-    setCurrentPage(1);
-    fetchMedicinesFromApi(1, searchQuery, category, sortBy);
-    
-    // 탭 변경 시 상단으로 스크롤
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [sortOrder, searchQuery, fetchMedicinesFromApi]);
+  const handleTabChange = useCallback(
+    (newTab: string) => {
+      setActiveTab(newTab);
+      const category = CATEGORY_MAP[newTab];
+      const sortBy =
+        sortOrder === 'asc' ? 'name_asc' : sortOrder === 'desc' ? 'name_desc' : undefined;
+
+      setCurrentPage(1);
+      fetchMedicinesFromApi(1, searchQuery, category, sortBy);
+
+      // 탭 변경 시 상단으로 스크롤
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    [sortOrder, searchQuery, fetchMedicinesFromApi]
+  );
 
   /**
    * 필터 초기화 함수
@@ -207,10 +227,10 @@ export default function MedicinesPage() {
     setSortOrder(null);
     setActiveTab('all');
     setCurrentPage(1);
-    
+
     // 초기 상태로 데이터 다시 로드
     fetchMedicinesFromApi(1, '', '전체', undefined);
-    
+
     // 초기화 시 상단으로 스크롤
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -220,10 +240,10 @@ export default function MedicinesPage() {
    */
   const hasActiveFilters = () => {
     return (
-      searchQuery.trim() !== '' ||           // 검색어가 입력됨
-      sortOrder !== null ||                  // 정렬이 적용됨
-      activeTab !== 'all' ||                 // 전체가 아닌 카테고리 선택됨
-      currentPage !== 1                      // 첫 페이지가 아님
+      searchQuery.trim() !== '' || // 검색어가 입력됨
+      sortOrder !== null || // 정렬이 적용됨
+      activeTab !== 'all' || // 전체가 아닌 카테고리 선택됨
+      currentPage !== 1 // 첫 페이지가 아님
     );
   };
 
@@ -239,20 +259,21 @@ export default function MedicinesPage() {
    */
   const generatePageNumbers = () => {
     const pages = [];
-    const maxVisiblePages = 5;
-    
+    const maxVisiblePages = 3;
+
     const startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
+
     // 끝 페이지가 조정되면 시작 페이지도 다시 조정
-    const adjustedStartPage = endPage - startPage + 1 < maxVisiblePages 
-      ? Math.max(1, endPage - maxVisiblePages + 1)
-      : startPage;
-    
+    const adjustedStartPage =
+      endPage - startPage + 1 < maxVisiblePages
+        ? Math.max(1, endPage - maxVisiblePages + 1)
+        : startPage;
+
     for (let i = adjustedStartPage; i <= endPage; i++) {
       pages.push(i);
     }
-    
+
     return pages;
   };
 
@@ -281,9 +302,7 @@ export default function MedicinesPage() {
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">{medicine.entpName}</p>
-              <p className="text-xs text-muted-foreground">
-                {medicine.etcOtcCode || '의약품'}
-              </p>
+              <p className="text-xs text-muted-foreground">{medicine.etcOtcCode || '의약품'}</p>
               {medicine.chart && (
                 <p className="text-xs text-gray-600 line-clamp-2">{medicine.chart}</p>
               )}
@@ -299,15 +318,17 @@ export default function MedicinesPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">약 검색</h1>
-          <p className="text-muted-foreground">약 이름, 성분, 제조사 등으로 검색하여 원하는 약을 찾아보세요.</p>
+          <p className="text-muted-foreground">
+            약 이름, 성분, 제조사 등으로 검색하여 원하는 약을 찾아보세요.
+          </p>
         </div>
 
         <div className="flex flex-col gap-4 sm:flex-row">
           <div className="flex w-full items-center space-x-2">
-            <Input 
-              type="text" 
-              placeholder="약 이름, 성분, 제조사 검색" 
-              value={searchQuery} 
+            <Input
+              type="text"
+              placeholder="약 이름, 성분, 제조사 검색"
+              value={searchQuery}
               onChange={handleSearch}
               onKeyPress={(e) => e.key === 'Enter' && executeSearch()}
             />
@@ -319,10 +340,14 @@ export default function MedicinesPage() {
           <div className="flex gap-2">
             <Button variant="outline" className="flex gap-2" onClick={handleSort}>
               <ArrowUpDown className="h-4 w-4" />
-              {sortOrder === 'asc' ? '가나다순 ↓' : sortOrder === 'desc' ? '가나다순 ↑' : '가나다순'}
+              {sortOrder === 'asc'
+                ? '가나다순 ↓'
+                : sortOrder === 'desc'
+                  ? '가나다순 ↑'
+                  : '가나다순'}
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className={`flex gap-2 ${!hasActiveFilters() ? 'opacity-50 cursor-not-allowed' : ''}`}
               onClick={handleResetFilters}
               disabled={!hasActiveFilters()}
@@ -333,7 +358,12 @@ export default function MedicinesPage() {
           </div>
         </div>
 
-        <Tabs value={activeTab} defaultValue="all" className="w-full" onValueChange={handleTabChange}>
+        <Tabs
+          value={activeTab}
+          defaultValue="all"
+          className="w-full"
+          onValueChange={handleTabChange}
+        >
           <TabsList>
             <TabsTrigger value="all">전체</TabsTrigger>
             <TabsTrigger value="painkillers">진통제</TabsTrigger>
@@ -341,7 +371,7 @@ export default function MedicinesPage() {
             <TabsTrigger value="digestive">소화제</TabsTrigger>
             <TabsTrigger value="antibiotics">항생제</TabsTrigger>
           </TabsList>
-          
+
           {Object.keys(CATEGORY_MAP).map((tabValue) => (
             <TabsContent key={tabValue} value={tabValue} className="mt-4">
               {/* 로딩 상태와 콘텐츠를 자연스럽게 전환 */}
@@ -355,40 +385,39 @@ export default function MedicinesPage() {
                     </div>
                   </div>
                 )}
-                
+
                 {/* 의약품 목록 */}
-                <div className={`transition-all duration-300 ease-in-out ${isLoading ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+                <div
+                  className={`transition-all duration-300 ease-in-out ${isLoading ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}
+                >
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {medicines.length > 0 ? (
-                      medicines.map((medicine, index) => renderMedicineCard(medicine, index))
-                    ) : (
-                      !isLoading && (
-                        <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                          <p className="text-muted-foreground">검색 결과가 없습니다.</p>
-                        </div>
-                      )
-                    )}
+                    {medicines.length > 0
+                      ? medicines.map((medicine, index) => renderMedicineCard(medicine, index))
+                      : !isLoading && (
+                          <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                            <p className="text-muted-foreground">검색 결과가 없습니다.</p>
+                          </div>
+                        )}
                   </div>
-                  
+
                   {/* 페이지네이션 */}
                   {medicines.length > 0 && totalPages > 1 && (
                     <div className="flex justify-center items-center gap-2 mt-8">
                       {/* 이전 페이지 버튼 */}
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1 || isLoading}
                       >
                         <ChevronLeft className="h-4 w-4" />
-                        이전
                       </Button>
-                      
+
                       {/* 첫 페이지 */}
                       {generatePageNumbers()[0] > 1 && (
                         <>
                           <Button
-                            variant={1 === currentPage ? "default" : "outline"}
+                            variant={1 === currentPage ? 'default' : 'ghost'}
                             size="sm"
                             onClick={() => handlePageChange(1)}
                             disabled={isLoading}
@@ -400,12 +429,12 @@ export default function MedicinesPage() {
                           )}
                         </>
                       )}
-                      
+
                       {/* 페이지 번호들 */}
                       {generatePageNumbers().map((pageNum) => (
                         <Button
                           key={pageNum}
-                          variant={pageNum === currentPage ? "default" : "outline"}
+                          variant={pageNum === currentPage ? 'default' : 'ghost'}
                           size="sm"
                           onClick={() => handlePageChange(pageNum)}
                           disabled={isLoading}
@@ -413,15 +442,16 @@ export default function MedicinesPage() {
                           {pageNum}
                         </Button>
                       ))}
-                      
+
                       {/* 마지막 페이지 */}
                       {generatePageNumbers()[generatePageNumbers().length - 1] < totalPages && (
                         <>
-                          {generatePageNumbers()[generatePageNumbers().length - 1] < totalPages - 1 && (
+                          {generatePageNumbers()[generatePageNumbers().length - 1] <
+                            totalPages - 1 && (
                             <span className="px-2 text-muted-foreground">...</span>
                           )}
                           <Button
-                            variant={totalPages === currentPage ? "default" : "outline"}
+                            variant={totalPages === currentPage ? 'default' : 'ghost'}
                             size="sm"
                             onClick={() => handlePageChange(totalPages)}
                             disabled={isLoading}
@@ -430,15 +460,14 @@ export default function MedicinesPage() {
                           </Button>
                         </>
                       )}
-                      
+
                       {/* 다음 페이지 버튼 */}
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages || isLoading}
                       >
-                        다음
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
