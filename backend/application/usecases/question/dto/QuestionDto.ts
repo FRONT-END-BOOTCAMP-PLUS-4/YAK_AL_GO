@@ -4,7 +4,7 @@ import { AnswerResponseDto } from '@/backend/application/usecases/question/dto/A
 export interface CreateQuestionDto {
   title: string;
   content: any;
-  content_html: string;
+  contentHTML: string;
   userId: string;
   tags: TagResponseDto[];
 }
@@ -13,10 +13,10 @@ export interface QuestionResponseDto {
   id?: number;
   title: string;
   content: any;
-  content_html: string;
+  contentHTML: string;
   createdAt?: Date;
   updatedAt?: Date;
   userId: string;
-  tags: TagResponseDto[];
+  tags?: TagResponseDto[];
   answers: AnswerResponseDto[];
 }

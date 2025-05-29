@@ -1,25 +1,20 @@
-import { Question } from '../entities/QuestionEntity';
-import { Tag } from '../entities/TagEntity';
-import { QuestionResponseDto } from '@/backend/application/usecases/question/dto/QuestionDto';
+import { Question, QuestionResponse } from '@/backend/domain/entities/QuestionEntity';
+import { Tag } from '@/backend/domain/entities/TagEntity';
+
 export interface PaginationParams {
   page: number;
   limit: number;
 }
 
 export interface PaginatedQuestions {
-  questions: Question[];
+  questions: QuestionResponse[];
   hasMore: boolean;
   total: number;
 }
 
 export interface QuestionRepository {
   create(question: Question): Promise<Question>;
-  findById(id: number): Promise<QuestionResponseDto | null>;
+  findById(id: number): Promise<Question | null>;
   findAll(params: PaginationParams): Promise<PaginatedQuestions>;
-  update(id: number, question: Partial<Question>): Promise<Question>;
-  delete(id: number): Promise<void>;
   addTags(questionId: number, tags: Tag[]): Promise<void>;
-  removeTag(questionId: number, tagId: number): Promise<void>;
-  getTags(questionId: number): Promise<Tag[]>;
-  getAnswerCount(questionId: number): Promise<number>;
 }

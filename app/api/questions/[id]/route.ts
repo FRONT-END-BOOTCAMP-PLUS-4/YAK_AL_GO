@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaQuestionRepository } from '@/backend/infra/repositories/prisma/PrismaQuestionRepository';
-import { GetQuestionByIdUseCase } from '@/backend/application/usecases/question/GetQuestionByIdUseCase';
+import { GetQuestionByIdUseCase } from '@/backend/application/usecases/question/GetQuestionByIdUsecase';
 import prisma from '@/lib/prisma';
 
 const questionRepository = new PrismaQuestionRepository(prisma);

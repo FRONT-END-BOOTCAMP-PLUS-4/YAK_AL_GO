@@ -7,7 +7,7 @@ export class PrismaTagRepository implements TagRepository {
 
   async findAll(): Promise<Tag[]> {
     const tags = await this.prisma.tags.findMany();
-    return tags.map((tag: { id: number; tag_name: string }) => new Tag({ id: tag.id, name: tag.tag_name }));
+    return tags.map((tag: { id: number; tagName: string }) => new Tag({ id: tag.id, name: tag.tagName }));
   }
 
   async findById(id: string): Promise<Tag | null> {
@@ -15,18 +15,18 @@ export class PrismaTagRepository implements TagRepository {
       where: { id: Number(id) },
     });
     if (!tag) return null;
-    return new Tag({ id: tag.id, name: tag.tag_name });
+    return new Tag({ id: tag.id, name: tag.tagName });
   }
 
   async create(data: Tag): Promise<Tag> {
     const tag = await this.prisma.tags.create({
       data: {
-        tag_name: data.name,
+        tagName: data.name,
       },
     });
     return {
       id: tag.id,
-      name: tag.tag_name,
+      name: tag.tagName,
     };
   }
 
@@ -34,12 +34,12 @@ export class PrismaTagRepository implements TagRepository {
     const tag = await this.prisma.tags.update({
       where: { id: Number(id) },
       data: {
-        tag_name: data.name,
+        tagName: data.name,
       },
     });
     return {
       id: tag.id,
-      name: tag.tag_name,
+      name: tag.tagName,
     };
   }
 

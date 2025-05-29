@@ -1,96 +1,50 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { AnswerSection } from '@/components/qna/AnswerSection';
-import { ContentRenderer } from '@/components/qna/ContentRenderer';
-import { ArrowLeft, User, Clock, ThumbsUp } from 'lucide-react';
-import { formatDate } from '@/lib/community/formatDate';
 import { getQuestion } from '@/lib/queries/getQuestion';
+import { QuestionDetailHeader } from '@/components/qna/QuestionDetailHeader';
+import { QuestionDetailCard } from '@/components/qna/QuestionDetailCard';
+import { AnswerDetailList } from '@/components/qna/AnswerDetailList';
+import { AnswerDetailCard } from '@/components/qna/AnswerDetailCard';
+
+interface Answer {
+  id?: number | undefined;
+  contentHTML: string;
+  createdAt?: Date | undefined;
+  users?: {
+    id: string;
+    name?: string;
+    member_type?: number;
+  };
+}
 
 export default async function QuestionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: questionId } = await params;
+  // 질문 정보 조회: 질문, 답변, 태그, 유저 등의 정보를 담고 있다.
   const question = await getQuestion(questionId);
 
+  // TODO: 실제 로그인한 사용자 정보를 가져오는 로직으로 교체
+  const currentUserId = '20250522'; // 임시 현재 사용자 ID
+
+  // 답변 등록 버튼을 누르면 AnswerSection 컴포넌트가 렌더링된다. 답변 등록 후 페이지 새로고침된다.
   return (
-    <div className="container py-8">
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/community">
-              <ArrowLeft className="h-4 w-4" />
-              <span className="sr-only">Back</span>
-            </Link>
-          </Button>
-          <h1 className="text-2xl font-bold">Q&A</h1>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container max-w-4xl py-8">
+        <div className="flex flex-col gap-6">
+          {/* Header */}
+          <QuestionDetailHeader />
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="default" className="bg-primary">
-                Q&A
-              </Badge>
-              <div className="flex flex-wrap gap-1">
-                {question.tags?.map((tag) => (
-                  <Badge key={tag.id} variant="outline" className="text-xs">
-                    {tag.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            <CardTitle className="text-xl">{question.title}</CardTitle>
-            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <User className="h-3 w-3" />
-                {question.userId}
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {question.createdAt ? formatDate(question.createdAt.toString()) : ''}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ContentRenderer contentHtml={question.content_html} />
-          </CardContent>
-        </Card>
+          {/* Question Card */}
+          <QuestionDetailCard question={question} currentUserId={currentUserId} />
 
-        <AnswerSection questionId={questionId} />
+          {/* Answer Section */}
+          <AnswerSection questionId={parseInt(questionId)} />
 
-        {question.answers && question.answers.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold">답변 {question.answers.length}개</h2>
-            {question.answers.map((answer) => (
-              <Card key={answer.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{answer.userId}</span>
-                          <Badge variant="default" className="bg-primary">
-                            {answer.role}
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {answer.createdAt ? formatDate(answer.createdAt.toString()) : ''}
-                        </div>
-                      </div>
-                      {/* <p className="whitespace-pre-line">{answer.content}</p> */}
-                      <div className="flex items-center gap-2 mt-4">
-                        <Button variant="outline" size="sm" className="gap-1">
-                          <ThumbsUp className="h-4 w-4" />
-                          도움이 됐어요 {answer.likes || 0}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Answers */}
+          <AnswerDetailList answerCount={question.answers?.length || 0}>
+            {question.answers?.map((answer: Answer, index: number) => (
+              <AnswerDetailCard key={answer.id ?? `answer-${index}`} answer={answer} currentUserId={currentUserId} />
             ))}
-          </div>
-        )}
+          </AnswerDetailList>
+        </div>
       </div>
     </div>
   );

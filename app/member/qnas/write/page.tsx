@@ -1,34 +1,54 @@
 'use client';
-
+// UI 컴포넌트들
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 
+// tag 관련 컴포넌트들
+import { TagSelect } from '@/components/qna/TagSelect';
+import { Tag } from '@/backend/domain/entities/TagEntity';
+
+// 훅들
 import { useRef, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { TagSelect } from '@/components/qna/TagSelect';
+
+// editor 관련 데이터
 import { initialValue } from '@/app/member/qnas/write/editorInitialValue';
 import { SerializedEditorState } from 'lexical';
-import { Tag } from '@/backend/domain/entities/TagEntity';
 import { getEditorHtmlFromJSON } from '@/lib/community/getEditorHtmlFromJSON';
-// Dynamically import the Editor component with no SSR
+
+// 질문 생성시 데이터 캐시 무효화
+import { QUESTIONS_QUERY_KEY } from '@/lib/constants/queryKeys';
+import { useQueryClient } from '@tanstack/react-query';
+
+// Editor 컴포넌트 SSR 비활성화
 const Editor = dynamic(() => import('@/components/blocks/editor-x/editor').then((mod) => mod.Editor), {
   ssr: false,
   loading: () => <div className="h-72 w-full animate-pulse rounded-lg bg-muted" />,
 });
 
+// 질문 작성 페이지
 export default function WritePage() {
-  const router = useRouter();
+  // 태그 선택 상태
   const [tags, setTags] = useState<Tag[]>([]);
+  // 제목 입력 상태
   const title = useRef<HTMLInputElement>(null);
+  // editor 상태
   const editorState = useRef<SerializedEditorState>(initialValue);
 
+  // 라우터, 쿼리 클라이언트
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  // 질문 작성 함수
   const handleSubmit = async (e: React.FormEvent) => {
     const htmlContent = getEditorHtmlFromJSON(editorState.current);
 
+    // 폼 제출 방지
     e.preventDefault();
     try {
+      // 질문 생성 요청
       const response = await fetch('/api/questions', {
         method: 'POST',
         headers: {
@@ -37,7 +57,7 @@ export default function WritePage() {
         body: JSON.stringify({
           title: title.current?.value,
           content: editorState.current,
-          content_html: htmlContent,
+          contentHTML: htmlContent,
           tags,
           userId: '20250522',
         }),
@@ -49,14 +69,19 @@ export default function WritePage() {
 
       const result = await response.json();
       console.log('Question created:', result);
-      router.push('/community');
+
+      // 무한 쿼리 완전히 리셋하고 새로고침
+      await queryClient.resetQueries({ queryKey: QUESTIONS_QUERY_KEY });
+
+      // 질문 탭이 활성화된 상태로 커뮤니티 페이지로 이동
+      router.push('/community?tab=qnas');
     } catch (error) {
       console.error('Error submitting question:', error);
     }
   };
 
   return (
-    <div className="container py-8">
+    <div className="container max-w-4xl py-8">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">질문 작성</h1>

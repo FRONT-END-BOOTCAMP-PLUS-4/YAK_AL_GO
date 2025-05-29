@@ -10,28 +10,28 @@ datasource db {
 
 model answers {
   id          Int       @id @default(autoincrement())
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @default(now())
-  deleted_at  DateTime?
-  is_accepted Boolean   @default(false)
-  userId      String
-  qnaId       Int
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  isAccepted  Boolean   @default(false) @map("is_accepted")
+  userId      String    @map("user_id") @db.Uuid
+  qnaId       Int       @map("qna_id")
   content     Json
-  content_html String?
+  contentHTML String?   @map("content_html")
   qnas        qnas      @relation(fields: [qnaId], references: [id])
   users       users     @relation(fields: [userId], references: [id])
 }
 
 model comments {
-  id         Int       @id @default(autoincrement())
-  content    String
-  created_at DateTime  @default(now())
-  updated_at DateTime  @default(now())
-  deleted_at DateTime?
-  userId     String
-  postId     Int
-  posts      posts     @relation(fields: [postId], references: [id])
-  users      users     @relation(fields: [userId], references: [id])
+  id        Int       @id @default(autoincrement())
+  content   String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  userId    String    @map("user_id") @db.Uuid
+  postId    Int       @map("post_id")
+  posts     posts     @relation(fields: [postId], references: [id])
+  users     users     @relation(fields: [userId], references: [id])
 }
 
 model healths {
@@ -57,35 +57,35 @@ model medi_times {
 }
 
 model medicines {
-  item_seq         String        @id
-  item_name        String        @db.VarChar(255)
-  entp_name        String?       @db.VarChar(255)
-  item_permit_date DateTime?
-  etc_otc_code     String?       @db.VarChar(50)
-  class_no         String?       @db.VarChar(100)
-  chart            String?
-  bar_code         String?       @db.VarChar(50)
-  material_name    String?
-  ee_doc_id        String?       @db.VarChar(255)
-  bizrno           String?       @db.VarChar(20)
-  cancel_date      DateTime?
-  cancel_name      String?       @db.VarChar(100)
-  change_date      DateTime?
-  created_at       DateTime      @default(now())
-  edi_code         String?       @db.VarChar(50)
-  insert_file      String?       @db.VarChar(255)
-  nb_doc_id        String?       @db.VarChar(255)
-  pack_unit        String?       @db.VarChar(255)
-  reexam_date      DateTime?
-  reexam_target    String?       @db.VarChar(255)
-  storage_method   String?       @db.VarChar(255)
-  type_code        String?       @db.VarChar(10)
-  type_name        String?       @db.VarChar(100)
-  ud_doc_id        String?       @db.VarChar(255)
-  updated_at       DateTime      @updatedAt
-  valid_term       String?       @db.VarChar(100)
-  inventories      inventories[]
-  user_medis       user_medis[]
+  item_seq                String                    @id
+  item_name               String                    @db.VarChar(255)
+  entp_name               String?                   @db.VarChar(255)
+  item_permit_date        DateTime?
+  etc_otc_code            String?                   @db.VarChar(50)
+  class_no                String?                   @db.VarChar(100)
+  chart                   String?
+  bar_code                String?                   @db.VarChar(50)
+  material_name           String?
+  ee_doc_id               String?                   @db.VarChar(255)
+  bizrno                  String?                   @db.VarChar(20)
+  cancel_date             DateTime?
+  cancel_name             String?                   @db.VarChar(100)
+  change_date             DateTime?
+  created_at              DateTime                  @default(now())
+  edi_code                String?                   @db.VarChar(50)
+  insert_file             String?                   @db.VarChar(255)
+  nb_doc_id               String?                   @db.VarChar(255)
+  pack_unit               String?                   @db.VarChar(255)
+  reexam_date             DateTime?
+  reexam_target           String?                   @db.VarChar(255)
+  storage_method          String?                   @db.VarChar(255)
+  type_code               String?                   @db.VarChar(10)
+  type_name               String?                   @db.VarChar(100)
+  ud_doc_id               String?                   @db.VarChar(255)
+  updated_at              DateTime                  @updatedAt
+  valid_term              String?                   @db.VarChar(100)
+  inventories inventories[]
+  user_medis  user_medis[]
 
   @@index([item_name])
   @@index([entp_name])
@@ -119,60 +119,60 @@ model pharmacies {
   users       users[]
 }
 
-model post_tags {
+model posts_tags {
   id     Int   @id @default(autoincrement())
-  tagId  Int
-  postId Int
+  tagId  Int   @map("tag_id")
+  postId Int   @map("post_id")
   posts  posts @relation(fields: [postId], references: [id])
   tags   tags  @relation(fields: [tagId], references: [id])
 }
 
 model posts {
-  id         Int         @id @default(autoincrement())
-  title      String      @db.VarChar(255)
-  created_at DateTime    @default(now())
-  updated_at DateTime    @default(now())
-  deleted_at DateTime?
-  userId     String
-  content    Json
-  content_html String?
-  comments   comments[]
-  post_tags  post_tags[]
-  users      users       @relation(fields: [userId], references: [id])
+  id          Int          @id @default(autoincrement())
+  title       String       @db.VarChar(255)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @default(now()) @map("updated_at")
+  deletedAt   DateTime?    @map("deleted_at")
+  userId      String       @map("user_id") @db.Uuid
+  content     Json
+  contentHTML String?      @map("content_html")
+  comments    comments[]
+  users       users        @relation(fields: [userId], references: [id])
+  postTags    posts_tags[]
 }
 
 model qna_tags {
   id    Int  @id @default(autoincrement())
-  tagId Int
-  qnaId Int
-  qnas  qnas @relation(fields: [qnaId], references: [id])
-  tags  tags @relation(fields: [tagId], references: [id])
+  tagId Int  @map("tag_id")
+  qnaId Int  @map("qna_id")
+  qnas  qnas @relation(fields: [qnaId], references: [id], onDelete: Cascade)
+  tags  tags @relation(fields: [tagId], references: [id], onDelete: Cascade)
 }
 
 model qnas {
-  id         Int        @id @default(autoincrement())
-  title      String     @db.VarChar(255)
-  created_at DateTime   @default(now())
-  updated_at DateTime   @default(now())
-  deleted_at DateTime?
-  userId     String
-  content    Json
-  content_html String?
-  answers    answers[]
-  qna_tags   qna_tags[]
-  users      users      @relation(fields: [userId], references: [id])
+  id          Int        @id @default(autoincrement())
+  title       String     @db.VarChar(255)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @default(now()) @map("updated_at")
+  deletedAt   DateTime?  @map("deleted_at")
+  userId      String     @map("user_id") @db.Uuid 
+  content     Json
+  contentHTML String?    @map("content_html")
+  answers     answers[]
+  qnaTags     qna_tags[]
+  users       users      @relation(fields: [userId], references: [id])
 }
 
 model tags {
-  id        Int         @id @default(autoincrement())
-  tag_name  String      @db.VarChar(100)
-  post_tags post_tags[]
-  qna_tags  qna_tags[]
+  id       Int          @id @default(autoincrement())
+  tagName  String       @db.VarChar(100)
+  postTags posts_tags[]
+  qnaTags  qna_tags[]
 }
 
 model user_healths {
   id       Int     @id @default(autoincrement())
-  userId   String
+  userId   String  @db.Uuid
   healthId Int
   healths  healths @relation(fields: [healthId], references: [id])
   users    users   @relation(fields: [userId], references: [id])
@@ -182,7 +182,7 @@ model user_medis {
   id         Int          @id @default(autoincrement())
   start_date DateTime?
   end_date   DateTime?
-  userId     String
+  userId     String     @db.Uuid
   itemSeq    String
   medi_times medi_times[]
   medicines  medicines    @relation(fields: [itemSeq], references: [item_seq])
@@ -190,13 +190,13 @@ model user_medis {
 }
 
 model users {
-  id           String         @id @default(uuid())
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String?        @unique @db.VarChar(255)
   photo        String?        @db.VarChar(255)
   name         String?        @db.VarChar(100)
   birthyear    Int?
   gender       String?        @db.VarChar(10)
-  member_type  Int
+  member_type  Int            @default(0) 
   created_at   DateTime       @default(now())
   deleted_at   DateTime?
   hpid         String?
