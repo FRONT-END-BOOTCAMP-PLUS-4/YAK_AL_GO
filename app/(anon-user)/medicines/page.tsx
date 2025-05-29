@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import CategoryIcon from '@/components/ui/CategoryIcon';
+import SearchModal from '@/components/medicines/SearchModal';
 import {
   Search,
   Filter,
@@ -56,6 +57,7 @@ export default function MedicinesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -173,20 +175,28 @@ export default function MedicinesPage() {
   }, [sortOrder, activeTab, currentPage, searchQuery, fetchMedicinesFromApi]);
 
   /**
-   * 검색어 입력 처리 함수
-   */
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
-  /**
    * 검색 실행 함수
    */
   const executeSearch = useCallback(() => {
     setCurrentPage(1);
     const category = CATEGORY_KEY_MAP[activeTab];
     fetchMedicinesFromApi(1, searchQuery.trim(), category);
+    setIsSearchModalOpen(false);
   }, [searchQuery, activeTab, fetchMedicinesFromApi]);
+
+  /**
+   * 검색 모달 열기
+   */
+  const openSearchModal = () => {
+    setIsSearchModalOpen(true);
+  };
+
+  /**
+   * 검색어 변경 핸들러
+   */
+  const handleSearchQueryChange = (query: string) => {
+    setSearchQuery(query);
+  };
 
   /**
    * 탭 변경 핸들러
@@ -316,64 +326,76 @@ export default function MedicinesPage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <div className="flex w-full items-center space-x-2">
-            <Input
-              type="text"
-              placeholder="약 이름, 성분, 제조사 검색"
-              value={searchQuery}
-              onChange={handleSearch}
-              onKeyPress={(e) => e.key === 'Enter' && executeSearch()}
-            />
-            <Button type="submit" size="icon" onClick={executeSearch}>
-              <Search className="h-4 w-4" />
-              <span className="sr-only">Search</span>
-            </Button>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex gap-2" onClick={handleSort}>
-              <ArrowUpDown className="h-4 w-4" />
-              {sortOrder === 'asc'
-                ? '가나다순 ↓'
-                : sortOrder === 'desc'
-                  ? '가나다순 ↑'
-                  : '가나다순'}
-            </Button>
-            <Button
-              variant="outline"
-              className={`flex gap-2 ${!hasActiveFilters() ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={handleResetFilters}
-              disabled={!hasActiveFilters()}
-            >
-              <RotateCcw className="h-4 w-4" />
-              초기화
-            </Button>
-          </div>
-        </div>
-
         <Tabs
           value={activeTab}
           defaultValue="all"
           className="w-full"
           onValueChange={handleTabChange}
         >
-          <TabsList>
+          <TabsList className="grid grid-cols-5 lg:grid-cols-9 gap-2 h-auto p-2 bg-transparent">
             {MAIN_CATEGORIES.map((category) => (
-              <TabsTrigger key={category.key} value={category.key}>
-                <div className="flex items-center gap-2">
+              <TabsTrigger
+                key={category.key}
+                value={category.key}
+                className="flex flex-col items-center gap-2 h-auto p-3 data-[state=active]:bg-primary/10 data-[state=active]:border-primary/20 rounded-lg"
+              >
+                <div className="flex flex-col items-center gap-1">
                   {category.key === 'all' ? (
-                    <span>{category.icon}</span>
+                    <span className="text-2xl">{category.icon}</span>
                   ) : (
-                    <CategoryIcon src={category.icon} alt={category.label} size="sm" />
+                    <CategoryIcon
+                      src={category.icon}
+                      alt={category.label}
+                      size={32}
+                      className="w-8 h-8"
+                    />
                   )}
-                  <span>{category.label}</span>
+                  <span className="text-xs font-medium leading-tight text-center">
+                    {category.label}
+                  </span>
                 </div>
               </TabsTrigger>
             ))}
           </TabsList>
 
+          <div className="flex justify-between items-center mt-4">
+            <Button variant="outline" onClick={openSearchModal} className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              {searchQuery ? `"${searchQuery}"로 검색됨` : '약 검색하기'}
+            </Button>
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex gap-2" onClick={handleSort}>
+                <ArrowUpDown className="h-4 w-4" />
+                {sortOrder === 'asc'
+                  ? '가나다순 ↓'
+                  : sortOrder === 'desc'
+                    ? '가나다순 ↑'
+                    : '가나다순'}
+              </Button>
+              <Button
+                variant="outline"
+                className={`flex gap-2 ${!hasActiveFilters() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={handleResetFilters}
+                disabled={!hasActiveFilters()}
+              >
+                <RotateCcw className="h-4 w-4" />
+                초기화
+              </Button>
+            </div>
+          </div>
+
+          {/* 검색 모달 */}
+          <SearchModal
+            isOpen={isSearchModalOpen}
+            onClose={() => setIsSearchModalOpen(false)}
+            searchQuery={searchQuery}
+            onSearchQueryChange={handleSearchQueryChange}
+            onSearch={executeSearch}
+          />
+
           {MAIN_CATEGORIES.map((category) => (
-            <TabsContent key={category.key} value={category.key} className="mt-4">
+            <TabsContent key={category.key} value={category.key} className="mt-8">
               {/* 로딩 상태와 콘텐츠를 자연스럽게 전환 */}
               <div className="relative min-h-[400px]">
                 {/* 로딩 상태 */}
