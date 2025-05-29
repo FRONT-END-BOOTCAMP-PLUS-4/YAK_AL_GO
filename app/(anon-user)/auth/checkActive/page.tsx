@@ -13,7 +13,7 @@ export default function CheckActivePage() {
 
     if (session?.user?.needsSignup) {
       // 회원가입이 필요한 경우
-      router.push("/auth/step1");
+      router.push("/auth/signup-step");
     } else {
       // 회원가입이 필요 없는 경우
       router.push("/");
