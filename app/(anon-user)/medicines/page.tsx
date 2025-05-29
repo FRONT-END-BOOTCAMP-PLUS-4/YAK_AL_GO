@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import CategoryIcon from '@/components/ui/CategoryIcon';
 import {
   Search,
   Filter,
@@ -17,6 +18,12 @@ import {
   ChevronRight,
   RotateCcw,
 } from 'lucide-react';
+import {
+  formatMedicineInfo,
+  MAIN_CATEGORIES,
+  CATEGORY_KEY_MAP,
+  type SimplifiedMedicine,
+} from '@/utils/medicineFormatter';
 
 /**
  * API 응답 타입 정의
@@ -35,28 +42,16 @@ interface ApiResponse {
   success: boolean;
   data: {
     medicines: MediBasicDto[];
-    hasMore: boolean;
-    nextCursor?: string;
-    totalCount?: number;
     currentPage: number;
     totalPages: number;
+    totalCount: number;
   };
 }
-
-/**
- * 카테고리 매핑
- */
-const CATEGORY_MAP: Record<string, string> = {
-  all: '전체',
-  painkillers: '진통제',
-  cold: '감기약',
-  digestive: '소화제',
-  antibiotics: '항생제',
-};
 
 export default function MedicinesPage() {
   // 상태 관리
   const [medicines, setMedicines] = useState<MediBasicDto[]>([]); // 현재 페이지 데이터
+  const [formattedMedicines, setFormattedMedicines] = useState<SimplifiedMedicine[]>([]); // 포맷된 데이터
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
@@ -104,17 +99,24 @@ export default function MedicinesPage() {
           );
 
           setMedicines(uniqueMedicines);
+
+          // 포맷팅 적용
+          const formatted = uniqueMedicines.map((medicine) => formatMedicineInfo(medicine));
+          setFormattedMedicines(formatted);
+
           setCurrentPage(result.data.currentPage || page);
           setTotalPages(result.data.totalPages || 1);
         } else {
           console.error('API 오류:', result);
           setMedicines([]);
+          setFormattedMedicines([]);
           setCurrentPage(1);
           setTotalPages(1);
         }
       } catch (error) {
         console.error('데이터 가져오기 오류:', error);
         setMedicines([]);
+        setFormattedMedicines([]);
         setCurrentPage(1);
         setTotalPages(1);
       } finally {
@@ -144,7 +146,7 @@ export default function MedicinesPage() {
 
       setCurrentPage(newPage);
 
-      const category = CATEGORY_MAP[activeTab];
+      const category = CATEGORY_KEY_MAP[activeTab];
       const sortBy =
         sortOrder === 'asc' ? 'name_asc' : sortOrder === 'desc' ? 'name_desc' : undefined;
 
@@ -161,21 +163,14 @@ export default function MedicinesPage() {
   /**
    * 정렬 처리 함수
    */
-  const handleSort = () => {
-    const newSortOrder = sortOrder === null || sortOrder === 'desc' ? 'asc' : 'desc';
+  const handleSort = useCallback(() => {
+    const newSortOrder = sortOrder === 'asc' ? 'desc' : sortOrder === 'desc' ? null : 'asc';
     setSortOrder(newSortOrder);
-
-    const category = CATEGORY_MAP[activeTab];
-    // 정렬 방향을 포함한 sortBy 값 전달
+    const category = CATEGORY_KEY_MAP[activeTab];
     const sortBy =
       newSortOrder === 'asc' ? 'name_asc' : newSortOrder === 'desc' ? 'name_desc' : undefined;
-
-    setCurrentPage(1);
-    fetchMedicinesFromApi(1, searchQuery, category, sortBy);
-
-    // 정렬 변경 시 상단으로 스크롤
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+    fetchMedicinesFromApi(currentPage, searchQuery.trim(), category, sortBy);
+  }, [sortOrder, activeTab, currentPage, searchQuery, fetchMedicinesFromApi]);
 
   /**
    * 검색어 입력 처리 함수
@@ -188,16 +183,10 @@ export default function MedicinesPage() {
    * 검색 실행 함수
    */
   const executeSearch = useCallback(() => {
-    const category = CATEGORY_MAP[activeTab];
-    const sortBy =
-      sortOrder === 'asc' ? 'name_asc' : sortOrder === 'desc' ? 'name_desc' : undefined;
-
     setCurrentPage(1);
-    fetchMedicinesFromApi(1, searchQuery, category, sortBy);
-
-    // 검색 실행 시 상단으로 스크롤
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeTab, sortOrder, searchQuery, fetchMedicinesFromApi]);
+    const category = CATEGORY_KEY_MAP[activeTab];
+    fetchMedicinesFromApi(1, searchQuery.trim(), category);
+  }, [searchQuery, activeTab, fetchMedicinesFromApi]);
 
   /**
    * 탭 변경 핸들러
@@ -205,17 +194,13 @@ export default function MedicinesPage() {
   const handleTabChange = useCallback(
     (newTab: string) => {
       setActiveTab(newTab);
-      const category = CATEGORY_MAP[newTab];
+      setCurrentPage(1);
+      const category = CATEGORY_KEY_MAP[newTab];
       const sortBy =
         sortOrder === 'asc' ? 'name_asc' : sortOrder === 'desc' ? 'name_desc' : undefined;
-
-      setCurrentPage(1);
-      fetchMedicinesFromApi(1, searchQuery, category, sortBy);
-
-      // 탭 변경 시 상단으로 스크롤
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      fetchMedicinesFromApi(1, searchQuery.trim(), category, sortBy);
     },
-    [sortOrder, searchQuery, fetchMedicinesFromApi]
+    [searchQuery, sortOrder, fetchMedicinesFromApi]
   );
 
   /**
@@ -280,31 +265,39 @@ export default function MedicinesPage() {
   /**
    * 의약품 카드 렌더링 함수
    */
-  const renderMedicineCard = (medicine: MediBasicDto, index: number) => (
+  const renderMedicineCard = (medicine: SimplifiedMedicine, index: number) => (
     <Link href={`/medicines/${medicine.itemSeq}`} key={`${medicine.itemSeq}-${index}`}>
-      <Card className="h-full overflow-hidden transition-all hover:shadow-md">
+      <Card className="hover:shadow-md transition-shadow cursor-pointer">
         <CardContent className="p-4">
           <div className="flex gap-4">
             <div className="flex-shrink-0">
               <img
                 src="/placeholder.svg?height=80&width=80"
-                alt={medicine.itemName}
+                alt={medicine.originalName}
                 width={80}
                 height={80}
                 className="rounded-md object-cover"
               />
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 flex-1">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm">{medicine.itemName}</h3>
+                <h3 className="font-bold text-sm" title={medicine.originalName}>
+                  {medicine.shortName}
+                </h3>
                 <Badge variant="outline" className="text-xs">
-                  {medicine.classNo?.replace(/\[.*?\]/, '') || '기타'}
+                  {medicine.category.display}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">{medicine.entpName}</p>
-              <p className="text-xs text-muted-foreground">{medicine.etcOtcCode || '의약품'}</p>
-              {medicine.chart && (
-                <p className="text-xs text-gray-600 line-clamp-2">{medicine.chart}</p>
+              <p className="text-sm text-muted-foreground" title={medicine.originalManufacturer}>
+                {medicine.shortManufacturer}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {medicines.find((m) => m.itemSeq === medicine.itemSeq)?.etcOtcCode || '의약품'}
+              </p>
+              {medicines.find((m) => m.itemSeq === medicine.itemSeq)?.chart && (
+                <p className="text-xs text-gray-600 line-clamp-2">
+                  {medicines.find((m) => m.itemSeq === medicine.itemSeq)?.chart}
+                </p>
               )}
             </div>
           </div>
@@ -365,15 +358,22 @@ export default function MedicinesPage() {
           onValueChange={handleTabChange}
         >
           <TabsList>
-            <TabsTrigger value="all">전체</TabsTrigger>
-            <TabsTrigger value="painkillers">진통제</TabsTrigger>
-            <TabsTrigger value="cold">감기약</TabsTrigger>
-            <TabsTrigger value="digestive">소화제</TabsTrigger>
-            <TabsTrigger value="antibiotics">항생제</TabsTrigger>
+            {MAIN_CATEGORIES.map((category) => (
+              <TabsTrigger key={category.key} value={category.key}>
+                <div className="flex items-center gap-2">
+                  {category.key === 'all' ? (
+                    <span>{category.icon}</span>
+                  ) : (
+                    <CategoryIcon src={category.icon} alt={category.label} size="sm" />
+                  )}
+                  <span>{category.label}</span>
+                </div>
+              </TabsTrigger>
+            ))}
           </TabsList>
 
-          {Object.keys(CATEGORY_MAP).map((tabValue) => (
-            <TabsContent key={tabValue} value={tabValue} className="mt-4">
+          {MAIN_CATEGORIES.map((category) => (
+            <TabsContent key={category.key} value={category.key} className="mt-4">
               {/* 로딩 상태와 콘텐츠를 자연스럽게 전환 */}
               <div className="relative min-h-[400px]">
                 {/* 로딩 상태 */}
@@ -391,8 +391,10 @@ export default function MedicinesPage() {
                   className={`transition-all duration-300 ease-in-out ${isLoading ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}
                 >
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {medicines.length > 0
-                      ? medicines.map((medicine, index) => renderMedicineCard(medicine, index))
+                    {formattedMedicines.length > 0
+                      ? formattedMedicines.map((medicine, index) =>
+                          renderMedicineCard(medicine, index)
+                        )
                       : !isLoading && (
                           <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
                             <p className="text-muted-foreground">검색 결과가 없습니다.</p>
@@ -401,7 +403,7 @@ export default function MedicinesPage() {
                   </div>
 
                   {/* 페이지네이션 */}
-                  {medicines.length > 0 && totalPages > 1 && (
+                  {formattedMedicines.length > 0 && totalPages > 1 && (
                     <div className="flex justify-center items-center gap-2 mt-8">
                       {/* 이전 페이지 버튼 */}
                       <Button
