@@ -36,8 +36,6 @@ const handler = NextAuth({
           token.needsSignup = false;
         } else {
           // 회원가입이 되어있지 않은 사용자 => 보류
-          // 사용자 별 토큰에 정보 입력 : 일반 step1 | 약사 step2
-          // 이후 사용자 정보는 토큰에 입력? 세션에 입력?
           token.needsSignup = true;
         }
         // 사용자 isActive 여부 판단 완료
@@ -65,7 +63,7 @@ const handler = NextAuth({
   },
   pages: {
     signIn: '/auth',
-    newUser: '/auth/step1',
+    newUser: '/auth/signup-step',
   },
 });
 

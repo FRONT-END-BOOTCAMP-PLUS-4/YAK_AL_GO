@@ -21,13 +21,14 @@ import ErrorMessage from "@/components/auth/ErrorMessage"
 import SignupMedicationStep from "@/components/auth/SignupMedicationStep"
 
 
-export default function SignupStep1Page() {
+export default function SignupStepPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
   const [userType, setUserType] = useState<"general" | "pharmacist">("general")
   const [error, setError] = useState("")
 
+  // 콘솔 로그
   console.log("Session data:", session)
 
   // 폼 상태 관리
@@ -50,35 +51,38 @@ export default function SignupStep1Page() {
     kidneyDisease : 0, // 0없음 7신장질환
   })
 
+ const [step, setStep] = useState(1)
 
 
-  // <폼 입력 핸들러>
+  // <핸들러>
+
   // 입력 필드 변경 핸들러
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const [step, setStep] = useState(1)
-  // 일반 회원일 경우에 다음 컴포넌트 로드드
+ 
+
+  // 일반 회원일 경우에 다음 컴포넌트 로드
  const handleNextButton = ()=>{
   if (!formData.birthyear) {
         setError("나이, 항목을 입력해주세요.")
         return
   }
-  
   setStep(2);
  }
 
+
+ // 약사일경우 hpid검증증
   const handleSubmit = async () => {
     console.log(formData);
-    // 폼 데이터 유효성 검사
     if( formData.member_type === 1 && !formData.hpid) {
       setError("약사 회원가입을 위해 약사 면허번호를 입력해주세요.");
       return
     }
 
-    // db에 회원가입 요청
+    // 완료 시 db에 회원가입 요청
     const response = await fetch('api/auth/signup', {
       method: 'POST',
       headers: {
@@ -91,7 +95,8 @@ export default function SignupStep1Page() {
       const data = await response.json();
       console.log("회원가입 성공:", data);
 
-      // data에 필요한 정보가지고 next-auth이용 토큰 추가 인코딩
+      // db에서 받은 response에 따라 세션 업데이트
+
       
       router.push('/auth/complete'); // 회원가입 완료 페이지로 이동
     } else {
@@ -100,17 +105,17 @@ export default function SignupStep1Page() {
       setError(errorData.message || "회원가입에 실패했습니다. 다시 시도해주세요.");
     }
   }
-
-
-
   
 if (status === "loading") {
     return <div>Loading...</div>  
   }
+
   return (
     <div className="container flex h-screen items-center justify-center">
       <Card className="w-full max-w-md">
+        {/* 헤더더 */}
         <CardHeader className="space-y-4">
+          {/* 단계 진행 컴포넌트 삽입, 복용약 경우엔 내장형 */}
           <ProgressIndicator userType={userType} step={step}/>
           <div className="flex items-center">
             <Button variant="ghost" size="icon" asChild className="mr-2">
@@ -123,6 +128,7 @@ if (status === "loading") {
             </CardTitle>
           </div>
         </CardHeader>
+        {/* 바디 */}
         <CardContent>
           <Tabs
             defaultValue={userType}
@@ -138,12 +144,13 @@ if (status === "loading") {
               <TabsTrigger value="general">일반 회원</TabsTrigger>
               <TabsTrigger value="pharmacist">약사</TabsTrigger>
             </TabsList>
-            {/* 일반회원 경우 */}
+            {/* 일반회원 경우 컴포넌트 */}
             <TabsContent value="general">
+              {/* step state에 따라 두개의 컴포넌트로 분리됨 */}
               {step === 1 ? <GeneralForm formData={formData} setFormData={setFormData} />
               : <SignupMedicationStep formData={formData} setFormData={setFormData} />}
             </TabsContent>
-            {/* 약사인 경우 */}
+            {/* 약사인 경우 컴포넌트*/}
             <TabsContent value="pharmacist">
               <PharmacistForm formData={formData} handleInputChange={handleInputChange} />
             </TabsContent>
