@@ -109,14 +109,14 @@ export default function MedicinesPage() {
           setCurrentPage(result.data.currentPage || page);
           setTotalPages(result.data.totalPages || 1);
         } else {
-          console.error('API 오류:', result);
+          console.error('❌ API 오류:', result);
           setMedicines([]);
           setFormattedMedicines([]);
           setCurrentPage(1);
           setTotalPages(1);
         }
       } catch (error) {
-        console.error('데이터 가져오기 오류:', error);
+        console.error('💥 데이터 가져오기 오류:', error);
         setMedicines([]);
         setFormattedMedicines([]);
         setCurrentPage(1);
@@ -177,12 +177,22 @@ export default function MedicinesPage() {
   /**
    * 검색 실행 함수
    */
-  const executeSearch = useCallback(() => {
-    setCurrentPage(1);
-    const category = CATEGORY_KEY_MAP[activeTab];
-    fetchMedicinesFromApi(1, searchQuery.trim(), category);
-    setIsSearchModalOpen(false);
-  }, [searchQuery, activeTab, fetchMedicinesFromApi]);
+  const executeSearch = useCallback(
+    (query?: string) => {
+      const searchTerm = query !== undefined ? query : searchQuery;
+
+      // 매개변수로 받은 검색어가 있으면 상태 업데이트
+      if (query !== undefined) {
+        setSearchQuery(query);
+      }
+
+      setCurrentPage(1);
+      const category = CATEGORY_KEY_MAP[activeTab];
+      fetchMedicinesFromApi(1, searchTerm.trim(), category);
+      setIsSearchModalOpen(false);
+    },
+    [searchQuery, activeTab, fetchMedicinesFromApi]
+  );
 
   /**
    * 검색 모달 열기
@@ -205,12 +215,18 @@ export default function MedicinesPage() {
     (newTab: string) => {
       setActiveTab(newTab);
       setCurrentPage(1);
+
+      // 카테고리 변경 시 검색어 초기화
+      setSearchQuery('');
+
       const category = CATEGORY_KEY_MAP[newTab];
       const sortBy =
         sortOrder === 'asc' ? 'name_asc' : sortOrder === 'desc' ? 'name_desc' : undefined;
-      fetchMedicinesFromApi(1, searchQuery.trim(), category, sortBy);
+
+      // 검색어 없이 해당 카테고리의 전체 데이터 로드
+      fetchMedicinesFromApi(1, '', category, sortBy);
     },
-    [searchQuery, sortOrder, fetchMedicinesFromApi]
+    [sortOrder, fetchMedicinesFromApi]
   );
 
   /**

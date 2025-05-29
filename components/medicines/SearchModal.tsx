@@ -10,7 +10,7 @@ interface SearchModalProps {
   onClose: () => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
-  onSearch: () => void;
+  onSearch: (query?: string) => void;
 }
 
 /**
@@ -34,7 +34,7 @@ const SearchModal = ({
 
   const handleSearch = () => {
     onSearchQueryChange(localQuery);
-    onSearch();
+    onSearch(localQuery);
     onClose();
   };
 
@@ -47,7 +47,7 @@ const SearchModal = ({
   const handleClear = () => {
     setLocalQuery('');
     onSearchQueryChange('');
-    onSearch();
+    onSearch('');
     onClose();
   };
 
