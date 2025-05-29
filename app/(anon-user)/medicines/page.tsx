@@ -337,7 +337,7 @@ export default function MedicinesPage() {
               <TabsTrigger
                 key={category.key}
                 value={category.key}
-                className="flex flex-col items-center gap-2 h-auto p-3 data-[state=active]:bg-primary/10 data-[state=active]:border-primary/20 rounded-lg"
+                className="flex flex-col items-center gap-2 h-auto p-3 data-[state=active]:bg-primary/10 data-[state=active]:border-primary/20 rounded-lg shadow-sm border-b border-gray-200/50 hover:shadow-md transition-shadow"
               >
                 <div className="flex flex-col items-center gap-1">
                   {category.key === 'all' ? (
@@ -359,7 +359,7 @@ export default function MedicinesPage() {
           </TabsList>
 
           <div className="flex justify-between items-center mt-4">
-            <Button variant="outline" onClick={openSearchModal} className="flex items-center gap-2">
+            <Button onClick={openSearchModal} className="flex items-center gap-2">
               <Search className="h-4 w-4" />
               {searchQuery ? `"${searchQuery}"로 검색됨` : '약 검색하기'}
             </Button>
