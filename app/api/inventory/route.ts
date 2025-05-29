@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaInventoryRepository } from '@/backend/domain/repositories/inventory/PrismaInventoryRepository';
-import { getInventoryByPharmacy } from '@/backend/application/usecases/inventory/getInventoryByPharmacy';
-import { addInventoryItem } from '@/backend/application/usecases/inventory/addInventoryItem';
-import { updateInventoryStock } from '@/backend/application/usecases/inventory/updateInventoryStock';
-import { deleteInventoryItem } from '@/backend/application/usecases/inventory/deleteInventoryItem';
+import { getInventoryByPharmacy } from '@/backend/application/usecases/inventory/GetInventoryByPharmacyUsecase';
+import { addInventoryItem } from '@/backend/application/usecases/inventory/AddInventoryItemUsecase';
+import { updateInventoryStock } from '@/backend/application/usecases/inventory/UpdateInventoryStockUsecase';
+import { deleteInventoryItem } from '@/backend/application/usecases/inventory/DeleteInventoryItemUsecase';
 
 const repository = new PrismaInventoryRepository();
 

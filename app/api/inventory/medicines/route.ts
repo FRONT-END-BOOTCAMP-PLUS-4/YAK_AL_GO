@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaInventoryRepository } from '@/backend/domain/repositories/inventory/PrismaInventoryRepository';
-import { getMedicinesList } from '@/backend/application/usecases/inventory/getMedicinesList';
+import { getMedicinesList } from '@/backend/application/usecases/inventory/GetMedicinesListUsecase';
 
 const repository = new PrismaInventoryRepository();
 
