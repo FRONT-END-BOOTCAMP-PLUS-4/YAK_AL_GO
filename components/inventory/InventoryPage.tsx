@@ -65,7 +65,7 @@ export default function InventoryPage() {
       item_seq: string;
       item_name: string;
       entp_name: string;
-      type_name: string;
+      class_no: string;
     }[]
   >([]);
   const [selectedItemSeq, setSelectedItemSeq] = useState<string>('');
@@ -76,7 +76,7 @@ export default function InventoryPage() {
       item_seq: string;
       item_name: string;
       entp_name: string;
-      type_name: string;
+      class_no: string;
     }[]
   >([]);
   const [companyFilter, setCompanyFilter] = useState<string[]>([]);
