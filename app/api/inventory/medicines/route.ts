@@ -1,18 +1,14 @@
-import prisma from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { PrismaInventoryRepository } from '@/backend/domain/repositories/inventory/PrismaInventoryRepository';
+import { getMedicinesList } from '@/backend/application/usecases/inventory/getMedicinesList';
+
+const repository = new PrismaInventoryRepository();
 
 export async function GET() {
-  const medicines = await prisma.medicines.findMany({
-    select: {
-      item_seq: true,
-      item_name: true,
-      entp_name: true,
-      class_no: true,
-    },
-    orderBy: {
-      item_name: "asc",
-    },
-  });
-
-  return NextResponse.json(medicines);
+  try {
+    const medicines = await getMedicinesList(repository);
+    return NextResponse.json(medicines);
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to load medicines' }, { status: 500 });
+  }
 }
