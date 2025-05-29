@@ -17,7 +17,7 @@ export class PrismaInventoryRepository implements InventoryRepository {
       itemSeq: r.itemSeq,
       name: r.medicines.item_name,
       company: r.medicines.entp_name || '',
-      type: r.medicines.type_name || '',
+      type: r.medicines.class_no || '',
       stock: r.quantity,
     }));
   }
@@ -51,7 +51,7 @@ export class PrismaInventoryRepository implements InventoryRepository {
         item_seq: true,
         item_name: true,
         entp_name: true,
-        type_name: true,
+        class_no: true,
       },
     });
 
