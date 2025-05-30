@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -104,10 +104,9 @@ const userProfile = {
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('profile');
-  const [medicationTimes, setMedicationTimes] = useState<Record<number, string[]>>({
-    1: ['09:00', '13:00', '19:00'],
-    2: ['08:00', '20:00'],
-    3: ['08:30', '13:30', '19:30'],
+  const [pharmacyInfo, setPharmacyInfo] = useState({
+    name: '',
+    address: '',
   });
   const { data: session } = useSession();
   const name = session?.user?.name ?? '';
@@ -121,20 +120,23 @@ export default function ProfilePage() {
   const needsSignup = session?.user?.needsSignup ?? '';
   const photo = session?.user?.photo ?? '';
 
-  const handleTimeToggle = (medicineId: number, time: string) => {
-    const currentTimes = medicationTimes[medicineId] || [];
-    if (currentTimes.includes(time)) {
-      setMedicationTimes({
-        ...medicationTimes,
-        [medicineId]: currentTimes.filter((t) => t !== time),
-      });
-    } else {
-      setMedicationTimes({
-        ...medicationTimes,
-        [medicineId]: [...currentTimes, time],
-      });
-    }
-  };
+  useEffect(() => {
+    const fetchPharmacyInfo = async () => {
+      if (member_type === 1 && hpid) {
+        try {
+          const response = await fetch(`/api/mypage?hpid=${hpid}`);
+          if (response.ok) {
+            const data = await response.json();
+            setPharmacyInfo(data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch pharmacy info:', error);
+        }
+      }
+    };
+
+    fetchPharmacyInfo();
+  }, [hpid, member_type]);
 
   return (
     <div className="container py-8">
@@ -230,14 +232,11 @@ export default function ProfilePage() {
                       <h3 className="text-lg font-medium mb-2">약국 정보</h3>
                       <div className="space-y-2">
                         <Label htmlFor="pharmacy-name">약국명</Label>
-                        <Input id="pharmacy-name" defaultValue={userProfile.pharmacyInfo.name} />
+                        <Input id="pharmacy-name" defaultValue={pharmacyInfo.name} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="pharmacy-address">약국 주소</Label>
-                        <Input
-                          id="pharmacy-address"
-                          defaultValue={userProfile.pharmacyInfo.address}
-                        />
+                        <Input id="pharmacy-address" defaultValue={pharmacyInfo.address} />
                       </div>
                     </>
                   )}
@@ -252,7 +251,9 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>복용 중인 약</CardTitle>
-                  <CardDescription>현재 복용 중인 약과 복용 기록을 관리할 수 있습니다.</CardDescription>
+                  <CardDescription>
+                    현재 복용 중인 약과 복용 기록을 관리할 수 있습니다.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="current">
