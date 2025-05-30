@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, X, User, MapPin, Search, MessageSquare } from 'lucide-react';
+import { Menu, User, MapPin, Search, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { useSession, signOut } from 'next-auth/react';
+
 const navigation = [
   { name: '홈', href: '/' },
   { name: '약 검색', href: '/medicines' },
@@ -18,9 +20,10 @@ const navigation = [
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-
-  // Mock authentication state - replace with actual auth
-  const isAuthenticated = false;
+  const { data: session } = useSession();
+  const name = session?.user?.name ?? '';
+  const photo = session?.user?.photo ?? '';
+  const isAuthenticated = !!session;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -39,7 +42,8 @@ export default function Header() {
                   <Link
                     href="/"
                     className="flex items-center gap-2 font-bold text-lg text-primary"
-                    onClick={() => setIsOpen(false)}>
+                    onClick={() => setIsOpen(false)}
+                  >
                     <Image src="/logo.png" alt="약알고" width={100} height={50} />
                   </Link>
                 </div>
@@ -51,9 +55,12 @@ export default function Header() {
                           href={item.href}
                           className={cn(
                             'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium',
-                            pathname === item.href ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                            pathname === item.href
+                              ? 'bg-primary text-primary-foreground'
+                              : 'hover:bg-muted'
                           )}
-                          onClick={() => setIsOpen(false)}>
+                          onClick={() => setIsOpen(false)}
+                        >
                           {item.name === '약 검색' && <Search className="h-4 w-4" />}
                           {item.name === '약국 찾기' && <MapPin className="h-4 w-4" />}
                           {item.name === '커뮤니티' && <MessageSquare className="h-4 w-4" />}
@@ -67,13 +74,14 @@ export default function Header() {
                   {isAuthenticated ? (
                     <div className="grid gap-2">
                       <Link
-                        href="/profile"
+                        href="/member"
                         className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
-                        onClick={() => setIsOpen(false)}>
+                        onClick={() => setIsOpen(false)}
+                      >
                         <User className="h-4 w-4" />
                         마이페이지
                       </Link>
-                      <Button variant="outline" className="w-full">
+                      <Button variant="outline" className="w-full" onClick={() => signOut()}>
                         로그아웃
                       </Button>
                     </div>
@@ -107,27 +115,32 @@ export default function Header() {
               className={cn(
                 'px-3 py-2 rounded-md text-sm font-medium transition-colors',
                 pathname === item.href ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-              )}>
+              )}
+            >
               {item.name}
             </Link>
           ))}
         </nav>
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
-            <Button asChild variant="ghost" size="icon">
-              <Link href="/profile">
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-RSc375mqZMwoKX2FpPgjORqaMwFLtg.png"
-                  alt="Profile"
-                  className="h-8 w-8"
-                />
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="ghost">
+                <Link href="/member">
+                  <span className="flex items-center gap-2">
+                    <img src={photo} alt="Profile" className="h-8 w-8 rounded-full" />
+                    <span className="text-sm font-medium">{name}</span>
+                  </span>
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => signOut()}>
+                로그아웃
+              </Button>
+            </div>
           ) : (
-            <Button asChild variant="ghost" size="icon">
-              <Link href="/auth">
+            <Button asChild variant="ghost">
+              <Link href="/auth" className="flex items-center gap-2">
                 <User className="h-6 w-6" />
-                <span className="sr-only">로그인/회원가입</span>
+                <span className="text-sm font-medium">로그인/회원가입</span>
               </Link>
             </Button>
           )}
