@@ -73,29 +73,24 @@ export default function Header() {
                 </nav>
                 <div className="border-t p-4">
                   {isAuthenticated ? (
-                    <div className="grid gap-2">
-                      <Link
-                        href="/member"
-                        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <User className="h-4 w-4" />
-                        마이페이지
-                      </Link>
+                    <div className="flex flex-col gap-2">
+                      <Button asChild variant="ghost" onClick={() => setIsOpen(false)}>
+                        <Link href="/member">
+                          <span className="flex items-center gap-2">
+                            <img src={photo} alt="Profile" className="h-8 w-8 rounded-full" />
+                            <span className="text-sm font-medium">{name}</span>
+                          </span>
+                        </Link>
+                      </Button>
                       <Button variant="outline" className="w-full" onClick={() => signOut()}>
                         로그아웃
                       </Button>
                     </div>
                   ) : (
-                    <div className="grid gap-2">
+                    <div>
                       <Button asChild className="w-full">
-                        <Link href="/login" onClick={() => setIsOpen(false)}>
-                          로그인
-                        </Link>
-                      </Button>
-                      <Button asChild variant="outline" className="w-full">
-                        <Link href="/register" onClick={() => setIsOpen(false)}>
-                          회원가입
+                        <Link href="/auth" onClick={() => setIsOpen(false)}>
+                          로그인/회원가입
                         </Link>
                       </Button>
                     </div>
