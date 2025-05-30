@@ -3,13 +3,21 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Pill, MessageSquare, User, Settings, Package, Heart, Store } from 'lucide-react';
+import { Pill, MessageSquare, User, Package, Store } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 // Mock data for user profile
 const userProfile = {
@@ -100,6 +108,17 @@ export default function ProfilePage() {
     2: ['08:00', '20:00'],
     3: ['08:30', '13:30', '19:30'],
   });
+  const { data: session } = useSession();
+  const name = session?.user?.name ?? '';
+  const birthyear = session?.user?.birthyear ?? '';
+  const created_at = session?.user?.created_at ?? '';
+  const email = session?.user?.email ?? '';
+  const hpid = session?.user?.hpid ?? '';
+  const id = session?.user?.id ?? '';
+  const image = session?.user?.image ?? '';
+  const member_type = session?.user?.member_type ?? '';
+  const needsSignup = session?.user?.needsSignup ?? '';
+  const photo = session?.user?.photo ?? '';
 
   const handleTimeToggle = (medicineId: number, time: string) => {
     const currentTimes = medicationTimes[medicineId] || [];
@@ -121,7 +140,9 @@ export default function ProfilePage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">마이알고</h1>
-          <p className="text-muted-foreground">내 정보와 복용 중인 약, 건강 상태 등을 관리하세요.</p>
+          <p className="text-muted-foreground">
+            내 정보와 복용 중인 약, 건강 상태 등을 관리하세요.
+          </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-[250px_1fr]">
@@ -129,63 +150,46 @@ export default function ProfilePage() {
             <CardContent className="p-6">
               <div className="flex flex-col items-center gap-4">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src="/placeholder.svg?height=96&width=96" alt={userProfile.name} />
-                  <AvatarFallback>{userProfile.name.slice(0, 2)}</AvatarFallback>
+                  <AvatarImage src={image} alt={name} />
                 </Avatar>
                 <div className="text-center">
-                  <h2 className="text-xl font-bold">{userProfile.name}</h2>
-                  <p className="text-sm text-muted-foreground">{userProfile.email}</p>
-                  <Badge className="mt-2">{userProfile.role}</Badge>
+                  <h2 className="text-xl font-bold">{name}</h2>
+                  <p className="text-sm text-muted-foreground">{email}</p>
+                  <Badge className="mt-2">
+                    {member_type === 0 ? '일반사용자' : member_type === 1 ? '약사' : '알 수 없음'}
+                  </Badge>
                 </div>
                 <div className="w-full border-t pt-4 mt-2">
                   <nav className="grid gap-1">
                     <Button
                       variant={activeTab === 'profile' ? 'default' : 'ghost'}
                       className="justify-start"
-                      onClick={() => setActiveTab('profile')}>
+                      onClick={() => setActiveTab('profile')}
+                    >
                       <User className="mr-2 h-4 w-4" />내 정보
                     </Button>
                     <Button
                       variant={activeTab === 'medicines' ? 'default' : 'ghost'}
                       className="justify-start"
-                      onClick={() => setActiveTab('medicines')}>
+                      onClick={() => setActiveTab('medicines')}
+                    >
                       <Pill className="mr-2 h-4 w-4" />
                       복용 중인 약
                     </Button>
                     <Button
-                      variant={activeTab === 'health' ? 'default' : 'ghost'}
-                      className="justify-start"
-                      onClick={() => setActiveTab('health')}>
-                      <Package className="mr-2 h-4 w-4" />
-                      건강 상태
-                    </Button>
-                    <Button
                       variant={activeTab === 'posts' ? 'default' : 'ghost'}
                       className="justify-start"
-                      onClick={() => setActiveTab('posts')}>
+                      onClick={() => setActiveTab('posts')}
+                    >
                       <MessageSquare className="mr-2 h-4 w-4" />내 게시글
-                    </Button>
-                    <Button
-                      variant={activeTab === 'favorites' ? 'default' : 'ghost'}
-                      className="justify-start"
-                      onClick={() => setActiveTab('favorites')}>
-                      <Heart className="mr-2 h-4 w-4" />
-                      관심 게시글
-                    </Button>
-                    <Button
-                      variant={activeTab === 'settings' ? 'default' : 'ghost'}
-                      className="justify-start"
-                      onClick={() => setActiveTab('settings')}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      설정
                     </Button>
 
                     {/* 약사인 경우에만 재고 관리 버튼 표시 */}
-                    {userProfile.isPharmacist && (
+                    {member_type === 1 && (
                       <>
                         <div className="h-px bg-border my-2"></div>
                         <Button variant="default" className="justify-start mt-2" asChild>
-                          <Link href="/pharmacy/inventory">
+                          <Link href="/member/inventory">
                             <Store className="mr-2 h-4 w-4" />
                             약국 재고 관리
                           </Link>
@@ -203,32 +207,19 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>내 정보</CardTitle>
-                  <CardDescription>개인 정보를 확인하고 수정할 수 있습니다.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">이름</Label>
-                    <Input id="name" defaultValue={userProfile.name} />
+                    <Input id="name" defaultValue={name} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">이메일</Label>
-                    <Input id="email" defaultValue={userProfile.email} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nickname">닉네임</Label>
-                    <Input id="nickname" defaultValue="약알고유저" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">비밀번호</Label>
-                    <Input id="password" type="password" placeholder="새 비밀번호" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password-confirm">비밀번호 확인</Label>
-                    <Input id="password-confirm" type="password" placeholder="비밀번호 확인" />
+                    <Input id="email" defaultValue={email} />
                   </div>
 
                   {/* 약사인 경우 약국 정보 표시 */}
-                  {userProfile.isPharmacist && (
+                  {member_type === 1 && (
                     <>
                       <div className="h-px bg-border my-4"></div>
                       <h3 className="text-lg font-medium mb-2">약국 정보</h3>
@@ -238,17 +229,16 @@ export default function ProfilePage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="pharmacy-address">약국 주소</Label>
-                        <Input id="pharmacy-address" defaultValue={userProfile.pharmacyInfo.address} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="license-number">약사 면허 번호</Label>
-                        <Input id="license-number" defaultValue={userProfile.pharmacyInfo.licenseNumber} />
+                        <Input
+                          id="pharmacy-address"
+                          defaultValue={userProfile.pharmacyInfo.address}
+                        />
                       </div>
                     </>
                   )}
                 </CardContent>
                 <CardFooter>
-                  <Button className="ml-auto">저장</Button>
+                  <Button className="ml-auto">회원 탈퇴</Button>
                 </CardFooter>
               </Card>
             )}
@@ -257,7 +247,6 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>복용 중인 약</CardTitle>
-                  <CardDescription>현재 복용 중인 약과 복용 기록을 관리할 수 있습니다.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="current">
@@ -275,30 +264,12 @@ export default function ProfilePage() {
                                 <div className="flex items-start justify-between">
                                   <div>
                                     <h3 className="font-bold">{medicine.name}</h3>
-                                    <p className="text-sm text-muted-foreground">{medicine.dosage}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {medicine.dosage}
+                                    </p>
                                     <p className="text-sm mt-1">
                                       {medicine.startDate} ~ {medicine.endDate}
                                     </p>
-                                    <div className="mt-2">
-                                      <p className="text-sm font-medium mb-1">복용 시간</p>
-                                      <div className="flex flex-wrap gap-1">
-                                        {Array.from({ length: 24 }).map((_, i) => {
-                                          const time = `${i.toString().padStart(2, '0')}:00`;
-                                          return (
-                                            <Button
-                                              key={i}
-                                              variant={
-                                                medicationTimes[medicine.id]?.includes(time) ? 'default' : 'outline'
-                                              }
-                                              size="sm"
-                                              className="h-8 px-2 text-xs"
-                                              onClick={() => handleTimeToggle(medicine.id, time)}>
-                                              {time}
-                                            </Button>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
                                   </div>
                                   <Button variant="outline" size="sm">
                                     복용 완료
@@ -320,7 +291,9 @@ export default function ProfilePage() {
                                 <div className="flex items-start justify-between">
                                   <div>
                                     <h3 className="font-bold">{medicine.name}</h3>
-                                    <p className="text-sm text-muted-foreground">{medicine.dosage}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {medicine.dosage}
+                                    </p>
                                     <p className="text-sm mt-1">
                                       {medicine.startDate} ~ {medicine.endDate}
                                     </p>
@@ -337,41 +310,10 @@ export default function ProfilePage() {
               </Card>
             )}
 
-            {activeTab === 'health' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>건강 상태</CardTitle>
-                  <CardDescription>건강 상태와 질병 정보를 관리할 수 있습니다.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {userProfile.health.map((condition) => (
-                      <Card key={condition.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h3 className="font-bold">{condition.name}</h3>
-                              <p className="text-sm text-muted-foreground">{condition.since}부터</p>
-                              <p className="text-sm mt-1">복용 약: {condition.medication}</p>
-                            </div>
-                            <Button variant="outline" size="sm">
-                              수정
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    <Button className="w-full">건강 정보 추가</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {activeTab === 'posts' && (
               <Card>
                 <CardHeader>
                   <CardTitle>내 게시글</CardTitle>
-                  <CardDescription>내가 작성한 질문과 게시글을 확인할 수 있습니다.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="expert">
@@ -431,97 +373,6 @@ export default function ProfilePage() {
                     </TabsContent>
                   </Tabs>
                 </CardContent>
-              </Card>
-            )}
-
-            {activeTab === 'favorites' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>관심 게시글</CardTitle>
-                  <CardDescription>내가 관심 표시한 게시글을 확인할 수 있습니다.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {userProfile.favorites.map((question) => (
-                      <Link href={`/qna/${question.id}`} key={question.id}>
-                        <Card className="transition-all hover:shadow-md">
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h3 className="font-bold">{question.title}</h3>
-                                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                                  <div>{question.date}</div>
-                                  <div>답변 {question.answers}개</div>
-                                </div>
-                              </div>
-                              <Badge
-                                variant={question.type === 'expert' ? 'default' : 'outline'}
-                                className={question.type === 'expert' ? 'bg-primary' : ''}>
-                                {question.type === 'expert' ? '전문가 Q&A' : '커뮤니티'}
-                              </Badge>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {activeTab === 'settings' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>설정</CardTitle>
-                  <CardDescription>계정 설정 및 알림 설정을 관리할 수 있습니다.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="notifications">알림 설정</Label>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="email-notifications"
-                        className="h-4 w-4 rounded border-gray-300"
-                        defaultChecked
-                      />
-                      <Label htmlFor="email-notifications">이메일 알림</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="push-notifications"
-                        className="h-4 w-4 rounded border-gray-300"
-                        defaultChecked
-                      />
-                      <Label htmlFor="push-notifications">푸시 알림</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="medication-notifications"
-                        className="h-4 w-4 rounded border-gray-300"
-                        defaultChecked
-                      />
-                      <Label htmlFor="medication-notifications">약 복용 알림</Label>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="language">언어 설정</Label>
-                    <select
-                      id="language"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                      <option value="ko">한국어</option>
-                      <option value="en">English</option>
-                    </select>
-                  </div>
-                  <div className="pt-4 border-t">
-                    <Button variant="destructive">계정 삭제</Button>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button className="ml-auto">저장</Button>
-                </CardFooter>
               </Card>
             )}
           </div>
