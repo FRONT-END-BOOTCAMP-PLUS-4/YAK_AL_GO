@@ -1,5 +1,6 @@
-import { Question, QuestionResponse } from '@/backend/domain/entities/QuestionEntity';
-import { Tag } from '@/backend/domain/entities/TagEntity';
+import { Question, QuestionResponse } from '@/backend/domain/entities/Question';
+import { Tag } from '@/backend/domain/entities/Tag';
+import { User } from '@/backend/domain/entities/User';
 import {
   PaginationParams,
   PaginatedQuestions,
@@ -44,6 +45,15 @@ export class PrismaQuestionRepository implements QuestionRepository {
     const question = await this.prisma.qnas.findUnique({
       where: { id },
       include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
         qnaTags: {
           include: {
             tags: true,
@@ -56,10 +66,13 @@ export class PrismaQuestionRepository implements QuestionRepository {
             contentHTML: true,
             createdAt: true,
             updatedAt: true,
+            userId: true,
             users: {
               select: {
                 id: true,
                 name: true,
+                email: true,
+                photo: true,
                 member_type: true,
               },
             },
@@ -78,8 +91,28 @@ export class PrismaQuestionRepository implements QuestionRepository {
       createdAt: question.createdAt,
       updatedAt: question.updatedAt,
       userId: question.userId,
+      user: question.users
+        ? new User({
+            id: question.users.id,
+            name: question.users.name,
+            email: question.users.email,
+            image: question.users.photo || '',
+            member_type: question.users.member_type,
+          })
+        : undefined,
       tags: question.qnaTags?.map((qt: any) => new Tag({ id: qt.tags.id, name: qt.tags.tagName })),
-      answers: question.answers,
+      answers: question.answers?.map((a: any) => ({
+        ...a,
+        user: a.users
+          ? new User({
+              id: a.users.id,
+              name: a.users.name,
+              email: a.users.email,
+              image: a.users.photo || '',
+              member_type: a.users.member_type,
+            })
+          : undefined,
+      })),
     });
   }
 
@@ -94,6 +127,15 @@ export class PrismaQuestionRepository implements QuestionRepository {
         take: limit + 1, // fetch one extra to determine if there are more items
         skip,
         include: {
+          users: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              photo: true,
+              member_type: true,
+            },
+          },
           qnaTags: {
             include: {
               tags: true,
@@ -123,7 +165,13 @@ export class PrismaQuestionRepository implements QuestionRepository {
             content: q.content,
             createdAt: q.createdAt,
             updatedAt: q.updatedAt,
-            userId: q.userId,
+            user: new User({
+              id: q.users.id,
+              name: q.users.name,
+              email: q.users.email,
+              image: q.users.photo || '',
+              member_type: q.users.member_type,
+            }),
             tags: q.qnaTags?.map((qt: any) => new Tag({ id: qt.tags.id, name: qt.tags.tagName })),
             answerCount: q._count.answers,
           })

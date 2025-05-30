@@ -4,18 +4,6 @@ import { Clock } from 'lucide-react';
 import { formatDate } from '@/lib/community/formatDate';
 import { CommentOptionDropdown } from '@/components/post/CommentOptionDropdown';
 
-// Mock profile images for demonstration
-const mockProfileImages = [
-  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-];
-
-const getRandomProfileImage = () => {
-  return mockProfileImages[Math.floor(Math.random() * mockProfileImages.length)];
-};
-
 interface CommentDetailCardProps {
   comment: {
     id?: number | undefined;
@@ -25,6 +13,7 @@ interface CommentDetailCardProps {
     users?: {
       id: string;
       name?: string;
+      image?: string;
       member_type?: number;
     };
   };
@@ -40,7 +29,7 @@ export function CommentDetailCard({ comment, currentUserId }: CommentDetailCardP
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={getRandomProfileImage()} alt="User profile" />
+                <AvatarImage src={comment.users?.image || ''} alt="User profile" />
                 <AvatarFallback className="bg-green-100 text-green-700 text-xs font-semibold">
                   {comment.users?.name?.charAt(0)?.toUpperCase() || comment.userId?.charAt(0)?.toUpperCase() || 'U'}
                 </AvatarFallback>

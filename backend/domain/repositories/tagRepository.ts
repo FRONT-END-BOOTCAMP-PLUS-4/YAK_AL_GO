@@ -1,4 +1,4 @@
-import { Tag } from '@/backend/domain/entities/TagEntity';
+import { Tag } from '@/backend/domain/entities/Tag';
 import { CreateTagDto } from '@/backend/application/usecases/tag/dto/TagDto';
 
 export interface TagRepository {

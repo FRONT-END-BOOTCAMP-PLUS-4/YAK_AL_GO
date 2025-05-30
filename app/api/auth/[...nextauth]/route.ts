@@ -34,6 +34,7 @@ export const authOptions: NextAuthOptions = {
           token.created_at = dbUser.created_at;
           token.hpid = dbUser.hpid;
           token.needsSignup = false;
+          token.id = dbUser.id;
         } else {
           // 회원가입이 되어있지 않은 사용자 => 보류
           token.needsSignup = true;
@@ -55,6 +56,7 @@ export const authOptions: NextAuthOptions = {
       session.user.created_at = token.created_at as Date;
       session.user.hpid = token.hpid as string;
       session.user.needsSignup = Boolean(token.needsSignup ?? false);
+
       return session;
     },
   },

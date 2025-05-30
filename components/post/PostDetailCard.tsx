@@ -5,24 +5,19 @@ import { formatDate } from '@/lib/community/formatDate';
 import { ContentRenderer } from '@/components/qna/ContentRenderer';
 import { PostOptionDropdown } from '@/components/post/PostOptionDropdown';
 
-// Mock profile images for demonstration
-const mockProfileImages = [
-  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-];
-
-const getRandomProfileImage = () => {
-  return mockProfileImages[Math.floor(Math.random() * mockProfileImages.length)];
-};
-
 interface PostDetailCardProps {
   post: {
     id?: number | undefined;
     title: string;
     contentHTML: string;
-    userId: string;
+    user?: {
+      id: string;
+      name: string;
+      email?: string;
+      image: string;
+      member_type?: number;
+    };
+    userId?: string; // 백워드 호환성을 위해 유지
     createdAt?: Date | undefined;
     tags?: Array<{
       id?: number | undefined;
@@ -56,20 +51,22 @@ export function PostDetailCard({ post, currentUserId }: PostDetailCardProps) {
             {/* User info */}
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={getRandomProfileImage()} alt="User profile" />
+                <AvatarImage src={post.user?.image} alt="User profile" />
                 <AvatarFallback className="bg-green-600/10 text-green-600 text-xs font-semibold">
-                  {post.userId?.charAt(0)?.toUpperCase() || 'U'}
+                  {post.user?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{post.userId}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{post.user?.name}</span>
                 <span className="text-xs text-gray-500">작성자</span>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               {/* Post Actions - Only visible to post owner */}
-              {post.userId === currentUserId && post.id && <PostOptionDropdown postId={post.id} />}
+              {(post.user?.id === currentUserId || post.userId === currentUserId) && post.id && (
+                <PostOptionDropdown postId={post.id} />
+              )}
             </div>
           </div>
         </div>

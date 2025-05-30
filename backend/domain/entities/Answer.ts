@@ -1,3 +1,5 @@
+import { User } from './User';
+
 export class Answer {
   id?: number;
   content: any;
@@ -6,6 +8,7 @@ export class Answer {
   updatedAt?: Date;
   deletedAt?: Date | null;
   userId: string;
+  user?: User;
   qnaId: number;
 
   constructor(props: {
@@ -16,6 +19,7 @@ export class Answer {
     updatedAt?: Date;
     deletedAt?: Date | null;
     userId: string;
+    user?: User;
     qnaId: number;
   }) {
     this.id = props.id;
@@ -25,6 +29,7 @@ export class Answer {
     this.updatedAt = props.updatedAt;
     this.deletedAt = props.deletedAt;
     this.userId = props.userId;
+    this.user = props.user;
     this.qnaId = props.qnaId;
   }
 }

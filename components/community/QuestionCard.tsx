@@ -14,7 +14,13 @@ interface QuestionCardProps {
     title: string;
     content: any;
     tags?: TagResponseDto[];
-    userId: string;
+    user: {
+      id: string;
+      name: string;
+      email?: string;
+      image: string;
+      member_type?: number;
+    };
     createdAt: string;
     answerCount: number;
   };
@@ -25,10 +31,13 @@ export const QuestionCard = ({ qna }: QuestionCardProps) => {
 
   // Mockup user profile image - 실제 구현시 유저 데이터에서 가져올 예정
   const getUserInitials = (userId: string) => {
+    if (!userId || typeof userId !== 'string') {
+      return 'UN'; // Unknown user의 줄임말
+    }
     return userId.slice(0, 2).toUpperCase();
   };
 
-  const mockProfileImage = `https://api.dicebear.com/7.x/avataaars/svg?seed=${qna.userId}`;
+  const mockProfileImage = qna.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${qna.user.id}`;
 
   return (
     <Link href={`community/qnas/${qna.id}`} className="block">
@@ -75,13 +84,13 @@ export const QuestionCard = ({ qna }: QuestionCardProps) => {
               {/* User info */}
               <div className="flex items-center gap-2">
                 <Avatar className="h-7 w-7">
-                  <AvatarImage src={mockProfileImage} alt={qna.userId} />
+                  <AvatarImage src={mockProfileImage} alt={qna.user.id} />
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                    {getUserInitials(qna.userId)}
+                    {getUserInitials(qna.user.id)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
-                  <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{qna.userId}</span>
+                  <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{qna.user.name}</span>
                   <span className="text-xs text-gray-500">질문자</span>
                 </div>
               </div>

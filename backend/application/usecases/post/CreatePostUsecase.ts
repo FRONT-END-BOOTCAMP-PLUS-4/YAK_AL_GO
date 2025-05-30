@@ -1,4 +1,4 @@
-import { Post } from '@/backend/domain/entities/PostEntity';
+import { Post } from '@/backend/domain/entities/Post';
 import { PostRepository } from '@/backend/domain/repositories/PostRepository';
 import { CreatePostDto, PostResponseDto } from '@/backend/application/usecases/post/dto/PostDto';
 

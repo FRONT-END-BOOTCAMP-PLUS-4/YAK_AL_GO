@@ -1,5 +1,6 @@
-import { Post, PostResponse } from '@/backend/domain/entities/PostEntity';
-import { Tag } from '@/backend/domain/entities/TagEntity';
+import { Post, PostResponse } from '@/backend/domain/entities/Post';
+import { Tag } from '@/backend/domain/entities/Tag';
+import { User } from '@/backend/domain/entities/User';
 import { PaginationParams, PaginatedPosts, PostRepository } from '@/backend/domain/repositories/PostRepository';
 import { PrismaClient } from '@prisma/client';
 
@@ -40,6 +41,15 @@ export class PrismaPostRepository implements PostRepository {
     const post = await this.prisma.posts.findUnique({
       where: { id },
       include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
         postTags: {
           include: {
             tags: true,
@@ -51,10 +61,13 @@ export class PrismaPostRepository implements PostRepository {
             content: true,
             createdAt: true,
             updatedAt: true,
+            userId: true,
             users: {
               select: {
                 id: true,
                 name: true,
+                email: true,
+                photo: true,
                 member_type: true,
               },
             },
@@ -73,8 +86,28 @@ export class PrismaPostRepository implements PostRepository {
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
       userId: post.userId,
+      user: post.users
+        ? new User({
+            id: post.users.id,
+            name: post.users.name,
+            email: post.users.email,
+            image: post.users.photo || '',
+            member_type: post.users.member_type,
+          })
+        : undefined,
       tags: post.postTags?.map((pt: any) => new Tag({ id: pt.tags.id, name: pt.tags.tagName })),
-      comments: post.comments,
+      comments: post.comments?.map((c: any) => ({
+        ...c,
+        user: c.users
+          ? new User({
+              id: c.users.id,
+              name: c.users.name,
+              email: c.users.email,
+              image: c.users.photo || '',
+              member_type: c.users.member_type,
+            })
+          : undefined,
+      })),
     });
   }
 
@@ -89,6 +122,15 @@ export class PrismaPostRepository implements PostRepository {
         take: limit + 1, // fetch one extra to determine if there are more items
         skip,
         include: {
+          users: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              photo: true,
+              member_type: true,
+            },
+          },
           postTags: {
             include: {
               tags: true,
@@ -118,7 +160,13 @@ export class PrismaPostRepository implements PostRepository {
             content: p.content,
             createdAt: p.createdAt,
             updatedAt: p.updatedAt,
-            userId: p.userId,
+            user: new User({
+              id: p.users.id,
+              name: p.users.name,
+              email: p.users.email,
+              image: p.users.photo || '',
+              member_type: p.users.member_type,
+            }),
             tags: p.postTags?.map((pt: any) => new Tag({ id: pt.tags.id, name: pt.tags.tagName })),
             commentCount: p._count.comments,
           })

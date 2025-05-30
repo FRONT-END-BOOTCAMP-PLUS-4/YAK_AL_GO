@@ -1,4 +1,4 @@
-import { Comment } from '@/backend/domain/entities/CommentEntity';
+import { Comment } from '@/backend/domain/entities/Comment';
 import { CommentRepository } from '@/backend/domain/repositories/CommentRepository';
 import { CommentResponseDto } from '@/backend/application/usecases/post/dto/CommentDto';
 import { CreateCommentDto } from '@/backend/application/usecases/post/dto/CommentDto';

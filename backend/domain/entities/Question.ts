@@ -1,7 +1,8 @@
-import { Tag } from './TagEntity';
-import { Comment } from './CommentEntity';
+import { Tag } from './Tag';
+import { Answer } from './Answer';
+import { User } from './User';
 
-export class Post {
+export class Question {
   id?: number;
   title: string;
   content: any; // JSON type
@@ -9,9 +10,10 @@ export class Post {
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;
-  userId: string;
   tags?: Tag[];
-  comments?: Comment[];
+  answers?: Answer[];
+  userId?: string;
+  user?: User;
 
   constructor(props: {
     id?: number;
@@ -21,9 +23,10 @@ export class Post {
     createdAt?: Date;
     updatedAt?: Date;
     deletedAt?: Date | null;
-    userId: string;
     tags?: Tag[];
-    comments?: Comment[];
+    answers?: Answer[];
+    userId?: string;
+    user?: User;
   }) {
     this.id = props.id;
     this.title = props.title;
@@ -32,21 +35,22 @@ export class Post {
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
     this.deletedAt = props.deletedAt;
-    this.userId = props.userId;
     this.tags = props.tags;
-    this.comments = props.comments;
+    this.answers = props.answers;
+    this.userId = props.userId;
+    this.user = props.user;
   }
 }
 
-export class PostResponse {
+export class QuestionResponse {
   id: number;
   title: string;
   content: any;
   createdAt: Date;
   updatedAt: Date;
-  userId: string;
+  user: User;
   tags: Tag[];
-  commentCount: number;
+  answerCount: number;
 
   constructor(props: {
     id: number;
@@ -54,17 +58,17 @@ export class PostResponse {
     content: any;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
+    user: User;
     tags: Tag[];
-    commentCount: number;
+    answerCount: number;
   }) {
     this.id = props.id;
     this.title = props.title;
     this.content = props.content;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
-    this.userId = props.userId;
+    this.user = props.user;
     this.tags = props.tags;
-    this.commentCount = props.commentCount;
+    this.answerCount = props.answerCount;
   }
 }

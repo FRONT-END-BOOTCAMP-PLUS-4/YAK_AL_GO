@@ -1,5 +1,5 @@
-import { Question, QuestionResponse } from '@/backend/domain/entities/QuestionEntity';
-import { Tag } from '@/backend/domain/entities/TagEntity';
+import { Question, QuestionResponse } from '@/backend/domain/entities/Question';
+import { Tag } from '@/backend/domain/entities/Tag';
 
 export interface PaginationParams {
   page: number;
