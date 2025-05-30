@@ -16,7 +16,14 @@ export interface PostResponseDto {
   contentHTML: string;
   createdAt?: Date;
   updatedAt?: Date;
-  userId: string;
+  userId?: string;
+  user?: {
+    id: string;
+    name: string;
+    email?: string;
+    image: string;
+    member_type?: number;
+  };
   tags?: TagResponseDto[];
   comments: CommentResponseDto[];
 }

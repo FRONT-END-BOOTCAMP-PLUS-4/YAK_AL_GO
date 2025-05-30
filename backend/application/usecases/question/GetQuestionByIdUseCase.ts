@@ -19,8 +19,33 @@ export class GetQuestionByIdUseCase {
       createdAt: question.createdAt,
       updatedAt: question.updatedAt,
       userId: question.userId,
+      user: question.user
+        ? {
+            id: question.user.id,
+            name: question.user.name,
+            email: question.user.email,
+            image: question.user.image,
+            member_type: question.user.member_type,
+          }
+        : undefined,
       tags: question.tags || [],
-      answers: question.answers || [],
+      answers:
+        question.answers?.map((answer) => ({
+          id: answer.id,
+          content: answer.content,
+          contentHTML: answer.contentHTML,
+          userId: answer.userId,
+          questionId: id,
+          createdAt: answer.createdAt,
+          updatedAt: answer.updatedAt,
+          users: answer.user
+            ? {
+                id: answer.user.id,
+                name: answer.user.name,
+                member_type: answer.user.member_type || 0,
+              }
+            : undefined,
+        })) || [],
     };
     return questionDto;
   }
