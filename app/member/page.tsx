@@ -1,120 +1,120 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Pill, MessageSquare, User, Settings, Package, Heart, Store } from "lucide-react"
+import { useState } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Pill, MessageSquare, User, Settings, Package, Heart, Store } from 'lucide-react';
 
 // Mock data for user profile
 const userProfile = {
-  name: "홍길동",
-  email: "user@example.com",
-  role: "일반 회원", // "일반 회원" or "약사"
-  joinDate: "2023-01-15",
+  name: '홍길동',
+  email: 'user@example.com',
+  role: '일반 회원', // "일반 회원" or "약사"
+  joinDate: '2023-01-15',
   medicines: [
     {
       id: 1,
-      name: "타이레놀",
-      dosage: "1일 3회, 1회 1정",
-      startDate: "2023-05-01",
-      endDate: "2023-05-10",
+      name: '타이레놀',
+      dosage: '1일 3회, 1회 1정',
+      startDate: '2023-05-01',
+      endDate: '2023-05-10',
       active: false,
-      times: ["09:00", "13:00", "19:00"],
+      times: ['09:00', '13:00', '19:00'],
     },
     {
       id: 2,
-      name: "판피린",
-      dosage: "1일 2회, 1회 1정",
-      startDate: "2023-05-05",
-      endDate: "2023-05-15",
+      name: '판피린',
+      dosage: '1일 2회, 1회 1정',
+      startDate: '2023-05-05',
+      endDate: '2023-05-15',
       active: true,
-      times: ["08:00", "20:00"],
+      times: ['08:00', '20:00'],
     },
     {
       id: 3,
-      name: "베아제",
-      dosage: "식후 30분, 1회 1정",
-      startDate: "2023-05-08",
-      endDate: "계속",
+      name: '베아제',
+      dosage: '식후 30분, 1회 1정',
+      startDate: '2023-05-08',
+      endDate: '계속',
       active: true,
-      times: ["08:30", "13:30", "19:30"],
+      times: ['08:30', '13:30', '19:30'],
     },
   ],
   health: [
     {
       id: 1,
-      name: "고혈압",
-      since: "2022-01",
-      medication: "혈압약",
+      name: '고혈압',
+      since: '2022-01',
+      medication: '혈압약',
     },
     {
       id: 2,
-      name: "알레르기",
-      since: "2020-03",
-      medication: "항히스타민제",
+      name: '알레르기',
+      since: '2020-03',
+      medication: '항히스타민제',
     },
   ],
   questions: [
     {
       id: 1,
-      title: "타이레놀과 아스피린을 함께 복용해도 될까요?",
-      date: "2023-05-10",
+      title: '타이레놀과 아스피린을 함께 복용해도 될까요?',
+      date: '2023-05-10',
       answers: 2,
-      type: "expert",
+      type: 'expert',
     },
     {
       id: 2,
-      title: "혈압약 부작용 경험 공유해주세요.",
-      date: "2023-05-03",
+      title: '혈압약 부작용 경험 공유해주세요.',
+      date: '2023-05-03',
       answers: 5,
-      type: "community",
+      type: 'community',
     },
   ],
   favorites: [
     {
       id: 3,
-      title: "항생제 복용 후 유산균 섭취 시간",
-      date: "2023-05-05",
+      title: '항생제 복용 후 유산균 섭취 시간',
+      date: '2023-05-05',
       answers: 1,
-      type: "expert",
+      type: 'expert',
     },
   ],
   isPharmacist: true, // 약사 여부 (재고 관리 버튼 표시 여부)
   pharmacyInfo: {
-    name: "건강약국",
-    address: "서울시 강남구 역삼동 123-45",
-    licenseNumber: "12345678",
+    name: '건강약국',
+    address: '서울시 강남구 역삼동 123-45',
+    licenseNumber: '12345678',
   },
-}
+};
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState("profile")
+  const [activeTab, setActiveTab] = useState('profile');
   const [medicationTimes, setMedicationTimes] = useState<Record<number, string[]>>({
-    1: ["09:00", "13:00", "19:00"],
-    2: ["08:00", "20:00"],
-    3: ["08:30", "13:30", "19:30"],
-  })
+    1: ['09:00', '13:00', '19:00'],
+    2: ['08:00', '20:00'],
+    3: ['08:30', '13:30', '19:30'],
+  });
 
   const handleTimeToggle = (medicineId: number, time: string) => {
-    const currentTimes = medicationTimes[medicineId] || []
+    const currentTimes = medicationTimes[medicineId] || [];
     if (currentTimes.includes(time)) {
       setMedicationTimes({
         ...medicationTimes,
         [medicineId]: currentTimes.filter((t) => t !== time),
-      })
+      });
     } else {
       setMedicationTimes({
         ...medicationTimes,
         [medicineId]: [...currentTimes, time],
-      })
+      });
     }
-  }
+  };
 
   return (
     <div className="container py-8">
@@ -140,48 +140,42 @@ export default function ProfilePage() {
                 <div className="w-full border-t pt-4 mt-2">
                   <nav className="grid gap-1">
                     <Button
-                      variant={activeTab === "profile" ? "default" : "ghost"}
+                      variant={activeTab === 'profile' ? 'default' : 'ghost'}
                       className="justify-start"
-                      onClick={() => setActiveTab("profile")}
-                    >
+                      onClick={() => setActiveTab('profile')}>
                       <User className="mr-2 h-4 w-4" />내 정보
                     </Button>
                     <Button
-                      variant={activeTab === "medicines" ? "default" : "ghost"}
+                      variant={activeTab === 'medicines' ? 'default' : 'ghost'}
                       className="justify-start"
-                      onClick={() => setActiveTab("medicines")}
-                    >
+                      onClick={() => setActiveTab('medicines')}>
                       <Pill className="mr-2 h-4 w-4" />
                       복용 중인 약
                     </Button>
                     <Button
-                      variant={activeTab === "health" ? "default" : "ghost"}
+                      variant={activeTab === 'health' ? 'default' : 'ghost'}
                       className="justify-start"
-                      onClick={() => setActiveTab("health")}
-                    >
+                      onClick={() => setActiveTab('health')}>
                       <Package className="mr-2 h-4 w-4" />
                       건강 상태
                     </Button>
                     <Button
-                      variant={activeTab === "posts" ? "default" : "ghost"}
+                      variant={activeTab === 'posts' ? 'default' : 'ghost'}
                       className="justify-start"
-                      onClick={() => setActiveTab("posts")}
-                    >
+                      onClick={() => setActiveTab('posts')}>
                       <MessageSquare className="mr-2 h-4 w-4" />내 게시글
                     </Button>
                     <Button
-                      variant={activeTab === "favorites" ? "default" : "ghost"}
+                      variant={activeTab === 'favorites' ? 'default' : 'ghost'}
                       className="justify-start"
-                      onClick={() => setActiveTab("favorites")}
-                    >
+                      onClick={() => setActiveTab('favorites')}>
                       <Heart className="mr-2 h-4 w-4" />
                       관심 게시글
                     </Button>
                     <Button
-                      variant={activeTab === "settings" ? "default" : "ghost"}
+                      variant={activeTab === 'settings' ? 'default' : 'ghost'}
                       className="justify-start"
-                      onClick={() => setActiveTab("settings")}
-                    >
+                      onClick={() => setActiveTab('settings')}>
                       <Settings className="mr-2 h-4 w-4" />
                       설정
                     </Button>
@@ -205,7 +199,7 @@ export default function ProfilePage() {
           </Card>
 
           <div>
-            {activeTab === "profile" && (
+            {activeTab === 'profile' && (
               <Card>
                 <CardHeader>
                   <CardTitle>내 정보</CardTitle>
@@ -259,7 +253,7 @@ export default function ProfilePage() {
               </Card>
             )}
 
-            {activeTab === "medicines" && (
+            {activeTab === 'medicines' && (
               <Card>
                 <CardHeader>
                   <CardTitle>복용 중인 약</CardTitle>
@@ -289,20 +283,19 @@ export default function ProfilePage() {
                                       <p className="text-sm font-medium mb-1">복용 시간</p>
                                       <div className="flex flex-wrap gap-1">
                                         {Array.from({ length: 24 }).map((_, i) => {
-                                          const time = `${i.toString().padStart(2, "0")}:00`
+                                          const time = `${i.toString().padStart(2, '0')}:00`;
                                           return (
                                             <Button
                                               key={i}
                                               variant={
-                                                medicationTimes[medicine.id]?.includes(time) ? "default" : "outline"
+                                                medicationTimes[medicine.id]?.includes(time) ? 'default' : 'outline'
                                               }
                                               size="sm"
                                               className="h-8 px-2 text-xs"
-                                              onClick={() => handleTimeToggle(medicine.id, time)}
-                                            >
+                                              onClick={() => handleTimeToggle(medicine.id, time)}>
                                               {time}
                                             </Button>
-                                          )
+                                          );
                                         })}
                                       </div>
                                     </div>
@@ -344,7 +337,7 @@ export default function ProfilePage() {
               </Card>
             )}
 
-            {activeTab === "health" && (
+            {activeTab === 'health' && (
               <Card>
                 <CardHeader>
                   <CardTitle>건강 상태</CardTitle>
@@ -374,7 +367,7 @@ export default function ProfilePage() {
               </Card>
             )}
 
-            {activeTab === "posts" && (
+            {activeTab === 'posts' && (
               <Card>
                 <CardHeader>
                   <CardTitle>내 게시글</CardTitle>
@@ -389,7 +382,7 @@ export default function ProfilePage() {
                     <TabsContent value="expert" className="mt-4">
                       <div className="space-y-4">
                         {userProfile.questions
-                          .filter((q) => q.type === "expert")
+                          .filter((q) => q.type === 'expert')
                           .map((question) => (
                             <Link href={`/qna/${question.id}`} key={question.id}>
                               <Card className="transition-all hover:shadow-md">
@@ -415,7 +408,7 @@ export default function ProfilePage() {
                     <TabsContent value="community" className="mt-4">
                       <div className="space-y-4">
                         {userProfile.questions
-                          .filter((q) => q.type === "community")
+                          .filter((q) => q.type === 'community')
                           .map((question) => (
                             <Link href={`/qna/${question.id}`} key={question.id}>
                               <Card className="transition-all hover:shadow-md">
@@ -441,7 +434,7 @@ export default function ProfilePage() {
               </Card>
             )}
 
-            {activeTab === "favorites" && (
+            {activeTab === 'favorites' && (
               <Card>
                 <CardHeader>
                   <CardTitle>관심 게시글</CardTitle>
@@ -462,10 +455,9 @@ export default function ProfilePage() {
                                 </div>
                               </div>
                               <Badge
-                                variant={question.type === "expert" ? "default" : "outline"}
-                                className={question.type === "expert" ? "bg-primary" : ""}
-                              >
-                                {question.type === "expert" ? "전문가 Q&A" : "커뮤니티"}
+                                variant={question.type === 'expert' ? 'default' : 'outline'}
+                                className={question.type === 'expert' ? 'bg-primary' : ''}>
+                                {question.type === 'expert' ? '전문가 Q&A' : '커뮤니티'}
                               </Badge>
                             </div>
                           </CardContent>
@@ -477,7 +469,7 @@ export default function ProfilePage() {
               </Card>
             )}
 
-            {activeTab === "settings" && (
+            {activeTab === 'settings' && (
               <Card>
                 <CardHeader>
                   <CardTitle>설정</CardTitle>
@@ -518,8 +510,7 @@ export default function ProfilePage() {
                     <Label htmlFor="language">언어 설정</Label>
                     <select
                       id="language"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                       <option value="ko">한국어</option>
                       <option value="en">English</option>
                     </select>
@@ -537,5 +528,5 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
