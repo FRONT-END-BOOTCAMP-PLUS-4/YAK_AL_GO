@@ -331,29 +331,53 @@ export const CATEGORY_STATS: Record<string, number> = {
 // ==================== 이미지 선택 함수 ====================
 
 /**
- * 사용 가능한 의약품 이미지 목록
+ * 연고/크림 전용 이미지
  */
-const MEDICINE_IMAGES = [
-  '/mediImg/1.svg',
-  '/mediImg/2.svg',
-  '/mediImg/3.svg',
-  '/mediImg/4.svg',
-  '/mediImg/5.svg',
+const OINTMENT_IMAGE = '/mediImg/Ointment_Tube.png';
+
+/**
+ * 일반 의약품 이미지 목록 (연고/크림 제외)
+ */
+const GENERAL_MEDICINE_IMAGES = [
+  '/mediImg/Blister_Pack.png',
+  '/mediImg/HDPE_Bottle.png',
+  '/mediImg/Heart_Capsule.png',
+  '/mediImg/Oval_Capsule.png',
+  '/mediImg/Pill_Bottle.png',
+  '/mediImg/Two-Piece_Capsule.png',
 ];
 
 /**
- * 의약품 ID를 기반으로 일관된 이미지 선택
- * 같은 의약품은 항상 동일한 이미지가 표시됨
+ * chart 정보를 확인하여 연고/크림 여부 판단
+ * @param chart 의약품 성상 정보
+ * @returns 연고/크림 여부
+ */
+function isOintmentOrCream(chart?: string): boolean {
+  if (!chart) return false;
+
+  const lowerChart = chart.toLowerCase();
+  return lowerChart.includes('로션') || lowerChart.includes('크림');
+}
+
+/**
+ * 의약품 정보를 기반으로 적절한 이미지 선택
+ * chart에 "로션" 또는 "크림"이 포함되면 연고 이미지, 그 외에는 랜덤 이미지
  * @param itemSeq 의약품 고유 ID
+ * @param chart 의약품 성상 정보
  * @returns 선택된 이미지 경로
  */
-export function selectMedicineImage(itemSeq: string): string {
-  // itemSeq의 숫자 부분을 추출하여 해시값 생성
+export function selectMedicineImage(itemSeq: string, chart?: string): string {
+  // 연고/크림인 경우 전용 이미지 사용
+  if (isOintmentOrCream(chart)) {
+    return OINTMENT_IMAGE;
+  }
+
+  // 일반 의약품은 ID 기반으로 랜덤 선택 (일관성 보장)
   const numericPart = itemSeq.replace(/\D/g, ''); // 숫자만 추출
   const hash = numericPart ? Number.parseInt(numericPart, 10) : 0;
 
-  // 이미지 개수로 나눈 나머지로 인덱스 결정
-  const imageIndex = hash % MEDICINE_IMAGES.length;
+  // 일반 이미지 개수로 나눈 나머지로 인덱스 결정
+  const imageIndex = hash % GENERAL_MEDICINE_IMAGES.length;
 
-  return MEDICINE_IMAGES[imageIndex];
+  return GENERAL_MEDICINE_IMAGES[imageIndex];
 }
