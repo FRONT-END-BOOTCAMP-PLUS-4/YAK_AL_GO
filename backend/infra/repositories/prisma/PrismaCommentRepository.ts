@@ -1,4 +1,5 @@
-import { Comment } from '@/backend/domain/entities/CommentEntity';
+import { Comment } from '@/backend/domain/entities/Comment';
+import { User } from '@/backend/domain/entities/User';
 import { CommentRepository } from '@/backend/domain/repositories/CommentRepository';
 import { PrismaClient } from '@prisma/client';
 
@@ -11,6 +12,17 @@ export class PrismaCommentRepository implements CommentRepository {
         content: comment.content,
         userId: comment.userId,
         postId: comment.postId,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
       },
     });
     return this.mapToEntity(created);
@@ -25,6 +37,8 @@ export class PrismaCommentRepository implements CommentRepository {
           select: {
             id: true,
             name: true,
+            email: true,
+            photo: true,
             member_type: true,
           },
         },
@@ -41,6 +55,15 @@ export class PrismaCommentRepository implements CommentRepository {
       updatedAt: prismaComment.updatedAt,
       deletedAt: prismaComment.deletedAt,
       userId: prismaComment.userId,
+      user: prismaComment.users
+        ? new User({
+            id: prismaComment.users.id,
+            name: prismaComment.users.name,
+            email: prismaComment.users.email,
+            image: prismaComment.users.photo || '',
+            member_type: prismaComment.users.member_type,
+          })
+        : undefined,
       postId: prismaComment.postId,
     });
   }

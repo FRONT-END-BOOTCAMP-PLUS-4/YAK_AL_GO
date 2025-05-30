@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaQuestionRepository } from '@/backend/infra/repositories/prisma/PrismaQuestionRepository';
 import { CreateQuestionDto } from '@/backend/application/usecases/question/dto/QuestionDto';
-import { CreateQuestionUseCase } from '@/backend/application/usecases/question/CreateQuestionUsecase';
+import { CreateQuestionUseCase } from '@/backend/application/usecases/question/CreateQuestionUseCase';
 import { GetAllQuestionsUseCase } from '@/backend/application/usecases/question/GetAllQuestionsUsecase';
 import prisma from '@/lib/prisma';
+
+import { getToken } from 'next-auth/jwt';
 
 const questionRepository = new PrismaQuestionRepository(prisma);
 const createQuestionUseCase = new CreateQuestionUseCase(questionRepository);
@@ -11,13 +13,19 @@ const getAllQuestionsUseCase = new GetAllQuestionsUseCase(questionRepository);
 
 export async function POST(request: NextRequest) {
   try {
+    const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
+    if (!token || !token.id) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
+
     const dto: CreateQuestionDto = {
       title: body.title,
       content: body.content,
       contentHTML: body.contentHTML,
       tags: body.tags,
-      userId: body.userId,
+      userId: token.id as string,
     };
 
     const result = await createQuestionUseCase.execute(dto);

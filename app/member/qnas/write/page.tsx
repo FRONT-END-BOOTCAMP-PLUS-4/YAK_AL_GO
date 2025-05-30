@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 // tag 관련 컴포넌트들
 import { TagSelect } from '@/components/qna/TagSelect';
-import { Tag } from '@/backend/domain/entities/TagEntity';
+import { Tag } from '@/backend/domain/entities/Tag';
 
 // 훅들
 import { useRef, useState, Suspense } from 'react';
@@ -59,7 +59,6 @@ export default function WritePage() {
           content: editorState.current,
           contentHTML: htmlContent,
           tags,
-          userId: '20250522',
         }),
       });
 

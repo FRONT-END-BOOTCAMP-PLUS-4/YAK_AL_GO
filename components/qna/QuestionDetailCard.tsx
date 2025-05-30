@@ -5,24 +5,19 @@ import { formatDate } from '@/lib/community/formatDate';
 import { ContentRenderer } from '@/components/qna/ContentRenderer';
 import { QuestionOptionDropdown } from '@/components/qna/QuestionOptionDropdown';
 
-// Mock profile images for demonstration
-const mockProfileImages = [
-  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-];
-
-const getRandomProfileImage = () => {
-  return mockProfileImages[Math.floor(Math.random() * mockProfileImages.length)];
-};
-
 interface QuestionDetailCardProps {
   question: {
     id?: number | undefined;
     title: string;
     contentHTML: string;
-    userId: string;
+    user?: {
+      id: string;
+      name: string;
+      email?: string;
+      image: string;
+      member_type?: number;
+    };
+    userId?: string; // 백워드 호환성을 위해 유지
     createdAt?: Date | undefined;
     tags?: Array<{
       id?: number | undefined;
@@ -56,20 +51,22 @@ export function QuestionDetailCard({ question, currentUserId }: QuestionDetailCa
             {/* User info */}
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={getRandomProfileImage()} alt="User profile" />
+                <AvatarImage src={question.user?.image} alt="User profile" />
                 <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                  {question.userId?.charAt(0)?.toUpperCase() || 'U'}
+                  {question.user?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{question.userId}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{question.user?.name}</span>
                 <span className="text-xs text-gray-500">질문자</span>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               {/* Question Actions - Only visible to question owner */}
-              {question.userId === currentUserId && question.id && <QuestionOptionDropdown questionId={question.id} />}
+              {(question.user?.id === currentUserId || question.userId === currentUserId) && question.id && (
+                <QuestionOptionDropdown questionId={question.id} />
+              )}
             </div>
           </div>
         </div>

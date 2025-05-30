@@ -1,5 +1,5 @@
-import { Post, PostResponse } from '@/backend/domain/entities/PostEntity';
-import { Tag } from '@/backend/domain/entities/TagEntity';
+import { Post, PostResponse } from '@/backend/domain/entities/Post';
+import { Tag } from '@/backend/domain/entities/Tag';
 
 export interface PaginationParams {
   page: number;

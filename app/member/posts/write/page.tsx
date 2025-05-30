@@ -59,7 +59,6 @@ export default function WritePage() {
           content: editorState.current,
           contentHTML: htmlContent,
           tags,
-          userId: '20250522',
         }),
       });
 

@@ -1,7 +1,8 @@
-import { Tag } from './TagEntity';
-import { Answer } from './AnswerEntity';
+import { Tag } from './Tag';
+import { Comment } from './Comment';
+import { User } from './User';
 
-export class Question {
+export class Post {
   id?: number;
   title: string;
   content: any; // JSON type
@@ -10,8 +11,9 @@ export class Question {
   updatedAt?: Date;
   deletedAt?: Date | null;
   userId: string;
+  user?: User;
   tags?: Tag[];
-  answers?: Answer[];
+  comments?: Comment[];
 
   constructor(props: {
     id?: number;
@@ -22,8 +24,9 @@ export class Question {
     updatedAt?: Date;
     deletedAt?: Date | null;
     userId: string;
+    user?: User;
     tags?: Tag[];
-    answers?: Answer[];
+    comments?: Comment[];
   }) {
     this.id = props.id;
     this.title = props.title;
@@ -33,20 +36,21 @@ export class Question {
     this.updatedAt = props.updatedAt;
     this.deletedAt = props.deletedAt;
     this.userId = props.userId;
+    this.user = props.user;
     this.tags = props.tags;
-    this.answers = props.answers;
+    this.comments = props.comments;
   }
 }
 
-export class QuestionResponse {
+export class PostResponse {
   id: number;
   title: string;
   content: any;
   createdAt: Date;
   updatedAt: Date;
-  userId: string;
+  user: User;
   tags: Tag[];
-  answerCount: number;
+  commentCount: number;
 
   constructor(props: {
     id: number;
@@ -54,17 +58,17 @@ export class QuestionResponse {
     content: any;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
+    user: User;
     tags: Tag[];
-    answerCount: number;
+    commentCount: number;
   }) {
     this.id = props.id;
     this.title = props.title;
     this.content = props.content;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
-    this.userId = props.userId;
+    this.user = props.user;
     this.tags = props.tags;
-    this.answerCount = props.answerCount;
+    this.commentCount = props.commentCount;
   }
 }

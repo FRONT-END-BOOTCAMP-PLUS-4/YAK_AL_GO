@@ -1,4 +1,4 @@
-import { Answer } from '@/backend/domain/entities/AnswerEntity';
+import { Answer } from '@/backend/domain/entities/Answer';
 import { AnswerRepository } from '@/backend/domain/repositories/AnswerRepository';
 import { AnswerResponseDto } from '@/backend/application/usecases/question/dto/AnswerDto';
 import { CreateAnswerDto } from '@/backend/application/usecases/question/dto/AnswerDto';

@@ -1,4 +1,4 @@
-import { Question } from '@/backend/domain/entities/QuestionEntity';
+import { Question } from '@/backend/domain/entities/Question';
 import { QuestionRepository } from '@/backend/domain/repositories/QuestionRepository';
 import { CreateQuestionDto, QuestionResponseDto } from '@/backend/application/usecases/question/dto/QuestionDto';
 
@@ -17,6 +17,7 @@ export class CreateQuestionUseCase {
     if (created.id) {
       await this.questionRepository.addTags(created.id, dto.tags);
     }
+
     return {
       id: created.id,
       title: created.title,
