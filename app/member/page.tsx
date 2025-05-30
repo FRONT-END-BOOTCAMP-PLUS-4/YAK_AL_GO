@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -138,11 +139,14 @@ export default function ProfilePage() {
   return (
     <div className="container py-8">
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold">마이알고</h1>
-          <p className="text-muted-foreground">
-            내 정보와 복용 중인 약, 건강 상태 등을 관리하세요.
-          </p>
+        <div className="flex items-center gap-4">
+          <Image src="/character.svg" alt="약알고" width={40} height={40} />
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl font-bold">마이알고</h1>
+            <p className="text-muted-foreground">
+              내 정보와 복용 중인 약, 건강 상태 등을 관리하세요.
+            </p>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-[250px_1fr]">
@@ -207,6 +211,7 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>내 정보</CardTitle>
+                  <CardDescription>개인 정보를 확인하고 수정할 수 있습니다.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
@@ -247,6 +252,7 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>복용 중인 약</CardTitle>
+                  <CardDescription>현재 복용 중인 약과 복용 기록을 관리할 수 있습니다.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="current">
@@ -314,6 +320,7 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>내 게시글</CardTitle>
+                  <CardDescription>내가 작성한 질문과 게시글을 확인할 수 있습니다.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="expert">
