@@ -12,12 +12,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Pill, MessageSquare, User, Package, Store } from 'lucide-react';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { Pill, MessageSquare, User, Store } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 interface Medicine {
@@ -27,87 +26,13 @@ interface Medicine {
   active: boolean;
 }
 
-// Mock data for user profile
-const userProfile = {
-  name: '홍길동',
-  email: 'user@example.com',
-  role: '일반 회원', // "일반 회원" or "약사"
-  joinDate: '2023-01-15',
-  medicines: [
-    {
-      id: 1,
-      name: '타이레놀',
-      dosage: '1일 3회, 1회 1정',
-      startDate: '2023-05-01',
-      endDate: '2023-05-10',
-      active: false,
-      times: ['09:00', '13:00', '19:00'],
-    },
-    {
-      id: 2,
-      name: '판피린',
-      dosage: '1일 2회, 1회 1정',
-      startDate: '2023-05-05',
-      endDate: '2023-05-15',
-      active: true,
-      times: ['08:00', '20:00'],
-    },
-    {
-      id: 3,
-      name: '베아제',
-      dosage: '식후 30분, 1회 1정',
-      startDate: '2023-05-08',
-      endDate: '계속',
-      active: true,
-      times: ['08:30', '13:30', '19:30'],
-    },
-  ],
-  health: [
-    {
-      id: 1,
-      name: '고혈압',
-      since: '2022-01',
-      medication: '혈압약',
-    },
-    {
-      id: 2,
-      name: '알레르기',
-      since: '2020-03',
-      medication: '항히스타민제',
-    },
-  ],
-  questions: [
-    {
-      id: 1,
-      title: '타이레놀과 아스피린을 함께 복용해도 될까요?',
-      date: '2023-05-10',
-      answers: 2,
-      type: 'expert',
-    },
-    {
-      id: 2,
-      title: '혈압약 부작용 경험 공유해주세요.',
-      date: '2023-05-03',
-      answers: 5,
-      type: 'community',
-    },
-  ],
-  favorites: [
-    {
-      id: 3,
-      title: '항생제 복용 후 유산균 섭취 시간',
-      date: '2023-05-05',
-      answers: 1,
-      type: 'expert',
-    },
-  ],
-  isPharmacist: true, // 약사 여부 (재고 관리 버튼 표시 여부)
-  pharmacyInfo: {
-    name: '건강약국',
-    address: '서울시 강남구 역삼동 123-45',
-    licenseNumber: '12345678',
-  },
-};
+interface Post {
+  id: number;
+  title: string;
+  date: string;
+  answers: number;
+  type: 'expert' | 'community';
+}
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -116,6 +41,7 @@ export default function ProfilePage() {
     address: '',
   });
   const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const { data: session } = useSession();
   const name = session?.user?.name ?? '';
   const birthyear = session?.user?.birthyear ?? '';
@@ -147,21 +73,33 @@ export default function ProfilePage() {
   }, [hpid, member_type]);
 
   useEffect(() => {
-    const fetchMedicines = async () => {
-      if (id) {
-        try {
-          const response = await fetch(`/api/mypage/medicine?userId=${id}`);
-          if (response.ok) {
-            const data = await response.json();
-            setMedicines(data);
-          }
-        } catch (error) {
-          console.error('Failed to fetch medicines:', error);
+    const fetchData = async () => {
+      if (!id) return;
+
+      // fetch medicines
+      try {
+        const medRes = await fetch(`/api/mypage/medicine?userId=${id}`);
+        if (medRes.ok) {
+          const medData = await medRes.json();
+          setMedicines(medData);
         }
+      } catch (error) {
+        console.error('Failed to fetch medicines:', error);
+      }
+
+      // fetch posts
+      try {
+        const postRes = await fetch(`/api/mypage/post?userId=${id}`);
+        if (postRes.ok) {
+          const postData = await postRes.json();
+          setPosts([...(postData.qnas || []), ...(postData.posts || [])]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch posts:', error);
       }
     };
 
-    fetchMedicines();
+    fetchData();
   }, [id]);
 
   return (
@@ -355,18 +293,18 @@ export default function ProfilePage() {
                     </TabsList>
                     <TabsContent value="expert" className="mt-4">
                       <div className="space-y-4">
-                        {userProfile.questions
-                          .filter((q) => q.type === 'expert')
-                          .map((question) => (
-                            <Link href={`/qna/${question.id}`} key={question.id}>
+                        {posts
+                          .filter((post) => post.type === 'expert')
+                          .map((post) => (
+                            <Link href={`/community/qnas/${post.id}`} key={post.id}>
                               <Card className="transition-all hover:shadow-md">
                                 <CardContent className="p-4">
                                   <div className="flex items-start justify-between">
                                     <div>
-                                      <h3 className="font-bold">{question.title}</h3>
+                                      <h3 className="font-bold">{post.title}</h3>
                                       <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                                        <div>{question.date}</div>
-                                        <div>답변 {question.answers}개</div>
+                                        <div>{post.date}</div>
+                                        <div>답변 {post.answers}개</div>
                                       </div>
                                     </div>
                                     <Badge variant="default" className="bg-primary">
@@ -381,18 +319,18 @@ export default function ProfilePage() {
                     </TabsContent>
                     <TabsContent value="community" className="mt-4">
                       <div className="space-y-4">
-                        {userProfile.questions
-                          .filter((q) => q.type === 'community')
-                          .map((question) => (
-                            <Link href={`/qna/${question.id}`} key={question.id}>
+                        {posts
+                          .filter((post) => post.type === 'community')
+                          .map((post) => (
+                            <Link href={`/community/posts/${post.id}`} key={post.id}>
                               <Card className="transition-all hover:shadow-md">
                                 <CardContent className="p-4">
                                   <div className="flex items-start justify-between">
                                     <div>
-                                      <h3 className="font-bold">{question.title}</h3>
+                                      <h3 className="font-bold">{post.title}</h3>
                                       <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                                        <div>{question.date}</div>
-                                        <div>댓글 {question.answers}개</div>
+                                        <div>{post.date}</div>
+                                        <div>댓글 {post.answers}개</div>
                                       </div>
                                     </div>
                                     <Badge variant="outline">커뮤니티</Badge>
