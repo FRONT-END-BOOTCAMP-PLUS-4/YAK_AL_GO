@@ -62,3 +62,28 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Failed to delete medicine' }, { status: 500 });
   }
 }
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const { userId, itemSeq, startDate, endDate } = body;
+
+  if (!userId || !itemSeq || !startDate) {
+    return NextResponse.json({ error: 'Required fields are missing' }, { status: 400 });
+  }
+
+  try {
+    const newMedicine = await prisma.user_medis.create({
+      data: {
+        userId,
+        itemSeq,
+        start_date: new Date(startDate),
+        end_date: endDate ? new Date(endDate) : null,
+      },
+    });
+
+    return NextResponse.json(newMedicine);
+  } catch (error) {
+    console.error('Error adding medicine:', error);
+    return NextResponse.json({ error: 'Failed to add medicine' }, { status: 500 });
+  }
+}

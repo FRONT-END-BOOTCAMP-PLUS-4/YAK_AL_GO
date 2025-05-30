@@ -26,6 +26,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Pill, MessageSquare, User, Store } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 
@@ -56,6 +65,23 @@ export default function ProfilePage() {
   const [showDeleteMedicineDialog, setShowDeleteMedicineDialog] = useState(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [medicineToDelete, setMedicineToDelete] = useState<number | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [medicineQuery, setMedicineQuery] = useState('');
+  const [selectedItemSeq, setSelectedItemSeq] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [filteredMedicines, setFilteredMedicines] = useState<
+    {
+      item_seq: string;
+      item_name: string;
+      entp_name: string;
+    }[]
+  >([]);
+  const [selectedMedicine, setSelectedMedicine] = useState<{
+    item_seq: string;
+    item_name: string;
+    entp_name: string;
+  } | null>(null);
 
   const { data: session } = useSession();
   const name = session?.user?.name ?? '';
@@ -117,6 +143,27 @@ export default function ProfilePage() {
     fetchData();
   }, [id]);
 
+  useEffect(() => {
+    async function loadMedicines() {
+      try {
+        const res = await fetch(`/api/mypage/medicinedb?query=${medicineQuery}`);
+        if (res.ok) {
+          const data = await res.json();
+          setFilteredMedicines(data);
+        }
+      } catch (error) {
+        console.error('Failed to load medicines:', error);
+        setFilteredMedicines([]);
+      }
+    }
+
+    if (medicineQuery.length >= 2) {
+      loadMedicines();
+    } else {
+      setFilteredMedicines([]);
+    }
+  }, [medicineQuery]);
+
   // page.tsx에 핸들러 함수 추가
   const handleDeleteMedicine = (id: number) => {
     setMedicineToDelete(id);
@@ -165,6 +212,45 @@ export default function ProfilePage() {
       console.error('Failed to withdraw:', error);
     } finally {
       setShowWithdrawDialog(false);
+    }
+  };
+
+  const handleAddMedicine = async () => {
+    if (!selectedItemSeq || !startDate) return;
+
+    try {
+      const res = await fetch('/api/mypage/medicine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: id,
+          itemSeq: selectedItemSeq,
+          startDate,
+          endDate: endDate || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert('추가 실패: ' + error.error);
+        return;
+      }
+
+      // 성공 후 상태 초기화
+      setSelectedItemSeq('');
+      setStartDate('');
+      setEndDate('');
+      setShowAddDialog(false);
+      setMedicineQuery('');
+
+      // 목록 새로고침
+      const refreshed = await fetch(`/api/mypage/medicine?userId=${id}`);
+      if (refreshed.ok) {
+        const newData = await refreshed.json();
+        setMedicines(newData);
+      }
+    } catch (err) {
+      console.error('약 추가 실패:', err);
     }
   };
 
@@ -320,7 +406,90 @@ export default function ProfilePage() {
                               </CardContent>
                             </Card>
                           ))}
-                        <Button className="w-full">약 추가하기</Button>
+                        <Button className="w-full" onClick={() => setShowAddDialog(true)}>
+                          약 추가하기
+                        </Button>
+
+                        {/* Add Medicine Dialog */}
+                        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>약 추가</DialogTitle>
+                              <DialogDescription>
+                                복용할 약을 검색하고 복용 기간을 설정하세요.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label>약품 검색</Label>
+                                <Input
+                                  type="text"
+                                  placeholder="약품명을 두 글자 이상 입력하세요"
+                                  value={medicineQuery}
+                                  onChange={(e) => setMedicineQuery(e.target.value)}
+                                />
+
+                                {selectedItemSeq && (
+                                  <div className="text-sm text-muted-foreground mt-1">
+                                    <Badge variant="outline">
+                                      {selectedMedicine?.item_name ?? '선택된 약품'}
+                                    </Badge>
+                                  </div>
+                                )}
+
+                                {medicineQuery && (
+                                  <div className="border rounded max-h-60 overflow-y-auto mt-2">
+                                    {filteredMedicines.length > 0
+                                      ? filteredMedicines.map((med) => (
+                                          <button
+                                            key={med.item_seq}
+                                            className="w-full text-left px-2 py-1 hover:bg-gray-100 text-sm"
+                                            onClick={() => {
+                                              setSelectedItemSeq(med.item_seq);
+                                              setSelectedMedicine(med); // 선택한 약품 정보 저장
+                                              setMedicineQuery('');
+                                            }}
+                                          >
+                                            {med.item_name} ({med.entp_name})
+                                          </button>
+                                        ))
+                                      : medicineQuery.length >= 2 && (
+                                          <div className="px-2 py-1 text-sm text-muted-foreground">
+                                            검색 결과 없음
+                                          </div>
+                                        )}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="start-date">시작 날짜</Label>
+                                <Input
+                                  id="start-date"
+                                  type="date"
+                                  value={startDate}
+                                  onChange={(e) => setStartDate(e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="end-date">종료 날짜 (선택사항)</Label>
+                                <Input
+                                  id="end-date"
+                                  type="date"
+                                  value={endDate}
+                                  onChange={(e) => setEndDate(e.target.value)}
+                                />
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                                취소
+                              </Button>
+                              <Button type="submit" onClick={handleAddMedicine}>
+                                추가
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </TabsContent>
                     <TabsContent value="history" className="mt-4">
