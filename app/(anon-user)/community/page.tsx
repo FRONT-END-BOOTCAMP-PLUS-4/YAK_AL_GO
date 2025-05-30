@@ -30,6 +30,8 @@ export default function CommunityPage() {
     fetchNextPage: fetchNextQnas,
     hasNextPage: hasNextQnas,
     isFetchingNextPage: isFetchingNextQnas,
+    isLoading: isLoadingQnas,
+    isPending: isPendingQnas,
     refetch: refetchQuestions,
   } = useQuestions();
 
@@ -39,6 +41,8 @@ export default function CommunityPage() {
     fetchNextPage: fetchNextPosts,
     hasNextPage: hasNextPosts,
     isFetchingNextPage: isFetchingNextPosts,
+    isLoading: isLoadingPosts,
+    isPending: isPendingPosts,
     refetch: refetchPosts,
   } = usePosts();
 
@@ -48,7 +52,9 @@ export default function CommunityPage() {
   // 자유게시판 데이터 조회 결과 페이지네이션 처리
   const posts = postsData?.pages.flatMap((page: any) => page?.posts || []) || [];
 
-  const isLoading = activeTab === 'qnas' ? isFetchingNextQnas : isFetchingNextPosts;
+  // 로딩 상태 계산
+  const isInitialLoading = activeTab === 'qnas' ? isLoadingQnas || isPendingQnas : isLoadingPosts || isPendingPosts;
+  const isFetchingNext = activeTab === 'qnas' ? isFetchingNextQnas : isFetchingNextPosts;
   const hasNext = activeTab === 'qnas' ? hasNextQnas : hasNextPosts;
   const fetchNext = activeTab === 'qnas' ? fetchNextQnas : fetchNextPosts;
 
@@ -80,7 +86,7 @@ export default function CommunityPage() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !isLoading && hasNext) {
+        if (entries[0].isIntersecting && !isFetchingNext && hasNext) {
           fetchNext();
         }
       },
@@ -98,7 +104,7 @@ export default function CommunityPage() {
       }
       observer.disconnect();
     };
-  }, [isLoading, fetchNext, hasNext]);
+  }, [isFetchingNext, fetchNext, hasNext]);
 
   return (
     <div className="container max-w-4xl py-8">
@@ -132,33 +138,61 @@ export default function CommunityPage() {
           </TabsList>
           <TabsContent value="qnas" className="mt-4">
             <div className="grid gap-4">
-              {questions.length > 0 ? (
-                questions.map((qna) => <QuestionCard key={qna.id} qna={qna} />)
-              ) : (
+              {isInitialLoading ? (
+                // 초기 로딩 중일 때 스켈레톤 표시
                 <div className="flex flex-col gap-4">
                   <QnaSkeleton />
                   <QnaSkeleton />
                   <QnaSkeleton />
+                </div>
+              ) : questions.length > 0 ? (
+                // 데이터가 있을 때 질문 카드 표시
+                questions.map((qna) => <QuestionCard key={qna.id} qna={qna} />)
+              ) : (
+                // 로딩 완료 후 데이터가 없을 때 메시지 표시
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="text-center">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">아직 질문이 없습니다</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">첫 번째 질문을 올려보세요!</p>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href="/member/qnas/write">질문하기</Link>
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
           </TabsContent>
           <TabsContent value="posts" className="mt-4">
             <div className="grid gap-4">
-              {posts.length > 0 ? (
-                posts.map((post) => <PostCard key={post.id} post={post} />)
-              ) : (
+              {isInitialLoading ? (
+                // 초기 로딩 중일 때 스켈레톤 표시
                 <div className="flex flex-col gap-4">
                   <QnaSkeleton />
                   <QnaSkeleton />
                   <QnaSkeleton />
+                </div>
+              ) : posts.length > 0 ? (
+                // 데이터가 있을 때 포스트 카드 표시
+                posts.map((post) => <PostCard key={post.id} post={post} />)
+              ) : (
+                // 로딩 완료 후 데이터가 없을 때 메시지 표시
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="text-center">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                      아직 게시글이 없습니다
+                    </h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">첫 번째 게시글을 작성해보세요!</p>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href="/member/posts/write">글쓰기</Link>
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
           </TabsContent>
 
           <div className="flex justify-center py-4" ref={loadMoreRef}>
-            {isLoading && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
+            {isFetchingNext && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
           </div>
         </Tabs>
       </div>
