@@ -132,7 +132,7 @@ export default function ProfilePage() {
     const fetchPharmacyInfo = async () => {
       if (member_type === 1 && hpid) {
         try {
-          const response = await fetch(`/api/mypage?hpid=${hpid}`);
+          const response = await fetch(`/api/mypage/phamacy?hpid=${hpid}`);
           if (response.ok) {
             const data = await response.json();
             setPharmacyInfo(data);
@@ -286,8 +286,8 @@ export default function ProfilePage() {
                 <CardContent>
                   <Tabs defaultValue="current">
                     <TabsList>
-                      <TabsTrigger value="current">현재 복용 중</TabsTrigger>
-                      <TabsTrigger value="history">복용 기록</TabsTrigger>
+                      <TabsTrigger value="current">복용 중</TabsTrigger>
+                      <TabsTrigger value="history">복용 완료</TabsTrigger>
                     </TabsList>
                     <TabsContent value="current" className="mt-4">
                       <div className="space-y-4">
@@ -304,7 +304,7 @@ export default function ProfilePage() {
                                     </p>
                                   </div>
                                   <Button variant="outline" size="sm">
-                                    복용 완료
+                                    삭제
                                   </Button>
                                 </div>
                               </CardContent>
@@ -327,28 +327,9 @@ export default function ProfilePage() {
                                       {medicine.startDate} ~ {medicine.endDate}
                                     </p>
                                   </div>
-                                  <Badge variant="outline">복용 완료</Badge>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="history" className="mt-4">
-                      <div className="space-y-4">
-                        {userProfile.medicines
-                          .filter((med) => !med.active)
-                          .map((medicine) => (
-                            <Card key={medicine.id}>
-                              <CardContent className="p-4">
-                                <div className="flex items-start justify-between">
-                                  <div>
-                                    <h3 className="font-bold">{medicine.name}</h3>
-                                    <p className="text-sm mt-1">
-                                      {medicine.startDate} ~ {medicine.endDate}
-                                    </p>
-                                  </div>
-                                  <Badge variant="outline">복용 완료</Badge>
+                                  <Button variant="outline" size="sm">
+                                    삭제
+                                  </Button>
                                 </div>
                               </CardContent>
                             </Card>
