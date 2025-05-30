@@ -16,10 +16,21 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Pill, MessageSquare, User, Store } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 
 interface Medicine {
+  id: number;
   name: string;
   startDate: string;
   endDate: string;
@@ -42,6 +53,10 @@ export default function ProfilePage() {
   });
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [showDeleteMedicineDialog, setShowDeleteMedicineDialog] = useState(false);
+  const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
+  const [medicineToDelete, setMedicineToDelete] = useState<number | null>(null);
+
   const { data: session } = useSession();
   const name = session?.user?.name ?? '';
   const birthyear = session?.user?.birthyear ?? '';
@@ -101,6 +116,57 @@ export default function ProfilePage() {
 
     fetchData();
   }, [id]);
+
+  // page.tsx에 핸들러 함수 추가
+  const handleDeleteMedicine = (id: number) => {
+    setMedicineToDelete(id);
+    setShowDeleteMedicineDialog(true);
+  };
+
+  const handleConfirmDeleteMedicine = async () => {
+    if (medicineToDelete) {
+      try {
+        const res = await fetch(`/api/mypage/medicine?medicineId=${medicineToDelete}`, {
+          method: 'DELETE',
+        });
+
+        if (!res.ok) throw new Error('Failed to delete medicine');
+
+        // 삭제 성공 후 목록 다시 불러오기
+        const medRes = await fetch(`/api/mypage/medicine?userId=${id}`);
+        if (medRes.ok) {
+          const medData = await medRes.json();
+          setMedicines(medData);
+        }
+      } catch (error) {
+        console.error('Failed to delete medicine:', error);
+      } finally {
+        setShowDeleteMedicineDialog(false);
+        setMedicineToDelete(null);
+      }
+    }
+  };
+
+  const handleWithdraw = () => {
+    setShowWithdrawDialog(true);
+  };
+
+  const handleConfirmWithdraw = async () => {
+    try {
+      const res = await fetch(`/api/mypage/user?userId=${id}`, {
+        method: 'PATCH',
+      });
+
+      if (!res.ok) throw new Error('Failed to withdraw');
+
+      // 탈퇴 성공 시 로그아웃 처리 및 홈으로 리다이렉트
+      signOut({ callbackUrl: '/' });
+    } catch (error) {
+      console.error('Failed to withdraw:', error);
+    } finally {
+      setShowWithdrawDialog(false);
+    }
+  };
 
   return (
     <div className="container py-8">
@@ -208,7 +274,9 @@ export default function ProfilePage() {
                   )}
                 </CardContent>
                 <CardFooter>
-                  <Button className="ml-auto">회원 탈퇴</Button>
+                  <Button className="ml-auto" onClick={handleWithdraw}>
+                    회원 탈퇴
+                  </Button>
                 </CardFooter>
               </Card>
             )}
@@ -241,7 +309,11 @@ export default function ProfilePage() {
                                       {medicine.startDate} ~ {medicine.endDate}
                                     </p>
                                   </div>
-                                  <Button variant="outline" size="sm">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDeleteMedicine(medicine.id)}
+                                  >
                                     삭제
                                   </Button>
                                 </div>
@@ -265,7 +337,11 @@ export default function ProfilePage() {
                                       {medicine.startDate} ~ {medicine.endDate}
                                     </p>
                                   </div>
-                                  <Button variant="outline" size="sm">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDeleteMedicine(medicine.id)}
+                                  >
                                     삭제
                                   </Button>
                                 </div>
@@ -348,6 +424,37 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      {/* Medicine Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteMedicineDialog} onOpenChange={setShowDeleteMedicineDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>약 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말로 이 약을 복용 목록에서 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDeleteMedicine}>삭제</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Withdraw Confirmation Dialog */}
+      <AlertDialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>회원 탈퇴</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmWithdraw}>탈퇴</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
