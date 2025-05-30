@@ -223,6 +223,7 @@ export interface SimplifiedMedicine {
   originalName: string; // 원본 의약품명 (툴팁용)
   originalManufacturer: string; // 원본 제조사명 (툴팁용)
   originalCategory: string; // 원본 카테고리 (툴팁용)
+  displayName: string; // 실제 표시될 의약품명 (중복 시 원본 사용)
 }
 
 /**
@@ -246,7 +247,50 @@ export function formatMedicineInfo(medicine: {
     originalName: medicine.itemName,
     originalManufacturer: medicine.entpName || '',
     originalCategory: medicine.classNo || '',
+    displayName: formatMedicineName(medicine.itemName),
   };
+}
+
+/**
+ * 중복 의약품명 처리 - 중복 시 원본 이름 사용
+ * @param medicines 의약품 목록
+ * @returns 중복 처리된 의약품 목록
+ */
+export function processDisplayNames(
+  medicines: {
+    itemSeq: string;
+    itemName: string;
+    entpName?: string;
+    classNo?: string;
+  }[]
+): SimplifiedMedicine[] {
+  // 1. 기본 포맷팅 적용
+  const formattedMedicines = medicines.map((medicine) => formatMedicineInfo(medicine));
+
+  // 2. 간소화된 이름별로 그룹화
+  const nameGroups = formattedMedicines.reduce(
+    (groups, medicine) => {
+      const name = medicine.shortName;
+      if (!groups[name]) {
+        groups[name] = [];
+      }
+      groups[name].push(medicine);
+      return groups;
+    },
+    {} as Record<string, SimplifiedMedicine[]>
+  );
+
+  // 3. 중복된 이름들은 원본 이름 사용
+  for (const [, group] of Object.entries(nameGroups)) {
+    if (group.length > 1) {
+      // 중복된 경우 원본 이름 사용
+      for (const medicine of group) {
+        medicine.displayName = medicine.originalName;
+      }
+    }
+  }
+
+  return formattedMedicines;
 }
 
 // ==================== 카테고리 키 매핑 ====================

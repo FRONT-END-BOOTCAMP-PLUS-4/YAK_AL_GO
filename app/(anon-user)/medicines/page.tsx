@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import {
   formatMedicineInfo,
+  processDisplayNames,
   MAIN_CATEGORIES,
   CATEGORY_KEY_MAP,
   type SimplifiedMedicine,
@@ -65,7 +66,7 @@ export default function MedicinesPage() {
 
   // 설정값
   const ITEMS_PER_PAGE = 99; // 페이지당 표시할 데이터 수
-  const SEARCH_ITEMS_PER_PAGE = 200; // 검색 시 더 많은 결과 표시
+  const SEARCH_ITEMS_PER_PAGE = 198; // 검색 시 더 많은 결과 표시
 
   /**
    * API에서 의약품 데이터 가져오기 (페이지네이션)
@@ -105,8 +106,8 @@ export default function MedicinesPage() {
 
           setMedicines(uniqueMedicines);
 
-          // 포맷팅 적용
-          const formatted = uniqueMedicines.map((medicine) => formatMedicineInfo(medicine));
+          // 중복 의약품명 처리 및 포맷팅 적용
+          const formatted = processDisplayNames(uniqueMedicines);
           setFormattedMedicines(formatted);
 
           setCurrentPage(result.data.currentPage || page);
@@ -144,6 +145,15 @@ export default function MedicinesPage() {
     if (!chart) return '';
     if (chart.length <= maxLength) return chart;
     return `${chart.substring(0, maxLength)}...`;
+  };
+
+  /**
+   * 의약품명 길이 제한 함수
+   */
+  const formatDisplayName = (displayName: string, maxLength = 20): string => {
+    if (!displayName) return '';
+    if (displayName.length <= maxLength) return displayName;
+    return `${displayName.substring(0, maxLength)}...`;
   };
 
   /**
@@ -321,11 +331,14 @@ export default function MedicinesPage() {
               />
             </div>
             <div className="flex flex-col gap-2 flex-1">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm" title={medicine.originalName}>
-                  {medicine.shortName}
+              <div className="flex items-start justify-between gap-2">
+                <h3
+                  className="font-bold text-sm truncate flex-1 min-w-0"
+                  title={medicine.originalName}
+                >
+                  {formatDisplayName(medicine.displayName)}
                 </h3>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs shrink-0">
                   {medicine.category.display}
                 </Badge>
               </div>
