@@ -33,6 +33,7 @@ export interface MainCategory {
 
 /**
  * 카테고리 매핑 규칙 (실제 데이터 분석 결과 기반)
+ * 백엔드 CATEGORY_KEYWORDS와 일치하도록 수정
  */
 export const CATEGORY_RULES: CategoryRule[] = [
   {
@@ -40,7 +41,7 @@ export const CATEGORY_RULES: CategoryRule[] = [
     display: '진통제',
     icon: '/mediCategory/Painkiller.svg',
     color: 'red',
-    keywords: ['해열', '진통', '소염'],
+    keywords: ['해열'], // 백엔드와 일치: "[114]해열.진통.소염제"
     priority: 1,
   },
   {
@@ -48,7 +49,7 @@ export const CATEGORY_RULES: CategoryRule[] = [
     display: '심혈관약',
     icon: '/mediCategory/Cardiovascular.svg',
     color: 'blue',
-    keywords: ['혈압', '동맥', '순환', '강압'],
+    keywords: ['혈압'], // 백엔드와 일치: "[214]혈압강하제"
     priority: 2,
   },
   {
@@ -56,7 +57,7 @@ export const CATEGORY_RULES: CategoryRule[] = [
     display: '당뇨약',
     icon: '/mediCategory/Diabetes.svg',
     color: 'purple',
-    keywords: ['당뇨', '대사'],
+    keywords: ['대사'], // 백엔드와 일치: "[264]대사성의약품"
     priority: 3,
   },
   {
@@ -64,7 +65,7 @@ export const CATEGORY_RULES: CategoryRule[] = [
     display: '신경약',
     icon: '/mediCategory/Nervous-system.svg',
     color: 'indigo',
-    keywords: ['신경', '정신', '전간', '중추'],
+    keywords: ['신경'], // 백엔드와 일치: "[117]중추신경계용약"
     priority: 4,
   },
   {
@@ -72,7 +73,7 @@ export const CATEGORY_RULES: CategoryRule[] = [
     display: '항생제',
     icon: '/mediCategory/Antibiotics.svg',
     color: 'green',
-    keywords: ['그람', '화학요법', '종양', '항악성'],
+    keywords: ['그람'], // 백엔드와 일치: "[611]그람양성균용제"
     priority: 5,
   },
   {
@@ -80,7 +81,7 @@ export const CATEGORY_RULES: CategoryRule[] = [
     display: '소화제',
     icon: '/mediCategory/Digestive-aid.svg',
     color: 'orange',
-    keywords: ['소화', '궤양', '간장', '위장'],
+    keywords: ['건위소화제'], // 백엔드와 일치: "[232]건위소화제"
     priority: 6,
   },
   {
@@ -88,7 +89,7 @@ export const CATEGORY_RULES: CategoryRule[] = [
     display: '감기약',
     icon: '/mediCategory/Cold medicine.svg',
     color: 'cyan',
-    keywords: ['진해', '거담', '호흡'],
+    keywords: ['진해'], // 백엔드와 일치: "[131]진해거담제"
     priority: 7,
   },
   {
@@ -96,7 +97,7 @@ export const CATEGORY_RULES: CategoryRule[] = [
     display: '알레르기약',
     icon: '/mediCategory/Allergy-medicine.svg',
     color: 'pink',
-    keywords: ['히스타민', '알레르기'],
+    keywords: ['히스타민'], // 백엔드와 일치: "[441]항히스타민제"
     priority: 8,
   },
 ];
@@ -175,56 +176,38 @@ export function formatMedicineName(itemName: string): string {
   // 1. 괄호 안 성분명 제거 (마지막 괄호만)
   formatted = formatted.replace(/\([^)]*\)$/, '');
 
-  // 2. 용량 정보 간소화
+  // 2. "/" 문자 제거 (슬래시로 구분된 이름들 정리)
+  formatted = formatted.replace(/\/.*$/, ''); // 첫 번째 "/" 이후 모든 내용 제거
+  formatted = formatted.replace(/\//g, ''); // 남은 "/" 문자들 제거
+
+  // 3. 용량 정보 간소화
   formatted = formatted.replace(/(\d+)(밀리그람|밀리그램|mg|그람|g)/gi, '');
 
-  // 3. 불필요한 제형 단어 제거
+  // 4. 불필요한 제형 단어 제거
   const unnecessaryWords = ['서방정', 'CR정', 'ER정', '필름코팅정', '장용정', '캡슐형', '정제'];
   for (const word of unnecessaryWords) {
     formatted = formatted.replace(new RegExp(word, 'gi'), '');
   }
 
-  // 4. 최대 길이 제한 (15자)
+  // 5. 최대 길이 제한 (15자)
   if (formatted.length > 15) {
     formatted = `${formatted.substring(0, 12)}...`;
   }
 
-  // 5. 공백 정리
+  // 6. 공백 정리
   return formatted.trim().replace(/\s+/g, ' ');
 }
 
 /**
  * 제조사명 간소화
  * @param entpName 원본 제조사명 "한국존슨앤드존슨판매(유)"
- * @returns 간소화된 제조사명 "한국존슨앤드존슨"
+ * @returns 원본 제조사명 그대로 반환
  */
 export function formatManufacturer(entpName: string): string {
   if (!entpName) return '';
 
-  let formatted = entpName;
-
-  // 불필요한 법인 표시 제거
-  const companyTerms = [
-    '(주)',
-    '(유)',
-    '주식회사',
-    '유한회사',
-    '판매',
-    '제약',
-    'Co.',
-    'Ltd.',
-    'Inc.',
-  ];
-  for (const term of companyTerms) {
-    formatted = formatted.replace(new RegExp(term, 'gi'), '');
-  }
-
-  // 최대 길이 제한 (12자)
-  if (formatted.length > 12) {
-    formatted = `${formatted.substring(0, 9)}...`;
-  }
-
-  return formatted.trim();
+  // 원본 제조사명 그대로 반환
+  return entpName.trim();
 }
 
 // ==================== 통합 포맷팅 함수 ====================

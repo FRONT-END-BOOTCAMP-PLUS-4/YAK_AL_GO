@@ -65,6 +65,7 @@ export default function MedicinesPage() {
 
   // 설정값
   const ITEMS_PER_PAGE = 99; // 페이지당 표시할 데이터 수
+  const SEARCH_ITEMS_PER_PAGE = 200; // 검색 시 더 많은 결과 표시
 
   /**
    * API에서 의약품 데이터 가져오기 (페이지네이션)
@@ -84,7 +85,9 @@ export default function MedicinesPage() {
 
       try {
         const params = new URLSearchParams();
-        params.append('limit', ITEMS_PER_PAGE.toString());
+        // 검색 시에는 더 많은 결과를 표시
+        const limitToUse = search?.trim() ? SEARCH_ITEMS_PER_PAGE : ITEMS_PER_PAGE;
+        params.append('limit', limitToUse.toString());
         params.append('page', page.toString());
 
         if (search) params.append('search', search);
@@ -133,6 +136,15 @@ export default function MedicinesPage() {
     },
     []
   );
+
+  /**
+   * Chart 텍스트 포맷팅 (길이 제한 및 말줄임표)
+   */
+  const formatChartText = (chart: string, maxLength = 50): string => {
+    if (!chart) return '';
+    if (chart.length <= maxLength) return chart;
+    return `${chart.substring(0, maxLength)}...`;
+  };
 
   /**
    * 페이지 변경 핸들러
@@ -187,7 +199,10 @@ export default function MedicinesPage() {
       }
 
       setCurrentPage(1);
-      const category = CATEGORY_KEY_MAP[activeTab];
+
+      // 🔍 검색 시에는 카테고리 필터를 적용하지 않고 전체 범위에서 검색
+      const category = searchTerm.trim() ? '전체' : CATEGORY_KEY_MAP[activeTab];
+
       fetchMedicinesFromApi(1, searchTerm.trim(), category);
       setIsSearchModalOpen(false);
     },
@@ -321,8 +336,10 @@ export default function MedicinesPage() {
                 {medicines.find((m) => m.itemSeq === medicine.itemSeq)?.etcOtcCode || '의약품'}
               </p>
               {medicines.find((m) => m.itemSeq === medicine.itemSeq)?.chart && (
-                <p className="text-xs text-gray-600 line-clamp-2">
-                  {medicines.find((m) => m.itemSeq === medicine.itemSeq)?.chart}
+                <p className="text-xs text-gray-600 line-clamp-1 overflow-hidden text-ellipsis">
+                  {formatChartText(
+                    medicines.find((m) => m.itemSeq === medicine.itemSeq)?.chart || ''
+                  )}
                 </p>
               )}
             </div>
