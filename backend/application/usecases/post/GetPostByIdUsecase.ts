@@ -19,8 +19,32 @@ export class GetPostByIdUseCase {
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
       userId: post.userId,
+      user: post.user
+        ? {
+            id: post.user.id,
+            name: post.user.name,
+            email: post.user.email,
+            image: post.user.image,
+            member_type: post.user.member_type,
+          }
+        : undefined,
       tags: post.tags || [],
-      comments: post.comments || [],
+      comments:
+        post.comments?.map((comment) => ({
+          id: comment.id,
+          content: comment.content,
+          userId: comment.userId,
+          postId: id,
+          createdAt: comment.createdAt,
+          updatedAt: comment.updatedAt,
+          users: comment.user
+            ? {
+                id: comment.user.id,
+                name: comment.user.name,
+                member_type: comment.user.member_type || 0,
+              }
+            : undefined,
+        })) || [],
     };
     return postDto;
   }

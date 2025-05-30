@@ -12,6 +12,7 @@ interface Answer {
   users?: {
     id: string;
     name?: string;
+    image?: string;
     member_type?: number;
   };
 }

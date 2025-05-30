@@ -62,12 +62,10 @@ export function QuestionDetailCard({ question, currentUserId }: QuestionDetailCa
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Question Actions - Only visible to question owner */}
-              {(question.user?.id === currentUserId || question.userId === currentUserId) && question.id && (
-                <QuestionOptionDropdown questionId={question.id} />
-              )}
-            </div>
+            {/* Question Actions - Only visible to question owner */}
+            {(question.user?.id === currentUserId || question.userId === currentUserId) && question.id && (
+              <QuestionOptionDropdown questionId={question.id} />
+            )}
           </div>
         </div>
 
