@@ -22,6 +22,7 @@ import {
 import {
   formatMedicineInfo,
   processDisplayNames,
+  selectMedicineImage,
   MAIN_CATEGORIES,
   CATEGORY_KEY_MAP,
   type SimplifiedMedicine,
@@ -323,7 +324,7 @@ export default function MedicinesPage() {
           <div className="flex gap-4">
             <div className="flex-shrink-0">
               <img
-                src="/placeholder.svg?height=80&width=80"
+                src={selectMedicineImage(medicine.itemSeq)}
                 alt={medicine.originalName}
                 width={80}
                 height={80}

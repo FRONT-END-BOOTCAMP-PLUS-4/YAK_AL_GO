@@ -327,3 +327,33 @@ export const CATEGORY_STATS: Record<string, number> = {
   respiratory: 607, // 감기약
   allergy: 797, // 알레르기약
 };
+
+// ==================== 이미지 선택 함수 ====================
+
+/**
+ * 사용 가능한 의약품 이미지 목록
+ */
+const MEDICINE_IMAGES = [
+  '/mediImg/1.svg',
+  '/mediImg/2.svg',
+  '/mediImg/3.svg',
+  '/mediImg/4.svg',
+  '/mediImg/5.svg',
+];
+
+/**
+ * 의약품 ID를 기반으로 일관된 이미지 선택
+ * 같은 의약품은 항상 동일한 이미지가 표시됨
+ * @param itemSeq 의약품 고유 ID
+ * @returns 선택된 이미지 경로
+ */
+export function selectMedicineImage(itemSeq: string): string {
+  // itemSeq의 숫자 부분을 추출하여 해시값 생성
+  const numericPart = itemSeq.replace(/\D/g, ''); // 숫자만 추출
+  const hash = numericPart ? Number.parseInt(numericPart, 10) : 0;
+
+  // 이미지 개수로 나눈 나머지로 인덱스 결정
+  const imageIndex = hash % MEDICINE_IMAGES.length;
+
+  return MEDICINE_IMAGES[imageIndex];
+}
