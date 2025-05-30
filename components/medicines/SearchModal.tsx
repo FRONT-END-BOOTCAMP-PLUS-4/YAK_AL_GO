@@ -61,19 +61,24 @@ const SearchModal = ({
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          <div className="flex items-center space-x-2">
+          <div className="relative">
             <Input
               type="text"
               placeholder="약 이름, 성분, 제조사를 입력하세요"
               value={localQuery}
               onChange={(e) => setLocalQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="flex-1"
+              className="pr-10"
               autoFocus
             />
             {localQuery && (
-              <Button variant="ghost" size="icon" onClick={() => setLocalQuery('')}>
-                <X className="h-4 w-4" />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setLocalQuery('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 hover:bg-gray-100 rounded-full"
+              >
+                <X className="h-4 w-4 text-gray-500" />
               </Button>
             )}
           </div>
