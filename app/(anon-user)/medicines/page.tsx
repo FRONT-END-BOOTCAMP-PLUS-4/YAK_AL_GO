@@ -324,7 +324,10 @@ export default function MedicinesPage() {
           <div className="flex gap-4">
             <div className="flex-shrink-0">
               <img
-                src={selectMedicineImage(medicine.itemSeq)}
+                src={selectMedicineImage(
+                  medicine.itemSeq,
+                  medicines.find((m) => m.itemSeq === medicine.itemSeq)?.chart
+                )}
                 alt={medicine.originalName}
                 width={80}
                 height={80}
