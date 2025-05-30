@@ -20,6 +20,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Pill, MessageSquare, User, Package, Store } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
+interface Medicine {
+  name: string;
+  startDate: string;
+  endDate: string;
+  active: boolean;
+}
+
 // Mock data for user profile
 const userProfile = {
   name: '홍길동',
@@ -108,6 +115,7 @@ export default function ProfilePage() {
     name: '',
     address: '',
   });
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
   const { data: session } = useSession();
   const name = session?.user?.name ?? '';
   const birthyear = session?.user?.birthyear ?? '';
@@ -137,6 +145,24 @@ export default function ProfilePage() {
 
     fetchPharmacyInfo();
   }, [hpid, member_type]);
+
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      if (id) {
+        try {
+          const response = await fetch(`/api/mypage/medicine?userId=${id}`);
+          if (response.ok) {
+            const data = await response.json();
+            setMedicines(data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch medicines:', error);
+        }
+      }
+    };
+
+    fetchMedicines();
+  }, [id]);
 
   return (
     <div className="container py-8">
@@ -217,12 +243,12 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">이름</Label>
-                    <Input id="name" defaultValue={name} />
+                    <Label>이름</Label>
+                    <div className="px-3 py-2 border rounded bg-muted">{name}</div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">이메일</Label>
-                    <Input id="email" defaultValue={email} />
+                    <Label>이메일</Label>
+                    <div className="px-3 py-2 border rounded bg-muted">{email}</div>
                   </div>
 
                   {/* 약사인 경우 약국 정보 표시 */}
@@ -231,12 +257,14 @@ export default function ProfilePage() {
                       <div className="h-px bg-border my-4"></div>
                       <h3 className="text-lg font-medium mb-2">약국 정보</h3>
                       <div className="space-y-2">
-                        <Label htmlFor="pharmacy-name">약국명</Label>
-                        <Input id="pharmacy-name" defaultValue={pharmacyInfo.name} />
+                        <Label>약국명</Label>
+                        <div className="px-3 py-2 border rounded bg-muted">{pharmacyInfo.name}</div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="pharmacy-address">약국 주소</Label>
-                        <Input id="pharmacy-address" defaultValue={pharmacyInfo.address} />
+                        <Label>약국 주소</Label>
+                        <div className="px-3 py-2 border rounded bg-muted">
+                          {pharmacyInfo.address}
+                        </div>
                       </div>
                     </>
                   )}
@@ -263,17 +291,14 @@ export default function ProfilePage() {
                     </TabsList>
                     <TabsContent value="current" className="mt-4">
                       <div className="space-y-4">
-                        {userProfile.medicines
+                        {medicines
                           .filter((med) => med.active)
-                          .map((medicine) => (
-                            <Card key={medicine.id}>
+                          .map((medicine, index) => (
+                            <Card key={index}>
                               <CardContent className="p-4">
                                 <div className="flex items-start justify-between">
                                   <div>
                                     <h3 className="font-bold">{medicine.name}</h3>
-                                    <p className="text-sm text-muted-foreground">
-                                      {medicine.dosage}
-                                    </p>
                                     <p className="text-sm mt-1">
                                       {medicine.startDate} ~ {medicine.endDate}
                                     </p>
@@ -290,6 +315,27 @@ export default function ProfilePage() {
                     </TabsContent>
                     <TabsContent value="history" className="mt-4">
                       <div className="space-y-4">
+                        {medicines
+                          .filter((med) => !med.active)
+                          .map((medicine, index) => (
+                            <Card key={index}>
+                              <CardContent className="p-4">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <h3 className="font-bold">{medicine.name}</h3>
+                                    <p className="text-sm mt-1">
+                                      {medicine.startDate} ~ {medicine.endDate}
+                                    </p>
+                                  </div>
+                                  <Badge variant="outline">복용 완료</Badge>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="history" className="mt-4">
+                      <div className="space-y-4">
                         {userProfile.medicines
                           .filter((med) => !med.active)
                           .map((medicine) => (
@@ -298,9 +344,6 @@ export default function ProfilePage() {
                                 <div className="flex items-start justify-between">
                                   <div>
                                     <h3 className="font-bold">{medicine.name}</h3>
-                                    <p className="text-sm text-muted-foreground">
-                                      {medicine.dosage}
-                                    </p>
                                     <p className="text-sm mt-1">
                                       {medicine.startDate} ~ {medicine.endDate}
                                     </p>
