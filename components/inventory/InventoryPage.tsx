@@ -3,6 +3,7 @@
 import type React from 'react';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -83,7 +84,8 @@ export default function InventoryPage() {
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const companyList = Array.from(new Set(inventory.map((item) => item.company)));
   const typeList = Array.from(new Set(inventory.map((item) => item.type)));
-  const HPID = 'C1108718';
+  const { data: session } = useSession();
+  const HPID = session?.user?.hpid ?? '';
 
   useEffect(() => {
     async function loadMedicines() {
@@ -93,25 +95,6 @@ export default function InventoryPage() {
     }
 
     loadMedicines();
-
-    async function fetchInventory() {
-      try {
-        const res = await fetch(`/api/inventory?hpid=${HPID}`);
-        const data: InventoryItem[] = await res.json();
-
-        const dataWithStatus = data.map((item) => ({
-          ...item,
-          status: determineStatus(item.stock),
-        }));
-
-        setInventory(dataWithStatus);
-        setFilteredInventory(dataWithStatus);
-      } catch (error) {
-        console.error('Failed to fetch inventory', error);
-      }
-    }
-
-    fetchInventory();
   }, []);
 
   useEffect(() => {
@@ -143,6 +126,29 @@ export default function InventoryPage() {
 
     setFilteredInventory(filtered);
   }, [inventory, searchQuery, companyFilter, typeFilter]);
+
+  useEffect(() => {
+    if (!HPID) return; // 세션 로딩 전에는 실행 안 함
+
+    async function fetchInventory() {
+      try {
+        const res = await fetch(`/api/inventory?hpid=${HPID}`);
+        const data: InventoryItem[] = await res.json();
+
+        const dataWithStatus = data.map((item) => ({
+          ...item,
+          status: determineStatus(item.stock),
+        }));
+
+        setInventory(dataWithStatus);
+        setFilteredInventory(dataWithStatus);
+      } catch (error) {
+        console.error('Failed to fetch inventory', error);
+      }
+    }
+
+    fetchInventory();
+  }, [HPID]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
