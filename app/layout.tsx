@@ -21,15 +21,15 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">
-              <ReactQueryProviders>
-                <SessionProvider>{children}</SessionProvider>
-              </ReactQueryProviders>
-            </main>
-            <Footer />
-          </div>
+           <SessionProvider>
+            <ReactQueryProviders>
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
+            </ReactQueryProviders>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>
