@@ -44,6 +44,7 @@ interface Medicine {
   startDate: string;
   endDate: string;
   active: boolean;
+  item_seq: string;
 }
 
 interface Post {
@@ -311,7 +312,7 @@ export default function ProfilePage() {
                       <>
                         <div className="h-px bg-border my-2"></div>
                         <Button variant="default" className="justify-start mt-2" asChild>
-                          <Link href="/member/inventory">
+                          <Link href="/member/inventory" target="_blank" rel="noopener noreferrer">
                             <Store className="mr-2 h-4 w-4" />
                             약국 재고 관리
                           </Link>
@@ -387,23 +388,32 @@ export default function ProfilePage() {
                           .filter((med) => med.active)
                           .map((medicine, index) => (
                             <Card key={index}>
-                              <CardContent className="p-4">
-                                <div className="flex items-start justify-between">
-                                  <div>
-                                    <h3 className="font-bold">{medicine.name}</h3>
-                                    <p className="text-sm mt-1">
-                                      {medicine.startDate} ~ {medicine.endDate}
-                                    </p>
+                              <Link
+                                href={`/medicines/${medicine.item_seq}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <CardContent className="p-4 cursor-pointer hover:bg-gray-50">
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <h3 className="font-bold">{medicine.name}</h3>
+                                      <p className="text-sm mt-1">
+                                        {medicine.startDate} ~ {medicine.endDate}
+                                      </p>
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        handleDeleteMedicine(medicine.id);
+                                      }}
+                                    >
+                                      삭제
+                                    </Button>
                                   </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleDeleteMedicine(medicine.id)}
-                                  >
-                                    삭제
-                                  </Button>
-                                </div>
-                              </CardContent>
+                                </CardContent>
+                              </Link>
                             </Card>
                           ))}
                         <Button className="w-full" onClick={() => setShowAddDialog(true)}>
@@ -498,23 +508,32 @@ export default function ProfilePage() {
                           .filter((med) => !med.active)
                           .map((medicine, index) => (
                             <Card key={index}>
-                              <CardContent className="p-4">
-                                <div className="flex items-start justify-between">
-                                  <div>
-                                    <h3 className="font-bold">{medicine.name}</h3>
-                                    <p className="text-sm mt-1">
-                                      {medicine.startDate} ~ {medicine.endDate}
-                                    </p>
+                              <Link
+                                href={`/medicines/${medicine.item_seq}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <CardContent className="p-4 cursor-pointer hover:bg-gray-50">
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <h3 className="font-bold">{medicine.name}</h3>
+                                      <p className="text-sm mt-1">
+                                        {medicine.startDate} ~ {medicine.endDate}
+                                      </p>
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        handleDeleteMedicine(medicine.id);
+                                      }}
+                                    >
+                                      삭제
+                                    </Button>
                                   </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleDeleteMedicine(medicine.id)}
-                                  >
-                                    삭제
-                                  </Button>
-                                </div>
-                              </CardContent>
+                                </CardContent>
+                              </Link>
                             </Card>
                           ))}
                       </div>
@@ -541,7 +560,12 @@ export default function ProfilePage() {
                         {posts
                           .filter((post) => post.type === 'expert')
                           .map((post) => (
-                            <Link href={`/community/qnas/${post.id}`} key={post.id}>
+                            <Link
+                              href={`/community/qnas/${post.id}`}
+                              key={post.id}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
                               <Card className="transition-all hover:shadow-md">
                                 <CardContent className="p-4">
                                   <div className="flex items-start justify-between">
@@ -567,7 +591,12 @@ export default function ProfilePage() {
                         {posts
                           .filter((post) => post.type === 'community')
                           .map((post) => (
-                            <Link href={`/community/posts/${post.id}`} key={post.id}>
+                            <Link
+                              href={`/community/posts/${post.id}`}
+                              key={post.id}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
                               <Card className="transition-all hover:shadow-md">
                                 <CardContent className="p-4">
                                   <div className="flex items-start justify-between">
