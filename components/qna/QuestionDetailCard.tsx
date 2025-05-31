@@ -75,18 +75,12 @@ export function QuestionDetailCard({ question, currentUserId }: QuestionDetailCa
         {/* Tags and Title */}
         <div className="px-5 pb-5">
           {/* Title */}
-          <h1 className="font-semibold text-xl leading-tight mb-4 text-gray-900 dark:text-gray-100">
+          <h1 className="font-semibold text-xl leading-tight mb-2 text-gray-900 dark:text-gray-100">
             {question.title}
           </h1>
-
-          {/* Content */}
-          <div className="prose prose-sm prose-gray max-w-none">
-            <ContentRenderer contentHtml={question.contentHTML} />
-          </div>
-
           {/* Tags */}
           {question.tags && question.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-3">
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {question.tags.map((tag) => (
                 <div
                   key={tag.id}
@@ -97,6 +91,11 @@ export function QuestionDetailCard({ question, currentUserId }: QuestionDetailCa
               ))}
             </div>
           )}
+
+          {/* Content */}
+          <div className="prose prose-sm prose-gray max-w-none">
+            <ContentRenderer contentHtml={question.contentHTML} />
+          </div>
         </div>
       </CardContent>
     </Card>
