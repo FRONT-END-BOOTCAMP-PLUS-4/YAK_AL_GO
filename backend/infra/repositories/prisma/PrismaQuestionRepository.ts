@@ -219,6 +219,7 @@ export class PrismaQuestionRepository implements QuestionRepository {
         title: question.title,
         content: question.content,
         contentHTML: question.contentHTML,
+        updatedAt: new Date(),
       },
     });
 
