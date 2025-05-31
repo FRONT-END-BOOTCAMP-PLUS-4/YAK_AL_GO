@@ -2,6 +2,7 @@
 
 import type { MediRepository } from '@/backend/domain/repositories/MediRepository';
 import type { Medicine } from '@/backend/domain/entities/Medicine';
+import { PdfParsingService } from '@/backend/infra/external/pdf/PdfParsingService';
 import type {
   MediDetailDto,
   MediDetailRequestDto,
@@ -19,7 +20,11 @@ import type {
  * Repository 계층과 Controller 계층 사이의 비즈니스 로직 처리
  */
 export class MediDetailUsecase {
-  constructor(private readonly mediRepository: MediRepository) {}
+  private readonly pdfParsingService: PdfParsingService;
+
+  constructor(private readonly mediRepository: MediRepository) {
+    this.pdfParsingService = new PdfParsingService();
+  }
 
   /**
    * 의약품 상세 정보 조회
@@ -63,8 +68,24 @@ export class MediDetailUsecase {
         };
       }
 
+      // PDF 파싱 (비동기, 실패해도 기본 정보는 반환)
+      let parsedContent;
+      try {
+        console.log(`PDF 파싱 시작 - itemSeq: ${medicine.itemSeq}`);
+        parsedContent = await this.pdfParsingService.parseAllDocuments({
+          effectDocId: medicine.eeDocId || undefined,
+          usageDocId: medicine.udDocId || undefined,
+          cautionDocId: medicine.nbDocId || undefined,
+        });
+        console.log(`PDF 파싱 완료 - itemSeq: ${medicine.itemSeq}`);
+      } catch (pdfError) {
+        console.warn(`PDF 파싱 실패 - itemSeq: ${medicine.itemSeq}:`, pdfError);
+        // PDF 파싱 실패해도 기본 정보는 제공
+        parsedContent = undefined;
+      }
+
       // Medicine Entity를 DTO로 변환
-      const detailDto = this.convertToDetailDto(medicine);
+      const detailDto = this.convertToDetailDto(medicine, parsedContent);
 
       return {
         success: true,
@@ -85,9 +106,10 @@ export class MediDetailUsecase {
   /**
    * Medicine Entity를 MediDetailDto로 변환
    * @param medicine Medicine Entity
+   * @param parsedContent PDF 파싱 결과 (선택적)
    * @returns MediDetailDto
    */
-  private convertToDetailDto(medicine: Medicine): MediDetailDto {
+  private convertToDetailDto(medicine: Medicine, parsedContent?: any): MediDetailDto {
     // PDF 문서 정보 구성
     const documents: MediDocumentInfo = {
       effectDocId: medicine.eeDocId || null,
@@ -141,6 +163,7 @@ export class MediDetailUsecase {
       chart: medicine.chart || null,
       materialName: medicine.materialName || null,
       documents,
+      parsedContent: parsedContent || undefined,
       warnings,
       storage,
       identification,
