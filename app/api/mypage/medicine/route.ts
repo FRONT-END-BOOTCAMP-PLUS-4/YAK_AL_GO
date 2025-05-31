@@ -21,6 +21,7 @@ export async function GET(request: Request) {
         medicines: {
           select: {
             item_name: true,
+            item_seq: true,
           },
         },
       },
@@ -32,6 +33,7 @@ export async function GET(request: Request) {
       startDate: med.start_date ? med.start_date.toISOString().split('T')[0] : null,
       endDate: med.end_date ? med.end_date.toISOString().split('T')[0] : '계속',
       active: med.end_date ? new Date(med.end_date) > new Date() : true,
+      item_seq: med.medicines.item_seq,
     }));
 
     return NextResponse.json(formattedMedicines);
