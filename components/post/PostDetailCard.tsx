@@ -77,16 +77,10 @@ export function PostDetailCard({ post, currentUserId }: PostDetailCardProps) {
         {/* Tags and Title */}
         <div className="px-5 pb-5">
           {/* Title */}
-          <h1 className="font-semibold text-xl leading-tight mb-4 text-gray-900 dark:text-gray-100">{post.title}</h1>
-
-          {/* Content */}
-          <div className="prose prose-sm prose-gray max-w-none">
-            <ContentRenderer contentHtml={post.contentHTML} />
-          </div>
-
+          <h1 className="font-semibold text-xl leading-tight mb-2 text-gray-900 dark:text-gray-100">{post.title}</h1>
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-3">
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {post.tags.map((tag) => (
                 <div
                   key={tag.id}
@@ -97,6 +91,10 @@ export function PostDetailCard({ post, currentUserId }: PostDetailCardProps) {
               ))}
             </div>
           )}
+          {/* Content */}
+          <div className="prose prose-sm prose-gray max-w-none">
+            <ContentRenderer contentHtml={post.contentHTML} />
+          </div>
         </div>
       </CardContent>
     </Card>
