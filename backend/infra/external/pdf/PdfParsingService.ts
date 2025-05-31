@@ -59,21 +59,21 @@ export class PdfParsingService {
 
       // 효능효과 결과 처리
       if (effectResult.status === 'fulfilled' && effectResult.value) {
-        results.effect = effectResult.value;
+        results.effect = effectResult.value as EffectInfo;
       } else if (effectResult.status === 'rejected' && docIds.effectDocId) {
         errors.push(this.createParsingError(docIds.effectDocId, effectResult.reason));
       }
 
       // 용법용량 결과 처리
       if (usageResult.status === 'fulfilled' && usageResult.value) {
-        results.usage = usageResult.value;
+        results.usage = usageResult.value as UsageInfo;
       } else if (usageResult.status === 'rejected' && docIds.usageDocId) {
         errors.push(this.createParsingError(docIds.usageDocId, usageResult.reason));
       }
 
       // 주의사항 결과 처리
       if (cautionResult.status === 'fulfilled' && cautionResult.value) {
-        results.caution = cautionResult.value;
+        results.caution = cautionResult.value as CautionInfo;
       } else if (cautionResult.status === 'rejected' && docIds.cautionDocId) {
         errors.push(this.createParsingError(docIds.cautionDocId, cautionResult.reason));
       }
