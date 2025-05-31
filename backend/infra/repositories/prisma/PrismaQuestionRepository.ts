@@ -180,4 +180,56 @@ export class PrismaQuestionRepository implements QuestionRepository {
       total,
     };
   }
+
+  async delete(id: number, userId: string): Promise<void> {
+    // 먼저 질문이 존재하고 해당 사용자의 것인지 확인
+    const question = await this.prisma.qnas.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+
+    if (!question) {
+      throw new Error('질문을 찾을 수 없습니다.');
+    }
+
+    if (question.userId !== userId) {
+      throw new Error('질문을 삭제할 권한이 없습니다.');
+    }
+
+    // 질문 소프트 삭제 (deletedAt 필드 설정)
+    await this.prisma.qnas.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
+
+  async hasAnswers(id: number): Promise<boolean> {
+    const answerCount = await this.prisma.answers.count({
+      where: { qnaId: id },
+    });
+    return answerCount > 0;
+  }
+
+  async update(id: number, question: Question): Promise<Question> {
+    const updated = await this.prisma.qnas.update({
+      where: { id },
+      data: {
+        title: question.title,
+        content: question.content,
+        contentHTML: question.contentHTML,
+      },
+    });
+
+    return new Question({
+      id: updated.id,
+      title: updated.title,
+      content: updated.content,
+      contentHTML: updated.contentHTML,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+      userId: updated.userId,
+    });
+  }
 }

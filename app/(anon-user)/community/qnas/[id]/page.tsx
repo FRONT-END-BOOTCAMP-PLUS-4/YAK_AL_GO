@@ -6,6 +6,7 @@ import { AnswerDetailList } from '@/components/qna/AnswerDetailList';
 import { AnswerDetailCard } from '@/components/qna/AnswerDetailCard';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { QuestionOptionDropdown } from '@/components/qna/QuestionOptionDropdown';
 
 interface Answer {
   id?: number | undefined;
@@ -38,7 +39,11 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
           <QuestionDetailHeader />
 
           {/* Question Card */}
-          <QuestionDetailCard question={question} currentUserId={currentUserId} />
+          <QuestionDetailCard question={question}>
+            {(question.user?.id === currentUserId || question.userId === currentUserId) && question.id && (
+              <QuestionOptionDropdown questionId={question.id} answerCount={question.answers?.length || 0} />
+            )}
+          </QuestionDetailCard>
 
           {/* Answer Section */}
           {userType !== 0 && <AnswerSection questionId={parseInt(questionId)} currentUserId={currentUserId} />}

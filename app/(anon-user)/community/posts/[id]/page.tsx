@@ -1,6 +1,7 @@
 import { CommentSection } from '@/components/post/CommentSection';
 import { PostDetailHeader } from '@/components/post/PostDetailHeader';
 import { PostDetailCard } from '@/components/post/PostDetailCard';
+import { PostOptionDropdown } from '@/components/post/PostOptionDropdown';
 import { CommentDetailList } from '@/components/post/CommentDetailList';
 import { CommentDetailCard } from '@/components/post/CommentDetailCard';
 import { getPost } from '@/lib/queries/getPost';
@@ -43,7 +44,11 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
           <PostDetailHeader />
 
           {/* Post Card */}
-          <PostDetailCard post={post} currentUserId={currentUserId} />
+          <PostDetailCard post={post}>
+            {(post.user?.id === currentUserId || post.userId === currentUserId) && post.id && (
+              <PostOptionDropdown postId={parseInt(postId)} />
+            )}
+          </PostDetailCard>
 
           {/* Comment Section */}
           <CommentSection postId={parseInt(postId)} currentUserId={currentUserId} />

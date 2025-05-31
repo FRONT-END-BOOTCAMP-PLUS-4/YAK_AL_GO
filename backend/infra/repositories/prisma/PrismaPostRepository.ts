@@ -175,4 +175,14 @@ export class PrismaPostRepository implements PostRepository {
       total,
     };
   }
+
+  async delete(id: number): Promise<void> {
+    // 소프트 삭제로 구현 (deletedAt 필드 설정)
+    await this.prisma.posts.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
 }

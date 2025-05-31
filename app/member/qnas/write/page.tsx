@@ -18,6 +18,9 @@ import { initialValue } from '@/app/member/qnas/write/editorInitialValue';
 import { SerializedEditorState } from 'lexical';
 import { getEditorHtmlFromJSON } from '@/lib/community/getEditorHtmlFromJSON';
 
+// 질문 생성 함수
+import { createQuestion } from '@/lib/queries/createQuestion';
+
 // 질문 생성시 데이터 캐시 무효화
 import { QUESTIONS_QUERY_KEY } from '@/lib/constants/queryKeys';
 import { useQueryClient } from '@tanstack/react-query';
@@ -49,24 +52,13 @@ export default function WritePage() {
     e.preventDefault();
     try {
       // 질문 생성 요청
-      const response = await fetch('/api/questions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: title.current?.value,
-          content: editorState.current,
-          contentHTML: htmlContent,
-          tags,
-        }),
+      const result = await createQuestion({
+        title: title.current?.value || '',
+        content: editorState.current,
+        contentHTML: htmlContent,
+        tags,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create question');
-      }
-
-      const result = await response.json();
       console.log('Question created:', result);
 
       // 무한 쿼리 완전히 리셋하고 새로고침

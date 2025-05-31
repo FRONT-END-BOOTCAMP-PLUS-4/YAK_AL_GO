@@ -24,10 +24,11 @@ interface QuestionDetailCardProps {
       name: string;
     }>;
   };
-  currentUserId: string;
+
+  children: React.ReactNode;
 }
 
-export function QuestionDetailCard({ question, currentUserId }: QuestionDetailCardProps) {
+export function QuestionDetailCard({ question, children }: QuestionDetailCardProps) {
   return (
     <Card className="h-full border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg overflow-hidden">
       <CardContent className="p-0">
@@ -63,9 +64,7 @@ export function QuestionDetailCard({ question, currentUserId }: QuestionDetailCa
             </div>
 
             {/* Question Actions - Only visible to question owner */}
-            {(question.user?.id === currentUserId || question.userId === currentUserId) && question.id && (
-              <QuestionOptionDropdown questionId={question.id} />
-            )}
+            {children}
           </div>
         </div>
 
