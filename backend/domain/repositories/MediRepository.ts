@@ -34,4 +34,11 @@ export interface MediRepository {
    * @returns 의약품 목록과 메타데이터
    */
   findAll(request: MediListRequest): Promise<MediListResult>;
+
+  /**
+   * 개별 의약품 상세 조회 (상세페이지용)
+   * @param itemSeq 의약품 일련번호
+   * @returns 의약품 상세 정보 또는 null
+   */
+  findByItemSeq(itemSeq: string): Promise<Medicine | null>;
 }
