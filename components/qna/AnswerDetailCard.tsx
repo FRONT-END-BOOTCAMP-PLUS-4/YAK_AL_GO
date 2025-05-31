@@ -51,8 +51,8 @@ export function AnswerDetailCard({ answer, currentUserId }: AnswerDetailCardProp
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{answer.users?.name}</span>
                 <span className="text-xs text-gray-500">
-                  {answer.users?.member_type === 0 && '약사'}
-                  {answer.users?.member_type === 1 && '의사'}
+                  {answer.users?.member_type === 1 && '약사'}
+                  {answer.users?.member_type === 2 && '의사'}
                 </span>
               </div>
             </div>

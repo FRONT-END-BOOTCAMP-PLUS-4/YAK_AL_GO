@@ -8,16 +8,24 @@ import { useQueryClient } from '@tanstack/react-query';
 
 interface CommentFormProps {
   postId: number;
+  currentUserId: string;
   onCommentSubmitted?: () => void;
 }
 
-export function CommentForm({ postId, onCommentSubmitted }: CommentFormProps) {
+export function CommentForm({ postId, currentUserId, onCommentSubmitted }: CommentFormProps) {
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
   const handleSubmit = async () => {
-    if (!commentText.trim()) return;
+    if (currentUserId === '') {
+      alert('로그인 후 이용해주세요.');
+      return;
+    }
+    if (!commentText.trim()) {
+      alert('댓글 내용을 입력해주세요.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -28,7 +36,7 @@ export function CommentForm({ postId, onCommentSubmitted }: CommentFormProps) {
         },
         body: JSON.stringify({
           content: commentText,
-          userId: '20250522', // TODO: 실제 사용자 ID로 변경
+          userId: currentUserId,
           postId: postId,
         }),
       });
@@ -42,7 +50,7 @@ export function CommentForm({ postId, onCommentSubmitted }: CommentFormProps) {
       onCommentSubmitted?.();
       window.location.reload();
     } catch (error) {
-      console.error('Error submitting comment:', error);
+      alert(error);
     } finally {
       setIsSubmitting(false);
     }
