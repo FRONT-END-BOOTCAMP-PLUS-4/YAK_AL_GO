@@ -55,6 +55,12 @@ interface Post {
   type: 'expert' | 'community';
 }
 
+interface Health {
+  id: number;
+  healthId: number;
+  healthName: string;
+}
+
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('profile');
   const [pharmacyInfo, setPharmacyInfo] = useState({
@@ -83,17 +89,15 @@ export default function ProfilePage() {
     item_name: string;
     entp_name: string;
   } | null>(null);
+  const [healths, setHealths] = useState<Health[]>([]);
 
   const { data: session } = useSession();
   const name = session?.user?.name ?? '';
-  const birthyear = session?.user?.birthyear ?? '';
-  const created_at = session?.user?.created_at ?? '';
   const email = session?.user?.email ?? '';
   const hpid = session?.user?.hpid ?? '';
   const id = session?.user?.id ?? '';
   const image = session?.user?.image ?? '';
   const member_type = session?.user?.member_type ?? '';
-  const needsSignup = session?.user?.needsSignup ?? '';
   const photo = session?.user?.photo ?? '';
 
   useEffect(() => {
@@ -138,6 +142,17 @@ export default function ProfilePage() {
         }
       } catch (error) {
         console.error('Failed to fetch posts:', error);
+      }
+
+      // fetch health data
+      try {
+        const healthRes = await fetch(`/api/mypage/health?userId=${id}`);
+        if (healthRes.ok) {
+          const healthData = await healthRes.json();
+          setHealths(healthData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch healths:', error);
       }
     };
 
@@ -340,6 +355,20 @@ export default function ProfilePage() {
                   <div className="space-y-2">
                     <Label>이메일</Label>
                     <div className="px-3 py-2 border rounded bg-muted">{email}</div>
+                  </div>
+
+                  <div className="h-px bg-border my-4"></div>
+                  <h3 className="text-lg font-medium mb-2">현재 건강 상태</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {healths.length > 0 ? (
+                      healths.map((health) => (
+                        <Badge key={health.id} variant="secondary" className="px-3 py-1">
+                          {health.healthName}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">등록된 건강 상태가 없습니다.</p>
+                    )}
                   </div>
 
                   {/* 약사인 경우 약국 정보 표시 */}
