@@ -4,6 +4,8 @@ import { QuestionDetailHeader } from '@/components/qna/QuestionDetailHeader';
 import { QuestionDetailCard } from '@/components/qna/QuestionDetailCard';
 import { AnswerDetailList } from '@/components/qna/AnswerDetailList';
 import { AnswerDetailCard } from '@/components/qna/AnswerDetailCard';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 interface Answer {
   id?: number | undefined;
@@ -22,8 +24,10 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
   // 질문 정보 조회: 질문, 답변, 태그, 유저 등의 정보를 담고 있다.
   const question = await getQuestion(questionId);
 
-  // TODO: 실제 로그인한 사용자 정보를 가져오는 로직으로 교체
-  const currentUserId = '20250522'; // 임시 현재 사용자 ID
+  // 유저 정보 조회
+  const session = await getServerSession(authOptions);
+  const userType = session?.user?.member_type || 0;
+  const currentUserId = session?.user?.id ?? '';
 
   // 답변 등록 버튼을 누르면 AnswerSection 컴포넌트가 렌더링된다. 답변 등록 후 페이지 새로고침된다.
   return (
@@ -37,7 +41,7 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
           <QuestionDetailCard question={question} currentUserId={currentUserId} />
 
           {/* Answer Section */}
-          <AnswerSection questionId={parseInt(questionId)} />
+          {userType !== 0 && <AnswerSection questionId={parseInt(questionId)} currentUserId={currentUserId} />}
 
           {/* Answers */}
           <AnswerDetailList answerCount={question.answers?.length || 0}>
