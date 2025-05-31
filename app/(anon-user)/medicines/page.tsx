@@ -149,12 +149,38 @@ export default function MedicinesPage() {
   };
 
   /**
-   * 의약품명 길이 제한 함수
+   * 의약품명 스마트 생략 함수 (중복 방지)
    */
-  const formatDisplayName = (displayName: string, maxLength = 20): string => {
-    if (!displayName) return '';
-    if (displayName.length <= maxLength) return displayName;
-    return `${displayName.substring(0, maxLength)}...`;
+  const formatMedicineNameSmart = (targetName: string, allNames: string[]): string => {
+    if (!targetName) return '';
+
+    const maxLength = 12; // 최대 허용 길이
+    const minLength = 6; // 최소 표시 길이
+
+    // 이미 충분히 짧으면 그대로 반환
+    if (targetName.length <= minLength) return targetName;
+
+    // 점진적으로 길이를 늘려가며 중복 확인
+    for (let len = minLength; len <= maxLength; len++) {
+      const truncated = targetName.substring(0, len);
+
+      // 같은 길이로 자른 다른 이름들과 중복되는지 확인
+      const conflicts = allNames.filter(
+        (name) => name !== targetName && name.substring(0, len) === truncated
+      );
+
+      // 중복이 없으면 이 길이로 생략
+      if (conflicts.length === 0) {
+        return len === targetName.length ? targetName : `${truncated}...`;
+      }
+    }
+
+    // 최대 길이에서도 중복이면 뒤쪽 중요 정보 포함
+    const frontPart = targetName.substring(0, 4);
+    const backPart = targetName.slice(-4);
+    return targetName.length > 8
+      ? `${frontPart}...${backPart}`
+      : `${targetName.substring(0, maxLength)}...`;
   };
 
   /**
@@ -322,25 +348,27 @@ export default function MedicinesPage() {
       <Card className="hover:shadow-md transition-shadow cursor-pointer">
         <CardContent className="p-4">
           <div className="flex gap-4">
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 w-20 h-20 min-w-[80px] min-h-[80px] max-w-[80px] max-h-[80px]">
               <img
                 src={selectMedicineImage(
                   medicine.itemSeq,
                   medicines.find((m) => m.itemSeq === medicine.itemSeq)?.chart
                 )}
                 alt={medicine.originalName}
-                width={80}
-                height={80}
-                className="rounded-md object-cover"
+                className="w-full h-full rounded-md object-cover aspect-square block"
+                style={{ width: '80px', height: '80px' }}
               />
             </div>
             <div className="flex flex-col gap-2 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <h3
-                  className="font-bold text-sm truncate flex-1 min-w-0"
+                  className="font-bold text-sm truncate flex-1 min-w-0 max-w-[80px] sm:max-w-[90px] md:max-w-[100px] lg:max-w-[110px] xl:max-w-[120px]"
                   title={medicine.originalName}
                 >
-                  {formatDisplayName(medicine.displayName)}
+                  {formatMedicineNameSmart(
+                    medicine.displayName,
+                    formattedMedicines.map((m) => m.displayName)
+                  )}
                 </h3>
                 <Badge variant="outline" className="text-xs shrink-0">
                   {medicine.category.display}
