@@ -107,14 +107,14 @@ export default function CommunityPage() {
   }, [isFetchingNext, fetchNext, hasNext]);
 
   return (
-    <div className="container max-w-4xl py-8">
+    <div className="container py-8">
       <div className="flex flex-col gap-6 overflow-auto">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">커뮤니티</h1>
           <p className="text-muted-foreground">약에 관한 정보를 공유하고 소통하는 공간입니다.</p>
         </div>
 
-        <div className="flex flex-col gap-4 sm:flex-row mx-1">
+        <div className=" flex  flex-col gap-4 sm:flex-row mx-1">
           <div className="flex w-full items-center space-x-2">
             <Input type="text" placeholder="검색어를 입력하세요" />
             <Button type="submit" size="icon">
@@ -137,20 +137,20 @@ export default function CommunityPage() {
             <TabsTrigger value="posts">자유게시판</TabsTrigger>
           </TabsList>
           <TabsContent value="qnas" className="mt-4">
-            <div className="grid gap-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {isInitialLoading ? (
                 // 초기 로딩 중일 때 스켈레톤 표시
-                <div className="flex flex-col gap-4">
+                <>
                   <QnaSkeleton />
                   <QnaSkeleton />
                   <QnaSkeleton />
-                </div>
+                </>
               ) : questions.length > 0 ? (
                 // 데이터가 있을 때 질문 카드 표시
                 questions.map((qna) => <QuestionCard key={qna.id} qna={qna} />)
               ) : (
                 // 로딩 완료 후 데이터가 없을 때 메시지 표시
-                <div className="flex flex-col items-center justify-center py-12">
+                <div className="col-span-full flex flex-col items-center justify-center py-12">
                   <div className="text-center">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">아직 질문이 없습니다</h3>
                     <p className="text-gray-500 dark:text-gray-400 mb-4">첫 번째 질문을 올려보세요!</p>
@@ -163,20 +163,20 @@ export default function CommunityPage() {
             </div>
           </TabsContent>
           <TabsContent value="posts" className="mt-4">
-            <div className="grid gap-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {isInitialLoading ? (
                 // 초기 로딩 중일 때 스켈레톤 표시
-                <div className="flex flex-col gap-4">
+                <>
                   <QnaSkeleton />
                   <QnaSkeleton />
                   <QnaSkeleton />
-                </div>
+                </>
               ) : posts.length > 0 ? (
                 // 데이터가 있을 때 포스트 카드 표시
                 posts.map((post) => <PostCard key={post.id} post={post} />)
               ) : (
                 // 로딩 완료 후 데이터가 없을 때 메시지 표시
-                <div className="flex flex-col items-center justify-center py-12">
+                <div className="col-span-full flex flex-col items-center justify-center py-12">
                   <div className="text-center">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                       아직 게시글이 없습니다

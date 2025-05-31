@@ -42,10 +42,10 @@ export const PostCard = ({ post }: PostCardProps) => {
   return (
     <Link href={`community/posts/${post.id}`} className="block">
       <Card className="h-full border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg overflow-hidden">
-        <CardContent className="p-0">
+        <CardContent className="p-0 h-full flex flex-col">
           {/* Header */}
-          <div className="p-5 pb-4">
-            <div className="flex items-start justify-between mb-4">
+          <div className="p-3 pb-2 flex-grow">
+            <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
                 <span className="text-xs font-medium text-green-600">자유게시판</span>
@@ -57,15 +57,17 @@ export const PostCard = ({ post }: PostCardProps) => {
             </div>
 
             {/* Title */}
-            <h3 className="font-semibold text-base leading-tight mb-2 line-clamp-2 text-gray-900 dark:text-gray-100">
+            <h3 className="font-semibold text-base leading-tight mb-1 line-clamp-2 text-gray-900 dark:text-gray-100">
               {post.title}
             </h3>
 
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3 leading-relaxed">{contentText}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-1.5 leading-relaxed">
+              {contentText}
+            </p>
 
             {/* Tags */}
             {post.tags && post.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-2">
+              <div className="flex flex-wrap gap-1.5 mb-1">
                 {post.tags.map((tag: TagResponseDto) => (
                   <div
                     key={tag.id}
@@ -79,7 +81,7 @@ export const PostCard = ({ post }: PostCardProps) => {
           </div>
 
           {/* Footer */}
-          <div className="px-3 py-2.5 bg-neutral-50/50 dark:bg-neutral-800/30 border-t border-neutral-200/40 dark:border-neutral-700/30">
+          <div className="px-3 py-1.5 bg-neutral-50/50 dark:bg-neutral-800/30 border-t border-neutral-200/40 dark:border-neutral-700/30 mt-auto">
             <div className="flex items-center justify-between">
               {/* User info */}
               <div className="flex items-center gap-2">
