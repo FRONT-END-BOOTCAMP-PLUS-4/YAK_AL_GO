@@ -48,9 +48,60 @@ interface PrismaClient {
         change_date: boolean;
         created_at: boolean;
         updated_at: boolean;
+        // PDF 문서 링크들 (상세페이지 핵심)
+        ee_doc_id: boolean;
+        ud_doc_id: boolean;
+        nb_doc_id: boolean;
+        insert_file: boolean;
+        // 주의사항 정보 (모달/경고용)
+        type_code: boolean;
+        type_name: boolean;
+        // 보관/포장 정보
+        storage_method: boolean;
+        valid_term: boolean;
+        pack_unit: boolean;
+        // 식별 정보
+        bar_code: boolean;
+        edi_code: boolean;
+        // 기타 상세 정보
+        bizrno: boolean;
+        reexam_date: boolean;
+        reexam_target: boolean;
       };
     }) => Promise<MedicineRecord[]>;
     count: (args: { where?: WhereCondition }) => Promise<number>;
+    findUnique: (args: {
+      where: { item_seq: string };
+      select?: {
+        item_seq: boolean;
+        item_name: boolean;
+        entp_name: boolean;
+        class_no: boolean;
+        chart: boolean;
+        material_name: boolean;
+        etc_otc_code: boolean;
+        item_permit_date: boolean;
+        cancel_date: boolean;
+        cancel_name: boolean;
+        change_date: boolean;
+        created_at: boolean;
+        updated_at: boolean;
+        ee_doc_id: boolean;
+        ud_doc_id: boolean;
+        nb_doc_id: boolean;
+        insert_file: boolean;
+        type_code: boolean;
+        type_name: boolean;
+        storage_method: boolean;
+        valid_term: boolean;
+        pack_unit: boolean;
+        bar_code: boolean;
+        edi_code: boolean;
+        bizrno: boolean;
+        reexam_date: boolean;
+        reexam_target: boolean;
+      };
+    }) => Promise<MedicineRecord | null>;
   };
 }
 
@@ -147,14 +198,36 @@ export class PrismaMediRepository implements MediRepository {
         take: limit + 1, // hasMore 판단을 위해 1개 더 조회
         skip: cursor ? 0 : skip, // 커서 사용 시 skip 안함
         select: {
+          // 기본 식별 정보
           item_seq: true,
           item_name: true,
           entp_name: true,
           class_no: true,
+          // 의약품 상세 정보
           chart: true,
           material_name: true,
           etc_otc_code: true,
           item_permit_date: true,
+          // PDF 문서 링크들 (상세페이지 핵심)
+          ee_doc_id: true,
+          ud_doc_id: true,
+          nb_doc_id: true,
+          insert_file: true,
+          // 주의사항 정보 (모달/경고용)
+          type_code: true,
+          type_name: true,
+          // 보관/포장 정보
+          storage_method: true,
+          valid_term: true,
+          pack_unit: true,
+          // 식별 정보
+          bar_code: true,
+          edi_code: true,
+          // 기타 상세 정보
+          bizrno: true,
+          reexam_date: true,
+          reexam_target: true,
+          // 시스템 정보
           cancel_date: true,
           cancel_name: true,
           change_date: true,
@@ -178,26 +251,26 @@ export class PrismaMediRepository implements MediRepository {
             medicine.etc_otc_code || undefined,
             medicine.class_no || undefined,
             medicine.chart || undefined,
-            undefined, // barCode
+            medicine.bar_code || undefined,
             medicine.material_name || undefined,
-            undefined, // eeDocId
-            undefined, // bizrno
+            medicine.ee_doc_id || undefined,
+            medicine.bizrno || undefined,
             medicine.cancel_date || undefined,
             medicine.cancel_name || undefined,
             medicine.change_date || undefined,
             medicine.created_at || undefined,
-            undefined, // ediCode
-            undefined, // insertFile
-            undefined, // nbDocId
-            undefined, // packUnit
-            undefined, // reexamDate
-            undefined, // reexamTarget
-            undefined, // storageMethod
-            undefined, // typeCode
-            undefined, // typeName
-            undefined, // udDocId
+            medicine.edi_code || undefined,
+            medicine.insert_file || undefined,
+            medicine.nb_doc_id || undefined,
+            medicine.pack_unit || undefined,
+            medicine.reexam_date || undefined,
+            medicine.reexam_target || undefined,
+            medicine.storage_method || undefined,
+            medicine.type_code || undefined,
+            medicine.type_name || undefined,
+            medicine.ud_doc_id || undefined,
             medicine.updated_at || undefined,
-            undefined // validTerm
+            medicine.valid_term || undefined
           )
       );
 
@@ -216,6 +289,94 @@ export class PrismaMediRepository implements MediRepository {
     } catch (error) {
       console.error('의약품 목록 조회 오류:', error);
       throw new Error('의약품 목록을 조회하는 중 오류가 발생했습니다.');
+    }
+  }
+
+  /**
+   * 개별 의약품 상세 조회 (상세페이지용)
+   */
+  async findByItemSeq(itemSeq: string): Promise<Medicine | null> {
+    try {
+      const medicine: MedicineRecord | null = await this.prisma.medicines.findUnique({
+        where: {
+          item_seq: itemSeq,
+        },
+        select: {
+          // 기본 식별 정보
+          item_seq: true,
+          item_name: true,
+          entp_name: true,
+          class_no: true,
+          // 의약품 상세 정보
+          chart: true,
+          material_name: true,
+          etc_otc_code: true,
+          item_permit_date: true,
+          // PDF 문서 링크들 (상세페이지 핵심)
+          ee_doc_id: true,
+          ud_doc_id: true,
+          nb_doc_id: true,
+          insert_file: true,
+          // 주의사항 정보 (모달/경고용)
+          type_code: true,
+          type_name: true,
+          // 보관/포장 정보
+          storage_method: true,
+          valid_term: true,
+          pack_unit: true,
+          // 식별 정보
+          bar_code: true,
+          edi_code: true,
+          // 기타 상세 정보
+          bizrno: true,
+          reexam_date: true,
+          reexam_target: true,
+          // 시스템 정보
+          cancel_date: true,
+          cancel_name: true,
+          change_date: true,
+          created_at: true,
+          updated_at: true,
+        },
+      });
+
+      if (!medicine) {
+        return null;
+      }
+
+      // Entity 변환
+      return new Medicine(
+        medicine.item_seq,
+        medicine.item_name,
+        medicine.entp_name || undefined,
+        medicine.item_permit_date || undefined,
+        medicine.etc_otc_code || undefined,
+        medicine.class_no || undefined,
+        medicine.chart || undefined,
+        medicine.bar_code || undefined,
+        medicine.material_name || undefined,
+        medicine.ee_doc_id || undefined,
+        medicine.bizrno || undefined,
+        medicine.cancel_date || undefined,
+        medicine.cancel_name || undefined,
+        medicine.change_date || undefined,
+        medicine.created_at || undefined,
+        medicine.edi_code || undefined,
+        medicine.insert_file || undefined,
+        medicine.nb_doc_id || undefined,
+        medicine.pack_unit || undefined,
+        medicine.reexam_date || undefined,
+        medicine.reexam_target || undefined,
+        medicine.storage_method || undefined,
+        medicine.type_code || undefined,
+        medicine.type_name || undefined,
+        medicine.ud_doc_id || undefined,
+        medicine.updated_at || undefined,
+        medicine.valid_term || undefined
+      );
+    } catch (error) {
+      console.error('의약품 상세 조회 오류:', error);
+      throw new Error('의약품 상세 정보를 조회하는 중 오류가 발생했습니다.');
     }
   }
 
