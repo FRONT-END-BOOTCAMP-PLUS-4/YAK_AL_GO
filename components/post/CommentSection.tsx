@@ -7,10 +7,15 @@ import { CommentForm } from './CommentForm';
 
 interface CommentSectionProps {
   postId: number;
+  currentUserId: string;
 }
 
-export function CommentSection({ postId }: CommentSectionProps) {
+export function CommentSection({ postId, currentUserId }: CommentSectionProps) {
   const [isCommentExpanded, setIsCommentExpanded] = useState(false);
+
+  const handleCommentSubmitted = () => {
+    setIsCommentExpanded(false);
+  };
 
   return (
     <Card>
@@ -26,7 +31,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
       </CardHeader>
       {isCommentExpanded && (
         <CardContent>
-          <CommentForm postId={postId} onCommentSubmitted={() => setIsCommentExpanded(false)} />
+          <CommentForm postId={postId} currentUserId={currentUserId} onCommentSubmitted={handleCommentSubmitted} />
         </CardContent>
       )}
     </Card>

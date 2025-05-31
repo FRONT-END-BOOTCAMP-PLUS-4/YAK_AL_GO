@@ -39,8 +39,8 @@ export function CommentDetailCard({ comment, currentUserId }: CommentDetailCardP
                   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {comment.users?.name || comment.userId}
                   </span>
-                  {comment.users?.member_type === 0 && <span className="text-xs text-gray-500">약사</span>}
-                  {comment.users?.member_type === 1 && <span className="text-xs text-gray-500">의사</span>}
+                  {comment.users?.member_type === 1 && <span className="text-xs text-gray-500">약사</span>}
+                  {comment.users?.member_type === 2 && <span className="text-xs text-gray-500">의사</span>}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <div className="flex items-center gap-1">
