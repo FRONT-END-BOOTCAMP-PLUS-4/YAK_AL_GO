@@ -24,10 +24,10 @@ interface PostDetailCardProps {
       name: string;
     }>;
   };
-  currentUserId: string;
+  children: React.ReactNode;
 }
 
-export function PostDetailCard({ post, currentUserId }: PostDetailCardProps) {
+export function PostDetailCard({ post, children }: PostDetailCardProps) {
   return (
     <Card className="h-full border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg overflow-hidden">
       <CardContent className="p-0">
@@ -64,9 +64,7 @@ export function PostDetailCard({ post, currentUserId }: PostDetailCardProps) {
 
             <div className="flex items-center gap-3">
               {/* Post Actions - Only visible to post owner */}
-              {(post.user?.id === currentUserId || post.userId === currentUserId) && post.id && (
-                <PostOptionDropdown postId={post.id} />
-              )}
+              {children}
             </div>
           </div>
         </div>

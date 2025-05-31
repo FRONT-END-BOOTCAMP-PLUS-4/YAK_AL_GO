@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 // tag 관련 컴포넌트들
 import { TagSelect } from '@/components/qna/TagSelect';
-import { Tag } from '@/backend/domain/entities/TagEntity';
+import { Tag } from '@/backend/domain/entities/Tag';
 
 // 훅들
 import { useRef, useState, Suspense } from 'react';
@@ -18,7 +18,10 @@ import { initialValue } from '@/app/member/qnas/write/editorInitialValue';
 import { SerializedEditorState } from 'lexical';
 import { getEditorHtmlFromJSON } from '@/lib/community/getEditorHtmlFromJSON';
 
-// 질문 생성시 데이터 캐시 무효화
+// 게시물 생성 함수
+import { createPost } from '@/lib/queries/createPost';
+
+// 게시물 생성시 데이터 캐시 무효화
 import { POSTS_QUERY_KEY } from '@/lib/constants/queryKeys';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -28,7 +31,7 @@ const Editor = dynamic(() => import('@/components/blocks/editor-y/editor').then(
   loading: () => <div className="h-72 w-full animate-pulse rounded-lg bg-muted" />,
 });
 
-// 질문 작성 페이지
+// 게시물 작성 페이지
 export default function WritePage() {
   // 태그 선택 상태
   const [tags, setTags] = useState<Tag[]>([]);
@@ -41,32 +44,22 @@ export default function WritePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // 질문 작성 함수
+  // 게시물 작성 함수
   const handleSubmit = async (e: React.FormEvent) => {
     const htmlContent = getEditorHtmlFromJSON(editorState.current);
 
     // 폼 제출 방지
     e.preventDefault();
     try {
-      // 질문 생성 요청
-      const response = await fetch('/api/posts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: title.current?.value,
-          content: editorState.current,
-          contentHTML: htmlContent,
-          tags,
-        }),
+      // 게시물 생성 요청
+      const result = await createPost({
+        title: title.current?.value || '',
+        content: editorState.current,
+        contentHTML: htmlContent,
+        tags,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create post');
-      }
-
-      const result = await response.json();
+      console.log('Post created:', result);
 
       // 무한 쿼리 완전히 리셋하고 새로고침
       await queryClient.resetQueries({ queryKey: POSTS_QUERY_KEY });
