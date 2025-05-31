@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
       if (!user) {
         return NextResponse.json({ error: 'User not found' }, { status: 401 });
       }
-      // 403: 유저의 타입이 0이 아닐 경우
-      if (user.member_type !== 0) {
+      // 403: 유저의 타입이 0일 경우
+      if (user.member_type === 0) {
         return NextResponse.json({ error: 'User does not have permission to create answers' }, { status: 403 });
       }
     }
