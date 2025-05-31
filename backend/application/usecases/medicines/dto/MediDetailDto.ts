@@ -1,5 +1,7 @@
 // 의약품 상세 정보 DTO
 
+import type { ParsedMedicineContent } from '@/backend/infra/external/pdf/types/ParsedContent';
+
 /**
  * 의약품 PDF 문서 정보
  */
@@ -74,6 +76,9 @@ export interface MediDetailDto {
 
   // PDF 문서 정보 (상세페이지 핵심)
   documents: MediDocumentInfo;
+
+  // PDF 파싱된 상세 내용 (상세페이지 메인 컨텐츠)
+  parsedContent?: ParsedMedicineContent;
 
   // 주의사항 정보 (모달/경고용)
   warnings: MediWarningInfo;
