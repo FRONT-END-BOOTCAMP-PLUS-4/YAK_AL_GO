@@ -60,10 +60,14 @@ export class PrismaQuestionRepository implements QuestionRepository {
           },
         },
         answers: {
+          where: {
+            deletedAt: null,
+          },
           select: {
             id: true,
             content: true,
             contentHTML: true,
+            isAccepted: true,
             createdAt: true,
             updatedAt: true,
             userId: true,
@@ -143,7 +147,11 @@ export class PrismaQuestionRepository implements QuestionRepository {
           },
           _count: {
             select: {
-              answers: true,
+              answers: {
+                where: {
+                  deletedAt: null, // 소프트 삭제된 답변 제외
+                },
+              },
             },
           },
         },
@@ -207,7 +215,10 @@ export class PrismaQuestionRepository implements QuestionRepository {
 
   async hasAnswers(id: number): Promise<boolean> {
     const answerCount = await this.prisma.answers.count({
-      where: { qnaId: id },
+      where: {
+        qnaId: id,
+        deletedAt: null,
+      },
     });
     return answerCount > 0;
   }

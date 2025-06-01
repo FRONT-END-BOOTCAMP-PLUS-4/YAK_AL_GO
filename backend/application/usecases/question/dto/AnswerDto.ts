@@ -2,6 +2,7 @@ export interface AnswerResponseDto {
   id?: number;
   content: any;
   contentHTML: string;
+  isAccepted?: boolean;
   userId: string;
   questionId: number;
   createdAt?: Date;

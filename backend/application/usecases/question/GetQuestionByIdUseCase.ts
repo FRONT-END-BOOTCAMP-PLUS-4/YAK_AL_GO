@@ -34,6 +34,7 @@ export class GetQuestionByIdUseCase {
           id: answer.id,
           content: answer.content,
           contentHTML: answer.contentHTML,
+          isAccepted: answer.isAccepted,
           userId: answer.userId,
           questionId: id,
           createdAt: answer.createdAt,
