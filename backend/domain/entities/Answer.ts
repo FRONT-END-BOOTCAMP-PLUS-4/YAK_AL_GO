@@ -7,6 +7,7 @@ export class Answer {
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;
+  isAccepted: boolean;
   userId: string;
   user?: User;
   qnaId: number;
@@ -18,6 +19,7 @@ export class Answer {
     createdAt?: Date;
     updatedAt?: Date;
     deletedAt?: Date | null;
+    isAccepted?: boolean;
     userId: string;
     user?: User;
     qnaId: number;
@@ -28,6 +30,7 @@ export class Answer {
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
     this.deletedAt = props.deletedAt;
+    this.isAccepted = props.isAccepted ?? false;
     this.userId = props.userId;
     this.user = props.user;
     this.qnaId = props.qnaId;
