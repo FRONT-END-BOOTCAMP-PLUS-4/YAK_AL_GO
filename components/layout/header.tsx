@@ -9,21 +9,30 @@ import { Menu, User, MapPin, Search, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
+import { useLoadingContext } from '@/providers/LoadingProvider';
 
 const navigation = [
-  { name: '홈', href: '/' },
-  { name: '약 검색', href: '/medicines' },
-  { name: '약국 찾기', href: '/map' },
-  { name: '커뮤니티', href: '/community' },
+  { name: '홈', href: '/', loadingText: '홈으로 이동하고 있어요...' },
+  { name: '약 검색', href: '/medicines', loadingText: '약 검색 페이지로 이동하고 있어요...' },
+  { name: '약국 찾기', href: '/map', loadingText: '내 주변 약국을 찾고 있어요...' },
+  { name: '커뮤니티', href: '/community', loadingText: '커뮤니티 페이지로 이동하고 있어요...' },
 ];
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { navigate } = useLoadingContext();
   const name = session?.user?.name ?? '';
   const photo = session?.user?.photo ?? '';
   const isAuthenticated = !!session;
+
+  const handleNavigation = (href: string, loadingText: string) => {
+    setIsOpen(false);
+    if (pathname !== href) {
+      navigate(href, loadingText);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -40,33 +49,31 @@ export default function Header() {
               <SheetTitle className="sr-only">내비게이션 메뉴</SheetTitle>
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b px-2 py-4">
-                  <Link
-                    href="/"
+                  <button
+                    onClick={() => handleNavigation('/', '홈으로 이동하고 있어요...')}
                     className="flex items-center gap-2 font-bold text-lg text-primary"
-                    onClick={() => setIsOpen(false)}
                   >
                     <Image src="/logo.png" alt="약알고" width={100} height={50} />
-                  </Link>
+                  </button>
                 </div>
                 <nav className="flex-1 overflow-auto py-4">
                   <ul className="grid gap-1 px-2">
                     {navigation.map((item) => (
                       <li key={item.name}>
-                        <Link
-                          href={item.href}
+                        <button
+                          onClick={() => handleNavigation(item.href, item.loadingText)}
                           className={cn(
-                            'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium',
+                            'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium w-full text-left',
                             pathname === item.href
                               ? 'bg-primary text-primary-foreground'
                               : 'hover:bg-muted'
                           )}
-                          onClick={() => setIsOpen(false)}
                         >
                           {item.name === '약 검색' && <Search className="h-4 w-4" />}
                           {item.name === '약국 찾기' && <MapPin className="h-4 w-4" />}
                           {item.name === '커뮤니티' && <MessageSquare className="h-4 w-4" />}
                           {item.name}
-                        </Link>
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -74,13 +81,15 @@ export default function Header() {
                 <div className="border-t p-4">
                   {isAuthenticated ? (
                     <div className="flex flex-col gap-2">
-                      <Button asChild variant="ghost" onClick={() => setIsOpen(false)}>
-                        <Link href="/member">
-                          <span className="flex items-center gap-2">
-                            <img src={photo} alt="Profile" className="h-8 w-8 rounded-full" />
-                            <span className="text-sm font-medium">{name}</span>
-                          </span>
-                        </Link>
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => handleNavigation('/member', '마이페이지로 이동하고 있어요...')}
+                        className="w-full justify-start"
+                      >
+                        <span className="flex items-center gap-2">
+                          <img src={photo} alt="Profile" className="h-8 w-8 rounded-full" />
+                          <span className="text-sm font-medium">{name}</span>
+                        </span>
                       </Button>
                       <Button variant="outline" className="w-full" onClick={() => signOut()}>
                         로그아웃
@@ -88,10 +97,11 @@ export default function Header() {
                     </div>
                   ) : (
                     <div>
-                      <Button asChild className="w-full">
-                        <Link href="/auth" onClick={() => setIsOpen(false)}>
-                          로그인/회원가입
-                        </Link>
+                      <Button 
+                        className="w-full"
+                        onClick={() => handleNavigation('/auth', '로그인 페이지로 이동하고 있어요...')}
+                      >
+                        로그인/회원가입
                       </Button>
                     </div>
                   )}
@@ -99,45 +109,51 @@ export default function Header() {
               </div>
             </SheetContent>
           </Sheet>
-          <Link href="/" className="flex items-center gap-2">
+          <button
+            onClick={() => handleNavigation('/', '홈으로 이동하고 있어요...')}
+            className="flex items-center gap-2"
+          >
             <Image src="/logo.png" alt="약알고" width={100} height={50} />
-          </Link>
+          </button>
         </div>
         <nav className="hidden lg:flex lg:gap-4 lg:items-center">
           {navigation.map((item) => (
-            <Link
+            <button
               key={item.name}
-              href={item.href}
+              onClick={() => handleNavigation(item.href, item.loadingText)}
               className={cn(
                 'px-3 py-2 rounded-md text-sm font-medium transition-colors',
                 pathname === item.href ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
               )}
             >
               {item.name}
-            </Link>
+            </button>
           ))}
         </nav>
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
-              <Button asChild variant="ghost">
-                <Link href="/member">
-                  <span className="flex items-center gap-2">
-                    <img src={photo} alt="Profile" className="h-8 w-8 rounded-full" />
-                    <span className="text-sm font-medium">{name}</span>
-                  </span>
-                </Link>
+              <Button 
+                variant="ghost"
+                onClick={() => handleNavigation('/member', '마이페이지로 이동하고 있어요...')}
+              >
+                <span className="flex items-center gap-2">
+                  <img src={photo} alt="Profile" className="h-8 w-8 rounded-full" />
+                  <span className="text-sm font-medium">{name}</span>
+                </span>
               </Button>
               <Button variant="outline" size="sm" onClick={() => signOut()}>
                 로그아웃
               </Button>
             </div>
           ) : (
-            <Button asChild variant="ghost">
-              <Link href="/auth" className="flex items-center gap-2">
-                <User className="h-6 w-6" />
-                <span className="text-sm font-medium">로그인/회원가입</span>
-              </Link>
+            <Button 
+              variant="ghost"
+              onClick={() => handleNavigation('/auth', '로그인 페이지로 이동하고 있어요...')}
+              className="flex items-center gap-2"
+            >
+              <User className="h-6 w-6" />
+              <span className="text-sm font-medium">로그인/회원가입</span>
             </Button>
           )}
         </div>

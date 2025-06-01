@@ -69,10 +69,54 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        wiggle: {
+          "0%, 100%": { 
+            transform: "rotate(0deg) scale(1)" 
+          },
+          "10%": { 
+            transform: "rotate(-3deg) scale(1.02)" 
+          },
+          "20%": { 
+            transform: "rotate(3deg) scale(0.98)" 
+          },
+          "30%": { 
+            transform: "rotate(-2deg) scale(1.01)" 
+          },
+          "40%": { 
+            transform: "rotate(2deg) scale(0.99)" 
+          },
+          "50%": { 
+            transform: "rotate(-1deg) scale(1)" 
+          },
+          "60%": { 
+            transform: "rotate(1deg) scale(1.01)" 
+          },
+          "70%": { 
+            transform: "rotate(-0.5deg) scale(0.99)" 
+          },
+          "80%": { 
+            transform: "rotate(0.5deg) scale(1)" 
+          },
+          "90%": { 
+            transform: "rotate(-0.2deg) scale(1.01)" 
+          },
+        },
+        "fade-in": {
+          "0%": { 
+            opacity: "0",
+            transform: "translateY(10px)"
+          },
+          "100%": { 
+            opacity: "1",
+            transform: "translateY(0)"
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        wiggle: "wiggle 2s ease-in-out infinite",
+        "fade-in": "fade-in 0.5s ease-out",
       },
     },
   },

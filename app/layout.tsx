@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import ReactQueryProviders from '@/components/query-provider';
 import { SessionProvider } from '@/components/session-provider';
 import ScrollToTop from '@/components/ui/ScrollToTop';
+import { LoadingProvider } from '@/providers/LoadingProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -29,12 +30,14 @@ export default function RootLayout({
         >
           <SessionProvider>
             <ReactQueryProviders>
-              <div className="flex min-h-screen flex-col">
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-              <ScrollToTop />
+              <LoadingProvider>
+                <div className="flex min-h-screen flex-col">
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
+                <ScrollToTop />
+              </LoadingProvider>
             </ReactQueryProviders>
           </SessionProvider>
         </ThemeProvider>
