@@ -26,6 +26,7 @@ interface AnswerDetailCardProps {
 }
 
 export function AnswerDetailCard({ answer, currentUserId, isEditing = false }: AnswerDetailCardProps) {
+  console.log(answer);
   return (
     <Card className="h-full border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg overflow-hidden">
       <CardContent className="p-0">

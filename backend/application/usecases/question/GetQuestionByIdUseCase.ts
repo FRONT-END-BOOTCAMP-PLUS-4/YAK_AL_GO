@@ -43,6 +43,7 @@ export class GetQuestionByIdUseCase {
             ? {
                 id: answer.user.id,
                 name: answer.user.name,
+                image: answer.user.image,
                 member_type: answer.user.member_type || 0,
               }
             : undefined,
