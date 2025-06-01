@@ -26,14 +26,25 @@ interface Comment {
   };
 }
 
-export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PostDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { id: postId } = await params;
+  const { edit } = await searchParams;
+
   // 게시물 정보 조회: 게시물, 댓글, 태그, 유저 등의 정보를 담고 있다.
   const post = await getPost(postId);
 
   // 유저 정보 조회
   const session = await getServerSession(authOptions);
   const currentUserId = session?.user?.id ?? '';
+
+  // 편집 중인 댓글 ID
+  const editingCommentId = typeof edit === 'string' ? parseInt(edit) : null;
 
   // 댓글 등록 버튼을 누르면 CommentSection 컴포넌트가 렌더링된다. 댓글 등록 후 페이지 새로고침된다.
   return (
@@ -60,6 +71,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
                 key={comment.id ?? `comment-${index}`}
                 comment={comment}
                 currentUserId={currentUserId}
+                isEditing={editingCommentId === comment.id}
               />
             ))}
           </CommentDetailList>
