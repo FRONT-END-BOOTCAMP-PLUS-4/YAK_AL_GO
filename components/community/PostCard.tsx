@@ -61,7 +61,7 @@ export const PostCard = ({ post }: PostCardProps) => {
               {post.title}
             </h3>
 
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-1.5 leading-relaxed">
+            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1 mb-1.5 leading-relaxed">
               {contentText}
             </p>
 
