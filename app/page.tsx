@@ -20,6 +20,7 @@ export default function Home() {
       detail: "효능, 부작용, 주의사항 등 모든 정보를 제공합니다",
       icon: Pill,
       color: "bg-blue-500",
+      link: "/medicines",
     },
     {
       title: "가까운 약국 찾기",
@@ -27,13 +28,15 @@ export default function Home() {
       detail: "영업 시간과 재고 정보를 실시간으로 확인할 수 있습니다",
       icon: MapPin,
       color: "bg-green-500",
+      link: "/map",
     },
     {
-      title: "전문가 상담",
+      title: "전문가 Q&A",
       description: "약사, 의사에게 직접 질문하고 답변을 받으세요",
       detail: "24시간 언제든지 전문가의 도움을 받을 수 있습니다",
       icon: MessageSquare,
       color: "bg-teal-500",
+      link: "/community",
     },
   ]
 
@@ -68,7 +71,7 @@ export default function Home() {
                 <h1 className="text-4xl font-bold tracking-tight sm:text-5xl xl:text-6xl/none">
                   아픈 모든 순간
                   <br />
-                  <span className="text-teal-600">약알고</span>가 도와줍니다
+                  <span style={{ color: '#4FC4B8' }}>약알고</span>가 도와줍니다
                 </h1>
                 <p className="max-w-[600px] text-gray-600 text-lg md:text-xl leading-relaxed">
                   약에 대한 모든 궁금증을 해결하고,
@@ -90,7 +93,10 @@ export default function Home() {
                     onKeyPress={handleKeyPress}
                   />
                   <Button 
-                    className="bg-teal-600 hover:bg-teal-700 px-6"
+                    className="px-6 text-white"
+                    style={{ backgroundColor: '#81DED4' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#6BC7BB'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#81DED4'}
                     onClick={handleSearch}
                     disabled={!searchQuery.trim()}
                   >
@@ -100,10 +106,31 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col gap-3 min-[400px]:flex-row">
-                <Button asChild size="lg" className="bg-teal-600 hover:bg-teal-700 text-white">
+                <Button 
+                  asChild 
+                  size="lg" 
+                  className="text-white"
+                  style={{ backgroundColor: '#4FC4B8' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3DAA9F'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4FC4B8'}
+                >
                   <Link href="/map">약국 찾기</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="border-teal-600 text-teal-600 hover:bg-teal-50">
+                <Button 
+                  asChild 
+                  variant="outline" 
+                  size="lg" 
+                  className="hover:bg-opacity-10"
+                  style={{ borderColor: '#4FC4B8', color: '#4FC4B8' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#4FC4B8'
+                    e.currentTarget.style.color = 'white'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = '#4FC4B8'
+                  }}
+                >
                   <Link href="/community">전문가 Q&A</Link>
                 </Button>
               </div>
@@ -142,9 +169,12 @@ export default function Home() {
                     key={index}
                     className={`p-6 rounded-2xl transition-all duration-500 cursor-pointer ${
                       currentFeature === index
-                        ? "bg-white shadow-lg border-2 border-teal-200 scale-105"
+                        ? "bg-white shadow-lg border-2 scale-105"
                         : "bg-white/50 hover:bg-white hover:shadow-md"
                     }`}
+                    style={{
+                      borderColor: currentFeature === index ? '#4FC4B8' : 'transparent',
+                    }}
                     onClick={() => setCurrentFeature(index)}
                   >
                     <div className="flex items-start gap-4">
@@ -158,7 +188,7 @@ export default function Home() {
                           <p className="text-sm text-gray-500 animate-fade-in">{feature.detail}</p>
                         )}
                       </div>
-                      {currentFeature === index && <ArrowRight className="h-5 w-5 text-teal-600 animate-pulse" />}
+                      {currentFeature === index && <ArrowRight className="h-5 w-5 animate-pulse" style={{ color: '#4FC4B8' }} />}
                     </div>
                   </div>
                 )
@@ -181,7 +211,15 @@ export default function Home() {
                       <h3 className="text-2xl font-bold mb-3">{features[currentFeature].title}</h3>
                       <p className="text-gray-600 text-lg">{features[currentFeature].detail}</p>
                     </div>
-                    <Button className="bg-teal-600 hover:bg-teal-700 text-white">자세히 보기</Button>
+                    <Button 
+                      asChild
+                      className="text-white"
+                      style={{ backgroundColor: '#4FC4B8' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3DAA9F'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4FC4B8'}
+                    >
+                      <Link href={features[currentFeature].link}>자세히 보기</Link>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -195,19 +233,19 @@ export default function Home() {
         <div className="container px-4 md:px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-teal-600 mb-2">2만+</div>
+              <div className="text-3xl md:text-4xl font-bold mb-2" style={{ color: '#4FC4B8' }}>2만+</div>
               <div className="text-gray-600">등록된 약품 정보</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-teal-600 mb-2">5천+</div>
+              <div className="text-3xl md:text-4xl font-bold mb-2" style={{ color: '#4FC4B8' }}>5천+</div>
               <div className="text-gray-600">전국 약국 정보</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-teal-600 mb-2">24시간</div>
+              <div className="text-3xl md:text-4xl font-bold mb-2" style={{ color: '#4FC4B8' }}>24시간</div>
               <div className="text-gray-600">전문가 상담</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-teal-600 mb-2">5</div>
+              <div className="text-3xl md:text-4xl font-bold mb-2" style={{ color: '#4FC4B8' }}>5</div>
               <div className="text-gray-600">누적 사용자</div>
             </div>
           </div>
@@ -221,15 +259,22 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
               <div className="pb-1">약국 문 닫았다는 이유로</div>
               <div className="pb-2">바빠서 어쩔 수 없다는 이유로</div>
-              <div className="text-teal-400">더 이상 아픔을 참거나 미루지 마세요.</div>
+              <div style={{ color: '#4FC4B8' }}>더 이상 아픔을 참거나 미루지 마세요.</div>
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
               아플 때, 약알고를 열면
               <br />
-              <span className="text-teal-400 font-semibold">약국이 우리를 찾아올 거예요.</span>
+              <span style={{ color: '#4FC4B8' }} className="font-semibold">약국이 우리를 찾아올 거예요.</span>
             </p>
             <div className="flex flex-col gap-4 min-[400px]:flex-row justify-center">
-              <Button asChild size="lg" className="bg-teal-600 hover:bg-teal-700">
+              <Button 
+                asChild 
+                size="lg" 
+                className="text-white"
+                style={{ backgroundColor: '#4FC4B8' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3DAA9F'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4FC4B8'}
+              >
                 <Link href="/auth">지금 시작하기</Link>
               </Button>
               <Button
