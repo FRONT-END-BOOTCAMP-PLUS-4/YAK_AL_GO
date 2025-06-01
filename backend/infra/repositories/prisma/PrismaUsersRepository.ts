@@ -9,12 +9,17 @@ export class PrismaUsersRepository implements UsersRepository {
         try {
             const userData = await this.prisma.users.create({
                 data: {
+                    id: user.id, // UUID는 DB에서 자동 생성되므로 빈 문자열로 설정
                     name: user.name,
                     email: user.email,
                     photo: user.photo,
                     birthyear: user.birthyear,
+                    gender : user.gender,
                     member_type: user.member_type,
+                    created_at: user.created_at,
+                    deleted_at: user.deleted_at,
                     hpid: user.hpid
+
                 }
             });
 
@@ -24,7 +29,10 @@ export class PrismaUsersRepository implements UsersRepository {
                 userData.email,
                 userData.photo,
                 userData.birthyear,
+                userData.gender,
                 userData.member_type,
+                userData.created_at,
+                userData.deleted_at,
                 userData.hpid
             );
         } catch (error: any) {
@@ -46,7 +54,10 @@ export class PrismaUsersRepository implements UsersRepository {
                 userData.email,
                 userData.photo,
                 userData.birthyear,
+                userData.gender,
                 userData.member_type,
+                userData.created_at,
+                userData.deleted_at,
                 userData.hpid
             );
         } catch (error: any) {
@@ -68,7 +79,10 @@ export class PrismaUsersRepository implements UsersRepository {
                 userData.email,
                 userData.photo,
                 userData.birthyear,
+                userData.gender,
                 userData.member_type,
+                userData.created_at,
+                userData.deleted_at,
                 userData.hpid
             );
         } catch (error: any) {
@@ -81,11 +95,15 @@ export class PrismaUsersRepository implements UsersRepository {
             const userData = await this.prisma.users.update({
                 where: { id },
                 data: {
+                    id: user.id, // UUID는 DB에서 자동 생성되므로 빈 문자열로 설정
                     name: user.name,
                     email: user.email,
                     photo: user.photo,
                     birthyear: user.birthyear,
+                    gender : user.gender,
                     member_type: user.member_type,
+                    created_at: user.created_at,
+                    deleted_at: user.deleted_at,
                     hpid: user.hpid
                 }
             });
@@ -96,7 +114,10 @@ export class PrismaUsersRepository implements UsersRepository {
                 userData.email,
                 userData.photo,
                 userData.birthyear,
+                userData.gender,
                 userData.member_type,
+                userData.created_at,
+                userData.deleted_at,
                 userData.hpid
             );
         } catch (error: any) {
