@@ -10,8 +10,10 @@ import { QuestionOptionDropdown } from '@/components/qna/QuestionOptionDropdown'
 
 interface Answer {
   id?: number | undefined;
+  content?: any;
   contentHTML: string;
   createdAt?: Date | undefined;
+  isAccepted?: boolean;
   users?: {
     id: string;
     name?: string;
@@ -20,8 +22,16 @@ interface Answer {
   };
 }
 
-export default async function QuestionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function QuestionDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { id: questionId } = await params;
+  const { edit } = await searchParams;
+
   // 질문 정보 조회: 질문, 답변, 태그, 유저 등의 정보를 담고 있다.
   const question = await getQuestion(questionId);
 
@@ -29,6 +39,9 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
   const session = await getServerSession(authOptions);
   const userType = session?.user?.member_type || 0;
   const currentUserId = session?.user?.id ?? '';
+
+  // 편집 중인 답변 ID
+  const editingAnswerId = typeof edit === 'string' ? parseInt(edit) : null;
 
   // 답변 등록 버튼을 누르면 AnswerSection 컴포넌트가 렌더링된다. 답변 등록 후 페이지 새로고침된다.
   return (
@@ -51,7 +64,12 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
           {/* Answers */}
           <AnswerDetailList answerCount={question.answers?.length || 0}>
             {question.answers?.map((answer: Answer, index: number) => (
-              <AnswerDetailCard key={answer.id ?? `answer-${index}`} answer={answer} currentUserId={currentUserId} />
+              <AnswerDetailCard
+                key={answer.id ?? `answer-${index}`}
+                answer={answer}
+                currentUserId={currentUserId}
+                isEditing={editingAnswerId === answer.id}
+              />
             ))}
           </AnswerDetailList>
         </div>
