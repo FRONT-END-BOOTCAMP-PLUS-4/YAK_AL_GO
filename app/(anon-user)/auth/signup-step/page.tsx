@@ -36,22 +36,22 @@ export default function SignupStepPage() {
     // kakao_account
     email: "",
     photo: "",
-    name : "",
+    name: "",
     // 약사
     hpid: "",
     // 일반 회원
-    birthyear: "", 
+    birthyear: "",
     member_type: 0, // general : 0, pharmacist : 1
-    pregnent : 0, // 0없음 1임산부
-    allergy :  0, // 0없음 2알레르기
-    hypertension : 0, // 0없음 3고혈압
-    diabetes : 0, // 0없음 4당뇨
-    heartDisease : 0, // 0없음 5심장질환
-    liverDisease : 0, // 0없음 6간질환
-    kidneyDisease : 0, // 0없음 7신장질환
+    pregnent: 0, // 0없음 1임산부
+    allergy: 0, // 0없음 2알레르기
+    hypertension: 0, // 0없음 3고혈압
+    diabetes: 0, // 0없음 4당뇨
+    heartDisease: 0, // 0없음 5심장질환
+    liverDisease: 0, // 0없음 6간질환
+    kidneyDisease: 0, // 0없음 7신장질환
   })
 
- const [step, setStep] = useState(1)
+  const [step, setStep] = useState(1)
 
 
   // <핸들러>
@@ -62,22 +62,22 @@ export default function SignupStepPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
- 
+
 
   // 일반 회원일 경우에 다음 컴포넌트 로드
- const handleNextButton = ()=>{
-  if (!formData.birthyear) {
-        setError("나이, 항목을 입력해주세요.")
-        return
+  const handleNextButton = () => {
+    if (!formData.birthyear) {
+      setError("나이, 항목을 입력해주세요.")
+      return
+    }
+    setStep(2);
   }
-  setStep(2);
- }
 
 
- // 약사일경우 hpid검증증
+  // 약사일경우 hpid검증증
   const handleSubmit = async () => {
     console.log(formData);
-    if( formData.member_type === 1 && !formData.hpid) {
+    if (formData.member_type === 1 && !formData.hpid) {
       setError("약사 회원가입을 위해 약사 면허번호를 입력해주세요.");
       return
     }
@@ -96,8 +96,8 @@ export default function SignupStepPage() {
       console.log("회원가입 성공:", data);
 
       // db에서 받은 response에 따라 세션 업데이트
-
       
+
       router.push('/auth/complete'); // 회원가입 완료 페이지로 이동
     } else {
       const errorData = await response.json();
@@ -105,18 +105,18 @@ export default function SignupStepPage() {
       setError(errorData.message || "회원가입에 실패했습니다. 다시 시도해주세요.");
     }
   }
-  
-if (status === "loading") {
-    return <div>Loading...</div>  
+
+  if (status === "loading") {
+    return <div>Loading...</div>
   }
 
   return (
     <div className="container flex h-screen items-center justify-center">
       <Card className="w-full max-w-md">
-        {/* 헤더더 */}
+        {/* 헤더 */}
         <CardHeader className="space-y-4">
           {/* 단계 진행 컴포넌트 삽입, 복용약 경우엔 내장형 */}
-          <ProgressIndicator userType={userType} step={step}/>
+          <ProgressIndicator userType={userType} step={step} />
           <div className="flex items-center">
             <Button variant="ghost" size="icon" asChild className="mr-2">
               <Link href="/auth">
@@ -124,7 +124,7 @@ if (status === "loading") {
               </Link>
             </Button>
             <CardTitle className="text-2xl font-bold">
-              {userType === "general" ? (step === 1 ? "회원가입 (1/2)"  : "회원가입 (2/2)"): "회원가입 (1/1)"}
+              {userType === "general" ? (step === 1 ? "회원가입 (1/2)" : "회원가입 (2/2)") : "회원가입 (1/1)"}
             </CardTitle>
           </div>
         </CardHeader>
@@ -148,7 +148,7 @@ if (status === "loading") {
             <TabsContent value="general">
               {/* step state에 따라 두개의 컴포넌트로 분리됨 */}
               {step === 1 ? <GeneralForm formData={formData} setFormData={setFormData} />
-              : <SignupMedicationStep formData={formData} setFormData={setFormData} />}
+                : <SignupMedicationStep formData={formData} setFormData={setFormData} />}
             </TabsContent>
             {/* 약사인 경우 컴포넌트*/}
             <TabsContent value="pharmacist">

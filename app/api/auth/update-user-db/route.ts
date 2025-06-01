@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
         if (!session) {
             return NextResponse.json({ message: 'missing session : 인증이 필요합니다.' }, { status: 401 });
         }
-
         const dto = new SignupDto(
             session.user?.name || '',
             session.user?.email || '',
@@ -29,7 +28,7 @@ export async function POST(req: NextRequest) {
             body.liverDisease,
             body.kidneyDisease
         );
-
+        // 인스턴스 생성
         const usersRepository = new PrismaUsersRepository();
         const userHealthRepository = new PrismaUserHealthRepository();
         // 주입
