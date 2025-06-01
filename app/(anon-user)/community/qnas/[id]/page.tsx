@@ -34,7 +34,6 @@ export default async function QuestionDetailPage({
 
   // 질문 정보 조회: 질문, 답변, 태그, 유저 등의 정보를 담고 있다.
   const question = await getQuestion(questionId);
-  console.log(question);
 
   // 유저 정보 조회
   const session = await getServerSession(authOptions);
