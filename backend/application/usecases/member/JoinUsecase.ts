@@ -2,27 +2,9 @@ import { UsersRepository } from '../../../domain/repositories/UsersRepository';
 import { UserHealthRepository } from '../../../domain/repositories/UserHealthRepository';
 import { User } from '../../../domain/entities/UsersEntity';
 import { UserHealth } from '../../../domain/entities/UserHealthEntity';
+import { SignupDto } from './dto/SignupDto'; // 경로 수정
 
-interface TokenData {
-  name: string;
-  photo: string;
-  email: string;
-}
-
-interface FormData {
-  member_type: number;
-  birthyear: number;
-  hpid: string;
-  pregnent: number;
-  allergy: number;
-  hypertension: number;
-  diabetes: number;
-  heartDisease: number;
-  liverDisease: number;
-  kidneyDisease: number;
-}
-
-export class CreateSignupUseCase {
+export class JoinUsecase {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly userHealthRepository: UserHealthRepository
@@ -30,26 +12,24 @@ export class CreateSignupUseCase {
     // 자동으로 this.usersRepository = usersRepository; 처리됨
   }
 
-  async execute(formData: FormData, tokenData: TokenData): Promise<void> {
+  async execute(dto: SignupDto): Promise<User> { // User 반환하도록 수정
     // 1. Users DB에 저장
     const now = new Date();
 
     const newUser = new User(
       '', // DB에서 UUID 자동 생성
-      tokenData.name,
-      tokenData.email,
-      tokenData.photo,
-      formData.birthyear,
+      dto.name,        // tokenData.name → dto.name
+      dto.email,       // tokenData.email → dto.email
+      dto.photo,       // tokenData.photo → dto.photo
+      dto.birthyear,   // formData.birthyear → dto.birthyear
       null,
-      formData.member_type,
+      dto.member_type, // formData.member_type → dto.member_type
       now,
       null,
-      formData.hpid
+      dto.hpid        // formData.hpid → dto.hpid
     );
 
     const createdUser = await this.usersRepository.createUser(newUser);
-    // 세션에 넣기 위해 반환 예정
-
 
     // 2. UserHealth DB에 저장 (0이 아닌 값만)
     const healthConditions: UserHealth[] = [];
@@ -64,34 +44,20 @@ export class CreateSignupUseCase {
     };
 
     Object.entries(healthFieldMap).forEach(([fieldName, healthId]) => {
-      // 매핑 객체를 순회하며 처리
-      const fieldValue = formData[fieldName as keyof typeof healthFieldMap];
-      // 폼데이터에서 해당 필드값 추출 (타입 안전성 보장)
+      // formData → dto로 수정
+      const fieldValue = dto[fieldName as keyof typeof healthFieldMap];
       if (fieldValue !== 0 && fieldValue !== undefined) {
-        // 0이 아니고 undefined가 아닌 경우만 처리
         healthConditions.push(new UserHealth(
-          createdUser.id, //50번 코드에서 생성된 사용자 ID
-          healthId        // healthId는 0이 아닌 값만 저장
+          createdUser.id,
+          healthId
         ));
-
-        //         healthConditions = [
-        //          new UserHealth("uuid-legun-123", 2), // allergy
-        //          new UserHealth("uuid-legun-123", 4), // diabetes
-        //          new UserHealth("uuid-legun-123", 6)  // liverDisease
-        //          ]
-
       }
     });
 
     if (healthConditions.length > 0) {
       await this.userHealthRepository.saveHealth(healthConditions);
-      // +----+------------------+----------+
-      // | id | userId           | healthId |
-      // +----+------------------+----------+
-      // | 1  | uuid-legun-123   |    2     |  ← allergy
-      // | 2  | uuid-legun-123   |    4     |  ← diabetes  
-      // | 3  | uuid-legun-123   |    6     |  ← liverDisease
-      // +----+------------------+----------+
     }
+
+    return createdUser; // 생성된 사용자 정보 반환
   }
 }
