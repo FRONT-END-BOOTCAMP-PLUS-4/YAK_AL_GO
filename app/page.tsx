@@ -7,11 +7,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Search, MapPin, MessageSquare, Pill, ArrowRight } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useLoadingContext } from "@/providers/LoadingProvider"
 
 export default function Home() {
   const [currentFeature, setCurrentFeature] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const router = useRouter()
+  const { navigate } = useLoadingContext()
 
   const features = [
     {
@@ -50,7 +52,7 @@ export default function Home() {
   const handleSearch = () => {
     if (searchQuery.trim()) {
       // 검색어를 URL 파라미터로 전달하여 medicines 페이지로 이동
-      router.push(`/medicines?search=${encodeURIComponent(searchQuery.trim())}`)
+      navigate(`/medicines?search=${encodeURIComponent(searchQuery.trim())}`, "약 정보를 검색하고 있어요...")
     }
   }
 
@@ -107,17 +109,16 @@ export default function Home() {
 
               <div className="flex flex-col gap-3 min-[400px]:flex-row">
                 <Button 
-                  asChild 
                   size="lg" 
                   className="text-white"
                   style={{ backgroundColor: '#4FC4B8' }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3DAA9F'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4FC4B8'}
+                  onClick={() => navigate('/map', '내 주변 약국을 찾고 있어요...')}
                 >
-                  <Link href="/map">약국 찾기</Link>
+                  약국 찾기
                 </Button>
                 <Button 
-                  asChild 
                   variant="outline" 
                   size="lg" 
                   className="hover:bg-opacity-10"
@@ -130,8 +131,9 @@ export default function Home() {
                     e.currentTarget.style.backgroundColor = 'transparent'
                     e.currentTarget.style.color = '#4FC4B8'
                   }}
+                  onClick={() => navigate('/community', '전문가 Q&A로 이동하고 있어요...')}
                 >
-                  <Link href="/community">전문가 Q&A</Link>
+                  전문가 Q&A
                 </Button>
               </div>
             </div>
@@ -212,13 +214,13 @@ export default function Home() {
                       <p className="text-gray-600 text-lg">{features[currentFeature].detail}</p>
                     </div>
                     <Button 
-                      asChild
-                      className="text-white"
+                      className="w-full text-white mt-6"
                       style={{ backgroundColor: '#4FC4B8' }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3DAA9F'}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4FC4B8'}
+                      onClick={() => navigate(features[currentFeature].link, `${features[currentFeature].title} 페이지로 이동하고 있어요...`)}
                     >
-                      <Link href={features[currentFeature].link}>자세히 보기</Link>
+                      자세히 보기 <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>
@@ -268,23 +270,22 @@ export default function Home() {
             </p>
             <div className="flex flex-col gap-4 min-[400px]:flex-row justify-center">
               <Button 
-                asChild 
                 size="lg" 
                 className="text-white"
                 style={{ backgroundColor: '#4FC4B8' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3DAA9F'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4FC4B8'}
+                onClick={() => navigate('/auth', '회원가입 페이지로 이동하고 있어요...')}
               >
-                <Link href="/auth">지금 시작하기</Link>
+                지금 시작하기
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="border-white hover:bg-gray-200"
+              <Button 
+                variant="outline" 
+                className="text-gray-600 border-gray-300 hover:bg-gray-50"
                 style={{ color: '#101827' }}
+                onClick={() => navigate('/medicines', '서비스를 둘러보고 있어요...')}
               >
-                <Link href="/medicines">서비스 둘러보기</Link>
+                서비스 둘러보기
               </Button>
             </div>
           </div>
