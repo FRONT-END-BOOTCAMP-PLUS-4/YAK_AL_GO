@@ -1,6 +1,5 @@
 // PDF 파싱 메인 서비스
 
-import pdfParse from 'pdf-parse';
 import { PdfDownloadService } from './PdfDownloadService';
 import { EffectParser } from './parsers/EffectParser';
 import { UsageParser } from './parsers/UsageParser';
@@ -28,6 +27,20 @@ export class PdfParsingService {
     this.effectParser = new EffectParser();
     this.usageParser = new UsageParser();
     this.cautionParser = new CautionParser();
+  }
+
+  /**
+   * PDF 파싱 라이브러리를 동적으로 로드
+   * @returns pdf-parse 함수
+   */
+  private async getPdfParse() {
+    try {
+      const pdfParse = await import('pdf-parse');
+      return pdfParse.default;
+    } catch (error) {
+      console.error('PDF 파싱 라이브러리 로드 실패:', error);
+      throw new Error('PDF 파싱 라이브러리를 로드할 수 없습니다.');
+    }
   }
 
   /**
@@ -105,6 +118,7 @@ export class PdfParsingService {
     try {
       console.log(`효능효과 PDF 파싱 시작: ${docId}`);
       
+      const pdfParse = await this.getPdfParse();
       const pdfBuffer = await this.downloadService.downloadPdfBuffer(docId);
       const pdfData = await pdfParse(pdfBuffer);
       
@@ -132,6 +146,7 @@ export class PdfParsingService {
     try {
       console.log(`용법용량 PDF 파싱 시작: ${docId}`);
       
+      const pdfParse = await this.getPdfParse();
       const pdfBuffer = await this.downloadService.downloadPdfBuffer(docId);
       const pdfData = await pdfParse(pdfBuffer);
       
@@ -159,6 +174,7 @@ export class PdfParsingService {
     try {
       console.log(`주의사항 PDF 파싱 시작: ${docId}`);
       
+      const pdfParse = await this.getPdfParse();
       const pdfBuffer = await this.downloadService.downloadPdfBuffer(docId);
       const pdfData = await pdfParse(pdfBuffer);
       
@@ -184,6 +200,7 @@ export class PdfParsingService {
    */
   async extractPdfText(docId: string): Promise<string> {
     try {
+      const pdfParse = await this.getPdfParse();
       const pdfBuffer = await this.downloadService.downloadPdfBuffer(docId);
       const pdfData = await pdfParse(pdfBuffer);
       return pdfData.text;
@@ -200,6 +217,7 @@ export class PdfParsingService {
    */
   async checkPdfAccessibility(docId: string): Promise<boolean> {
     try {
+      const pdfParse = await this.getPdfParse();
       const pdfBuffer = await this.downloadService.downloadPdfBuffer(docId);
       const pdfData = await pdfParse(pdfBuffer);
       return pdfData.text.trim().length > 0;
@@ -218,6 +236,8 @@ export class PdfParsingService {
     const results = new Map<string, string>();
     
     if (docIds.length === 0) return results;
+
+    const pdfParse = await this.getPdfParse();
 
     const extractPromises = docIds.map(async (docId) => {
       try {
