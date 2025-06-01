@@ -83,6 +83,50 @@ export class PrismaAnswerRepository implements AnswerRepository {
     });
   }
 
+  async findAcceptedByQuestionId(questionId: number): Promise<Answer | null> {
+    const prismaAnswer = await this.prisma.answers.findFirst({
+      where: {
+        qnaId: questionId,
+        isAccepted: true,
+        deletedAt: null,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
+      },
+    });
+
+    return prismaAnswer ? this.mapToEntity(prismaAnswer) : null;
+  }
+
+  async acceptAnswer(id: number): Promise<Answer> {
+    const updated = await this.prisma.answers.update({
+      where: { id },
+      data: {
+        isAccepted: true,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
+      },
+    });
+    return this.mapToEntity(updated);
+  }
+
   private mapToEntity(prismaAnswer: any): Answer {
     return new Answer({
       id: prismaAnswer.id,
