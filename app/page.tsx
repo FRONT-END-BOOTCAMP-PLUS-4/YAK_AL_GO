@@ -4,183 +4,299 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { Search, MapPin, MessageSquare, Pill } from "lucide-react"
+import { Search, MapPin, MessageSquare, Pill, ArrowRight } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function Home() {
+  const [currentFeature, setCurrentFeature] = useState(0)
+  const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter()
+
+  const features = [
+    {
+      title: "약 정보 검색",
+      description: "약 이름, 성분으로 검색하여 상세 정보를 확인하세요",
+      detail: "효능, 부작용, 주의사항 등 모든 정보를 제공합니다",
+      icon: Pill,
+      color: "bg-blue-500",
+    },
+    {
+      title: "가까운 약국 찾기",
+      description: "내 위치 기반으로 가까운 약국을 찾아보세요",
+      detail: "영업 시간과 재고 정보를 실시간으로 확인할 수 있습니다",
+      icon: MapPin,
+      color: "bg-green-500",
+    },
+    {
+      title: "전문가 상담",
+      description: "약사, 의사에게 직접 질문하고 답변을 받으세요",
+      detail: "24시간 언제든지 전문가의 도움을 받을 수 있습니다",
+      icon: MessageSquare,
+      color: "bg-teal-500",
+    },
+  ]
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentFeature((prev) => (prev + 1) % features.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      // 검색어를 URL 파라미터로 전달하여 medicines 페이지로 이동
+      router.push(`/medicines?search=${encodeURIComponent(searchQuery.trim())}`)
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch()
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-12 pb-8">
+    <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-secondary/50 to-background">
-        <div className="container px-4 md:px-6">
-          <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-            <div className="flex flex-col justify-center space-y-4">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">약을 알고 먹자</h1>
-                <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                  약품 정보 검색부터 가까운 약국 찾기까지, 약에 대한 모든 정보를 한 곳에서 확인하세요.
+      <section className="relative w-full min-h-[90vh] bg-gradient-to-br from-teal-50 via-white to-teal-100 overflow-hidden">
+        <div className="container px-4 md:px-6 py-6 md:py-12">
+          <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
+            <div className="flex flex-col justify-center space-y-6">
+              <div className="space-y-4">
+                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl xl:text-6xl/none">
+                  아픈 모든 순간
+                  <br />
+                  <span className="text-teal-600">약알고</span>가 도와줍니다
+                </h1>
+                <p className="max-w-[600px] text-gray-600 text-lg md:text-xl leading-relaxed">
+                  약에 대한 모든 궁금증을 해결하고,
+                  <br />
+                  가장 빠르고 편리하게 건강을 관리하세요.
                 </p>
               </div>
-              <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <Button asChild size="lg">
-                  <Link href="/medicines">약 검색하기</Link>
+
+              {/* Quick Search */}
+              <div className="flex flex-col gap-3 p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
+                <h3 className="font-semibold text-gray-900">약 정보 빠른 검색</h3>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="약 이름을 입력하세요"
+                    className="flex-1 border-gray-200 focus:border-teal-500"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                  />
+                  <Button 
+                    className="bg-teal-600 hover:bg-teal-700 px-6"
+                    onClick={handleSearch}
+                    disabled={!searchQuery.trim()}
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 min-[400px]:flex-row">
+                <Button asChild size="lg" className="bg-teal-600 hover:bg-teal-700 text-white">
+                  <Link href="/map">약국 찾기</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg">
-                  <Link href="/map">가까운 약국 찾기</Link>
+                <Button asChild variant="outline" size="lg" className="border-teal-600 text-teal-600 hover:bg-teal-50">
+                  <Link href="/community">전문가 Q&A</Link>
                 </Button>
               </div>
             </div>
-            <div className="flex items-center justify-center">
-              <div className="relative w-full max-w-sm">
-                <div className="absolute -left-4 -top-4 h-72 w-72 rounded-full bg-primary/30 blur-3xl"></div>
-                <div className="absolute -bottom-4 -right-4 h-72 w-72 rounded-full bg-secondary/30 blur-3xl"></div>
-                <Card className="relative overflow-hidden border-2 border-primary/20">
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-bold">약 검색</h3>
-                        <div className="flex w-full max-w-sm items-center space-x-2">
-                          <Input type="text" placeholder="약 이름을 검색하세요" />
-                          <Button type="submit" size="icon">
-                            <Search className="h-4 w-4" />
-                            <span className="sr-only">Search</span>
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-bold">약국 찾기</h3>
-                        <Button className="w-full justify-start" variant="outline" asChild>
-                          <Link href="/map">
-                            <MapPin className="mr-2 h-4 w-4" />
-                            내 주변 약국 찾기
-                          </Link>
-                        </Button>
-                      </div>
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-bold">질문 & 답변</h3>
-                        <Button className="w-full justify-start" variant="outline">
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          전문가에게 질문하기
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+
+            <div className="relative">
+              <div className="relative z-10">
+                <img
+                  src="/images/main.png"
+                  alt="약 정보를 확인하는 사람"
+                  className="w-full h-auto rounded-3xl shadow-2xl"
+                />
               </div>
+              <div className="absolute -top-4 -left-4 w-full h-full bg-teal-200 rounded-3xl -z-10"></div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-sub-bg">
+      {/* Dynamic Features Section */}
+      <section className="w-full py-16 md:py-24 bg-gray-50">
         <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">주요 기능</h2>
-              <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                약알고에서 제공하는 다양한 기능을 확인하세요.
-              </p>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">약알고만의 특별한 기능들</h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              언제 어디서나 편리하게 이용할 수 있는 다양한 서비스를 제공합니다
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              {features.map((feature, index) => {
+                const Icon = feature.icon
+                return (
+                  <div
+                    key={index}
+                    className={`p-6 rounded-2xl transition-all duration-500 cursor-pointer ${
+                      currentFeature === index
+                        ? "bg-white shadow-lg border-2 border-teal-200 scale-105"
+                        : "bg-white/50 hover:bg-white hover:shadow-md"
+                    }`}
+                    onClick={() => setCurrentFeature(index)}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-xl ${feature.color} text-white`}>
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                        <p className="text-gray-600 mb-2">{feature.description}</p>
+                        {currentFeature === index && (
+                          <p className="text-sm text-gray-500 animate-fade-in">{feature.detail}</p>
+                        )}
+                      </div>
+                      {currentFeature === index && <ArrowRight className="h-5 w-5 text-teal-600 animate-pulse" />}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="relative">
+              <Card className="bg-white shadow-xl border-0 overflow-hidden">
+                <CardContent className="p-8">
+                  <div className="text-center space-y-6">
+                    <div
+                      className={`w-20 h-20 mx-auto rounded-full ${features[currentFeature].color} flex items-center justify-center text-white`}
+                    >
+                      {(() => {
+                        const Icon = features[currentFeature].icon
+                        return <Icon className="h-10 w-10" />
+                      })()}
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold mb-3">{features[currentFeature].title}</h3>
+                      <p className="text-gray-600 text-lg">{features[currentFeature].detail}</p>
+                    </div>
+                    <Button className="bg-teal-600 hover:bg-teal-700 text-white">자세히 보기</Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
-          <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-3">
-            <Card className="bg-background">
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center space-y-2 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
-                    <Pill className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold">약 정보 검색</h3>
-                  <p className="text-sm text-muted-foreground">
-                    약 이름, 성분으로 검색하여 상세 정보를 확인하세요. 효능, 부작용, 주의사항 등 모든 정보를 제공합니다.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-background">
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center space-y-2 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
-                    <MapPin className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold">약국 찾기</h3>
-                  <p className="text-sm text-muted-foreground">
-                    내 위치 기반으로 가까운 약국을 찾고, 영업 시간과 재고 정보를 확인하세요.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-background">
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center space-y-2 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
-                    <MessageSquare className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold">전문가 Q&A</h3>
-                  <p className="text-sm text-muted-foreground">
-                    약사, 의사 등 전문가에게 약에 관한 질문을 하고 답변을 받으세요.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="w-full py-16 md:py-24 bg-white">
+        <div className="container px-4 md:px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-teal-600 mb-2">2만+</div>
+              <div className="text-gray-600">등록된 약품 정보</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-teal-600 mb-2">5천+</div>
+              <div className="text-gray-600">전국 약국 정보</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-teal-600 mb-2">24시간</div>
+              <div className="text-gray-600">전문가 상담</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-teal-600 mb-2">5</div>
+              <div className="text-gray-600">누적 사용자</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Section */}
+      <section className="w-full py-16 md:py-24 bg-gray-900 text-white">
+        <div className="container px-4 md:px-6">
+          <div className="text-center space-y-8">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              <div className="pb-1">약국 문 닫았다는 이유로</div>
+              <div className="pb-2">바빠서 어쩔 수 없다는 이유로</div>
+              <div className="text-teal-400">더 이상 아픔을 참거나 미루지 마세요.</div>
+            </h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              아플 때, 약알고를 열면
+              <br />
+              <span className="text-teal-400 font-semibold">약국이 우리를 찾아올 거예요.</span>
+            </p>
+            <div className="flex flex-col gap-4 min-[400px]:flex-row justify-center">
+              <Button asChild size="lg" className="bg-teal-600 hover:bg-teal-700">
+                <Link href="/auth">지금 시작하기</Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="border-white hover:bg-gray-200"
+                style={{ color: '#101827' }}
+              >
+                <Link href="/medicines">서비스 둘러보기</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="w-full py-12 md:py-24 lg:py-32">
+      <section className="w-full py-16 md:py-24 bg-teal-50">
         <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">이용 방법</h2>
-              <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                약알고 서비스를 이용하는 간단한 방법을 알아보세요.
-              </p>
-            </div>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">약알고, 이렇게 활용해보세요</h2>
           </div>
-          <div className="mx-auto grid max-w-5xl items-start gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
-            <div className="flex flex-col items-center space-y-2 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <span className="text-xl font-bold">1</span>
-              </div>
-              <h3 className="text-xl font-bold">약 검색</h3>
-              <p className="text-sm text-muted-foreground">약 이름이나 성분으로 검색하여 원하는 약을 찾으세요.</p>
-            </div>
-            <div className="flex flex-col items-center space-y-2 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <span className="text-xl font-bold">2</span>
-              </div>
-              <h3 className="text-xl font-bold">약국 찾기</h3>
-              <p className="text-sm text-muted-foreground">지도에서 가까운 약국을 찾고 재고 정보를 확인하세요.</p>
-            </div>
-            <div className="flex flex-col items-center space-y-2 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <span className="text-xl font-bold">3</span>
-              </div>
-              <h3 className="text-xl font-bold">질문하기</h3>
-              <p className="text-sm text-muted-foreground">궁금한 점이 있다면 전문가에게 질문하고 답변을 받으세요.</p>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-primary/10">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">지금 바로 시작하세요</h2>
-              <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                약알고와 함께 약에 대한 정확한 정보를 얻고 건강한 생활을 시작하세요.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 min-[400px]:flex-row">
-              <Button asChild size="lg">
-                <Link href="/register">회원가입</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/medicines">약 검색하기</Link>
-              </Button>
-            </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <span className="text-2xl font-bold text-teal-600">1</span>
+                </div>
+                <h3 className="text-xl font-bold mb-4">약 정보 검색</h3>
+                <p className="text-gray-600 mb-6">
+                  복용 중인 약이나 처방받은 약의 이름을 검색하여 상세 정보를 확인하세요.
+                </p>
+                <div className="flex items-center justify-center gap-2 text-teal-600 font-medium">
+                  <Search className="h-4 w-4" />
+                  바로 검색
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <span className="text-2xl font-bold text-green-600">2</span>
+                </div>
+                <h3 className="text-xl font-bold mb-4">약국 찾기</h3>
+                <p className="text-gray-600 mb-6">내 위치 기반으로 가까운 약국을 찾고 영업시간과 재고를 확인하세요.</p>
+                <div className="flex items-center justify-center gap-2 text-green-600 font-medium">
+                  <MapPin className="h-4 w-4" />
+                  약국 찾기
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <span className="text-2xl font-bold text-purple-600">3</span>
+                </div>
+                <h3 className="text-xl font-bold mb-4">전문가 상담</h3>
+                <p className="text-gray-600 mb-6">궁금한 점이 있다면 약사나 의사에게 직접 질문하고 답변을 받으세요.</p>
+                <div className="flex items-center justify-center gap-2 text-purple-600 font-medium">
+                  <MessageSquare className="h-4 w-4" />
+                  질문하기
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>

@@ -27,6 +27,7 @@ import {
   CATEGORY_KEY_MAP,
   type SimplifiedMedicine,
 } from '@/utils/medicineFormatter';
+import { useSearchParams } from 'next/navigation';
 
 /**
  * API 응답 타입 정의
@@ -311,10 +312,21 @@ export default function MedicinesPage() {
   };
 
   /**
-   * 초기 데이터 로드
+   * 초기 데이터 로드 및 URL 파라미터 처리
    */
   useEffect(() => {
-    fetchMedicinesFromApi(1);
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlSearchQuery = searchParams.get('search');
+    
+    if (urlSearchQuery) {
+      // URL에서 검색어가 있으면 해당 검색어로 검색 실행
+      setSearchQuery(urlSearchQuery);
+      setActiveTab('all'); // 검색 시에는 전체 카테고리로 설정
+      fetchMedicinesFromApi(1, urlSearchQuery, '전체');
+    } else {
+      // 검색어가 없으면 기본 데이터 로드
+      fetchMedicinesFromApi(1);
+    }
   }, [fetchMedicinesFromApi]);
 
   /**
