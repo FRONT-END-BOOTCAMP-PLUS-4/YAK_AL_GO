@@ -2,7 +2,6 @@
 
 import type { MediRepository } from '@/backend/domain/repositories/MediRepository';
 import type { Medicine } from '@/backend/domain/entities/Medicine';
-import { PdfParsingService } from '@/backend/infra/external/pdf/PdfParsingService';
 import type {
   MediDetailDto,
   MediDetailRequestDto,
@@ -20,11 +19,7 @@ import type {
  * Repository 계층과 Controller 계층 사이의 비즈니스 로직 처리
  */
 export class MediDetailUsecase {
-  private readonly pdfParsingService: PdfParsingService;
-
-  constructor(private readonly mediRepository: MediRepository) {
-    this.pdfParsingService = new PdfParsingService();
-  }
+  constructor(private readonly mediRepository: MediRepository) {}
 
   /**
    * 의약품 상세 정보 조회
@@ -90,10 +85,9 @@ export class MediDetailUsecase {
   /**
    * Medicine Entity를 MediDetailDto로 변환
    * @param medicine Medicine Entity
-   * @param parsedContent PDF 파싱 결과 (선택적)
    * @returns MediDetailDto
    */
-  private convertToDetailDto(medicine: Medicine, parsedContent?: any): MediDetailDto {
+  private convertToDetailDto(medicine: Medicine): MediDetailDto {
     // PDF 문서 정보 구성
     const documents: MediDocumentInfo = {
       effectDocId: medicine.eeDocId || null,
@@ -152,7 +146,6 @@ export class MediDetailUsecase {
       validTerm: medicine.validTerm || null,
       typeName: medicine.typeName || null, // type_name 필드 직접 매핑
       documents,
-      parsedContent: parsedContent || undefined,
       warnings,
       storage,
       identification,
