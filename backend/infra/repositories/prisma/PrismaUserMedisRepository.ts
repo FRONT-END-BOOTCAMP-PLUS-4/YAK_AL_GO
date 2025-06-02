@@ -1,9 +1,9 @@
 import prisma from '@/lib/prisma';
-import { UserMedicationRepository } from '../../../domain/repositories/UserMedicationRepository';
-import { UserMedication } from '../../../domain/entities/UserMedicationEntity';
+import { UserMedisRepository } from '../../../domain/repositories/UserMedisRepository';
+import { UserMedis } from '../../../domain/entities/UserMedisEntity';
 
-export class PrismaUserMedicationRepository implements UserMedicationRepository {
-  async saveMedications(medications: UserMedication[]): Promise<void> {
+export class PrismaUserMedisRepository implements UserMedisRepository {
+  async saveMedications(medications: UserMedis[]): Promise<void> {
     try {
       // 배치로 여러 약물 정보를 한 번에 저장
       await prisma.user_medis.createMany({
@@ -19,13 +19,13 @@ export class PrismaUserMedicationRepository implements UserMedicationRepository 
     }
   }
 
-  async findMedicationsByUserId(userId: string): Promise<UserMedication[]> {
+  async findMedicationsByUserId(userId: string): Promise<UserMedis[]> {
     try {
       const medicationRecords = await prisma.user_medis.findMany({
         where: { userId },
       });
       
-      return medicationRecords.map(record => new UserMedication(
+      return medicationRecords.map(record => new UserMedis(
         record.id,
         record.userId,
         record.itemSeq,
