@@ -19,12 +19,9 @@ interface MediDetailApiResponse {
   data?: {
     itemSeq: string;
     itemName: string;
-    entpName: string;
-    etcOtcName?: string;
-    materialName?: string;
-    storageMethod?: string;
-    validTerm?: string;
-    typeName?: string;
+    entpName: string | null;
+    chart: string | null;
+    materialName: string | null;
     documents: {
       effectDocId: string | null;
       usageDocId: string | null;
@@ -54,9 +51,9 @@ interface MediDetailApiResponse {
       parsedAt?: string;
     };
   };
-  error?: {
-    code: string;
-    message: string;
+  error?: { 
+    code: string; 
+    message: string; 
   };
 }
 
@@ -66,105 +63,92 @@ interface CautionInfo {
   severity: 'high' | 'medium' | 'low';
 }
 
-interface MedicineData {
-  itemSeq: string;
-  itemName: string;
-  entpName: string;
-  etcOtcName?: string;
-  materialName?: string;
-  storageMethod?: string;
-  validTerm?: string;
-  typeName?: string;
-  documents: {
-    effectDocId: string | null;
-    usageDocId: string | null;
-    cautionDocId: string | null;
-  };
-  parsedContent?: {
-    effect?: {
-      mainEffect?: string;
-      detailedEffect?: string;
-      targetDiseases?: string[];
-      therapeuticCategory?: string;
-    };
-    usage?: {
-      dosage?: string;
-      frequency?: string;
-      duration?: string;
-      administrationMethod?: string;
-      ageSpecificDosage?: string;
-    };
-    caution?: {
-      contraindications?: string[];
-      warnings?: string[];
-      sideEffects?: string[];
-      interactions?: string[];
-      specialGroups?: string[];
-    };
-    parsedAt?: string;
-  };
-}
+// 텍스트 포맷팅 유틸리티 함수들
+const formatTextWithLineBreaks = (text: string): string => {
+  return text
+    // 문장 끝 마침표 후 줄바꿈
+    .replace(/\.\s*/g, '.\n')
+    // 숫자와 단위 사이 공백 추가
+    .replace(/(\d+)(mg|g|kg|ml|μg|mcg)/gi, '$1 $2')
+    // 한글과 영문/숫자 사이 공백 추가
+    .replace(/([가-힣])([a-zA-Z0-9])/g, '$1 $2')
+    .replace(/([a-zA-Z0-9])([가-힣])/g, '$1 $2')
+    // 연속된 줄바꿈 정리
+    .replace(/\n{2,}/g, '\n')
+    // 앞뒤 공백 제거
+    .trim();
+};
 
-// 약국 관련 타입 정의
-interface InventoryDto {
-  id: number;
-  quantity: number;
-  itemSeq: string;
-  hpid: string;
-  medicines: {
-    item_seq: string;
-    item_name: string;
-    entp_name: string;
-  };
-}
+const formatBulletPoints = (items: string[]): string[] => {
+  return items.map(item => {
+    // 이미 불렛 포인트가 있으면 그대로, 없으면 추가
+    if (item.match(/^[•·-]\s*/)) {
+      return item;
+    }
+    return `• ${item}`;
+  });
+};
 
-interface PharmacyData {
-  hpid: string;
-  duty_name: string;
-  duty_addr: string;
-  duty_tel1: string;
-  wgs84_lat: number;
-  wgs84_lon: number;
-  duty_time1s: string;
-  duty_time1c: string;
-  duty_time2s: string;
-  duty_time2c: string;
-  duty_time3s: string;
-  duty_time3c: string;
-  duty_time4s: string;
-  duty_time4c: string;
-  duty_time5s: string;
-  duty_time5c: string;
-  duty_time6s: string;
-  duty_time6c: string;
-  duty_time7s: string;
-  duty_time7c: string;
-  inventories: InventoryDto[];
-  isOpen?: boolean;
-  distance?: number;
-}
+const formatDosageInfo = (text: string): string => {
+  return text
+    // ○ 기호 앞에 줄바꿈 추가
+    .replace(/○/g, '\n○ ')
+    // 의학 용어 사이 공백 추가
+    .replace(/체중kg당/g, '체중 kg당')
+    .replace(/(\d+)일/g, '$1일 ')
+    .replace(/(\d+)회/g, '$1회 ')
+    .replace(/(\d+)(mg|g|kg)/gi, '$1 $2')
+    // 문장 구분 개선
+    .replace(/\.(○|다음|환자)/g, '.\n$1')
+    // 연속 공백 정리
+    .replace(/\s+/g, ' ')
+    .trim();
+};
 
-// 리뷰 통계 관련 타입 추가
-interface ReviewStatItem {
-  id: number;
-  emoji: string;
-  text: string;
-  count: number;
-}
+const formatMedicalText = (text: string): string => {
+  return text
+    // 의학 용어와 숫자 사이 공백
+    .replace(/(\d+)(mg|g|kg|ml|μg|mcg|개월|주|일)/gi, '$1 $2')
+    // 용량 관련 표현 개선
+    .replace(/체중kg당/g, '체중 kg당')
+    .replace(/1일(\d+)/g, '1일 $1')
+    .replace(/1회(\d+)/g, '1회 $1')
+    // 괄호 앞뒤 공백 추가
+    .replace(/([가-힣])\(/g, '$1 (')
+    .replace(/\)([가-힣])/g, ') $1')
+    // 쉼표 뒤 공백 추가
+    .replace(/,([가-힣a-zA-Z])/g, ', $1')
+    // 연속 공백 정리
+    .replace(/\s+/g, ' ')
+    .trim();
+};
 
-interface ReviewStatsApiResponse {
-  success: boolean;
-  data?: {
-    reviewStats: Record<string, ReviewStatItem[]>;
-    totalReviews: number;
-    totalParticipants: number;
-    userReviews: string[];
+const parseWarningsByCategory = (text: string): { [key: string]: string[] } => {
+  const warnings: { [key: string]: string[] } = {
+    '경고': [],
+    '금기사항': [],
+    '일반주의': [],
+    '특수환자군': [],
   };
-  error?: {
-    code: string;
-    message: string;
-  };
-}
+
+  // 경고 섹션 추출
+  const warningMatch = text.match(/1\.\s*경고\s*([\s\S]*?)(?=2\.|$)/i);
+  if (warningMatch) {
+    const warningText = warningMatch[1];
+    const warningItems = warningText.split(/\d+\)/).filter(item => item.trim().length > 10);
+    warnings['경고'] = warningItems.map(item => formatMedicalText(item.trim()));
+  }
+
+  // 금기사항 섹션 추출  
+  const contraindicationMatch = text.match(/2\.\s*다음\s*환자에는\s*투여하지\s*말\s*것\s*([\s\S]*?)(?=3\.|$)/i);
+  if (contraindicationMatch) {
+    const contrText = contraindicationMatch[1];
+    const contrItems = contrText.split(/\d+\)/).filter(item => item.trim().length > 5);
+    warnings['금기사항'] = contrItems.map(item => formatMedicalText(item.trim()));
+  }
+
+  return warnings;
+};
 
 export default function MedicineDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -173,19 +157,9 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
   const [pharmaciesLoading, setPharmaciesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userReviews, setUserReviews] = useState<string[]>([]);
-  const [userComment, setUserComment] = useState('');
+  const [userComment, setUserComment] = useState("");
 
-  // 리뷰 통계 관련 상태 추가
-  const [reviewStats, setReviewStats] = useState<Record<string, ReviewStatItem[]>>({});
-  const [reviewStatsLoading, setReviewStatsLoading] = useState(false);
-  const [totalReviews, setTotalReviews] = useState(0);
-  const [totalParticipants, setTotalParticipants] = useState(0);
-
-  const { setLoading } = useLoadingContext();
-  const { data: session, status } = useSession();
-
-  const itemSeq = resolvedParams.id;
-
+  // API 호출 함수 (에러 처리 개선)
   const fetchMedicineDetail = async (itemSeq: string) => {
     try {
       setLoading(true, '의약품 정보를 불러오는 중...');
@@ -221,653 +195,395 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
         throw new Error(result.error?.message || '의약품 정보를 가져오는데 실패했습니다.');
       }
 
-      if (!result.data) {
-        throw new Error('의약품 데이터가 없습니다.');
+      // 기본 정보 먼저 설정
+      setMedicineData(result.data || null);
+      
+      // PDF 파싱 상태 업데이트
+      if (result.data?.parsedContent) {
+        setPdfParsingStatus('completed');
+      } else {
+        // PDF 파싱이 진행 중이거나 실패한 경우
+        const hasDocuments = result.data?.documents.effectDocId || 
+                            result.data?.documents.usageDocId || 
+                            result.data?.documents.cautionDocId;
+        
+        if (hasDocuments) {
+          setPdfParsingStatus('failed');
+        } else {
+          setPdfParsingStatus('completed'); // PDF 문서가 없는 경우
+        }
       }
 
-      setMedicineData(result.data);
+      console.log(`의약품 상세 조회 완료: ${itemSeq}`);
 
-      // 의약품 정보를 가져온 후 해당 의약품을 보유한 약국 정보 조회
-      if (result.data.itemName) {
-        await fetchPharmaciesWithMedicine(result.data.itemName);
-      }
-    } catch (error: any) {
-      console.error('의약품 상세 조회 오류:', error);
-
-      // 네트워크 오류 vs 애플리케이션 오류 구분
-      if (error instanceof TypeError && error.message.includes('fetch')) {
+    } catch (err) {
+      console.error('의약품 상세 조회 오류:', err);
+      
+      // 네트워크 오류인 경우
+      if (err instanceof TypeError && err.message.includes('fetch')) {
         setError('네트워크 연결을 확인해주세요.');
       } else {
-        setError(error.message || '의약품 정보를 불러오는 중 오류가 발생했습니다.');
+        setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
       }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPharmaciesWithMedicine = async (medicineName: string) => {
-    try {
-      setPharmaciesLoading(true);
-
-      // 현재 위치를 가져와서 거리 계산에 사용 (위치 권한이 없으면 서울 시청 기준)
-      let lat = 37.5665; // 서울 시청 위도
-      let lng = 126.978; // 서울 시청 경도
-
-      try {
-        if (navigator.geolocation) {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject);
-          });
-          lat = position.coords.latitude;
-          lng = position.coords.longitude;
-        }
-      } catch (geoError) {
-        // 위치 권한이 없어도 기본 위치로 진행
-      }
-
-      const params = new URLSearchParams({
-        medicine: medicineName,
-        lat: lat.toString(),
-        lng: lng.toString(),
-        showOnlyOpen: 'false', // 영업 여부와 관계없이 모든 약국 조회
-      });
-
-      const response = await fetch(`/api/map?${params}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('약국 정보를 가져오는데 실패했습니다.');
-      }
-
-      const pharmaciesResult: PharmacyData[] = await response.json();
-
-      // 해당 의약품을 실제로 보유한 약국만 필터링 (API에서 이미 필터링되지만 한번 더 확인)
-      const filteredPharmacies = pharmaciesResult.filter((pharmacy) =>
-        pharmacy.inventories.some(
-          (inv) => inv.medicines.item_name === medicineName && inv.quantity > 0
-        )
-      );
-
-      // 거리순으로 정렬 (distance가 있는 경우)
-      const sortedPharmacies = filteredPharmacies.sort((a, b) => {
-        return (a.distance || 0) - (b.distance || 0);
-      });
-
-      // 상위 5개 약국만 표시
-      setPharmaciesData(sortedPharmacies.slice(0, 5));
-    } catch (error: any) {
-      console.error('약국 조회 오류:', error);
-      // 약국 조회 실패 시에도 의약품 정보는 표시하고, 빈 배열로 설정
-      setPharmaciesData([]);
+      setPdfParsingStatus('failed');
     } finally {
       setPharmaciesLoading(false);
     }
   };
 
-  // 리뷰 통계를 가져오는 함수 수정
-  const fetchReviewStats = async (itemSeq: string) => {
-    try {
-      setReviewStatsLoading(true);
-
-      const response = await fetch(`/api/medicines/${itemSeq}/reviews?t=${Date.now()}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: 리뷰 통계를 불러올 수 없습니다.`);
-      }
-
-      const result: ReviewStatsApiResponse = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error?.message || '리뷰 통계를 불러오는데 실패했습니다.');
-      }
-
-      if (result.data) {
-        setReviewStats(result.data.reviewStats);
-        setTotalReviews(result.data.totalReviews);
-        setTotalParticipants(result.data.totalParticipants);
-        setUserReviews(result.data.userReviews || []);
-      }
-    } catch (error: any) {
-      console.error('리뷰 통계 조회 오류:', error);
-      // 리뷰 통계 실패는 전체 페이지 오류로 처리하지 않음
-      setReviewStats({});
-      setTotalReviews(0);
-      setTotalParticipants(0);
-      setUserReviews([]);
-    } finally {
-      setReviewStatsLoading(false);
-    }
-  };
-
+  // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     if (itemSeq) {
       fetchMedicineDetail(itemSeq);
-      fetchReviewStats(itemSeq);
     }
   }, [itemSeq]);
 
-  const handleReviewSubmit = async (selectedOptions: string[], comment: string) => {
-    if (!session) {
-      console.error('로그인이 필요합니다.');
-      return;
-    }
-
-    try {
-      setLoading(true, '리뷰를 등록하는 중...');
-
-      const response = await fetch(`/api/medicines/${itemSeq}/reviews`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-        },
-        body: JSON.stringify({
-          selectedOptions,
-        }),
-      });
-
-
-      // 응답 상태 확인
-      if (!response.ok) {
-        // 응답 내용 확인 (빈 응답 처리)
-        const responseText = await response.text();
-        let errorData;
-
-        try {
-          errorData = responseText ? JSON.parse(responseText) : {};
-        } catch (parseError) {
-          console.error('서버 응답 파싱 오류:', parseError);
-          throw new Error(`서버 오류 (${response.status}): 응답을 해석할 수 없습니다.`);
-        }
-
-        throw new Error(
-          errorData.error?.message || `리뷰 등록에 실패했습니다. (${response.status})`
-        );
-      }
-
-      // Content-Type 검증
-      const contentType = response.headers.get('content-type');
-      if (!contentType?.includes('application/json')) {
-        throw new Error('서버에서 올바르지 않은 응답 형식을 받았습니다.');
-      }
-
-      // 응답 텍스트 확인 후 JSON 파싱
-      const responseText = await response.text();
-      if (!responseText) {
-        throw new Error('서버에서 빈 응답을 받았습니다.');
-      }
-
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('JSON 파싱 오류:', parseError);
-        console.error('응답 내용:', responseText);
-        throw new Error('서버 응답을 해석할 수 없습니다.');
-      }
-
-      if (!result.success) {
-        throw new Error(result.error?.message || '리뷰 등록에 실패했습니다.');
-      }
-
-      // 성공 메시지 표시
-      if (result.data?.addedCount >= 0 || result.data?.removedCount >= 0) {
-        const message = `리뷰가 성공적으로 업데이트되었습니다. (추가: ${result.data.addedCount}개, 제거: ${result.data.removedCount}개)`;
-      }
-
-      // 사용자 상태 미리 업데이트 (즉시 반영)
-      setUserReviews([...selectedOptions]);
-      setUserComment(comment);
-
-      // 1초 지연 후 서버에서 최신 데이터 가져오기
-      setTimeout(async () => {
-        try {
-          setLoading(true, '최신 리뷰 정보를 불러오는 중...');
-          await fetchReviewStats(itemSeq);
-        } catch (error) {
-          console.error('리뷰 통계 업데이트 실패:', error);
-          // 통계 업데이트 실패해도 사용자가 설정한 리뷰는 유지
-        } finally {
-          setLoading(false);
-        }
-      }, 1000);
-
-    } catch (error: any) {
-      console.error('리뷰 등록 오류:', error);
-
-      // 특정 에러 타입에 따른 메시지 개선
-      let errorMessage = error.message || '리뷰 등록 중 오류가 발생했습니다.';
-
-      if (error.message.includes('최대') && error.message.includes('개까지')) {
-        errorMessage = '선택할 수 있는 리뷰 개수를 초과했습니다. 최대 5개까지만 선택해주세요.';
-      } else if (error.message.includes('네트워크') || error instanceof TypeError) {
-        errorMessage = '네트워크 연결을 확인해주세요.';
-      }
-
-      alert(errorMessage);
-      setLoading(false);
-    }
-  };
-
-  // type_name 파싱 및 경고 생성 함수들
-  const parseTypeNameWarnings = (typeName: string | undefined): CautionInfo[] => {
-    if (!typeName) return [];
-
-    const warnings: CautionInfo[] = [];
-    const typeList = typeName.split(',').map((type) => type.trim());
-
-    const warningMap: Record<
-      string,
-      { type: string; description: string; severity: 'high' | 'medium' | 'low' }
-    > = {
-      임부금기: {
-        type: '임신 중 복용 금지',
-        description:
-          '임신 중이거나 임신 가능성이 있는 여성은 이 약을 복용하지 마세요. 태아에게 해를 끼칠 수 있습니다.',
-        severity: 'high',
-      },
-      수유금기: {
-        type: '수유 중 복용 금지',
-        description:
-          '수유 중인 여성은 이 약을 복용하지 마세요. 모유를 통해 아기에게 전달될 수 있습니다.',
-        severity: 'high',
-      },
-      소아금기: {
-        type: '소아 복용 금지',
-        description: '소아(만 18세 미만)는 이 약을 복용하지 마세요. 안전성이 확립되지 않았습니다.',
-        severity: 'high',
-      },
-      고령금기: {
-        type: '고령자 복용 금지',
-        description:
-          '65세 이상 고령자는 이 약 복용 시 특별한 주의가 필요합니다. 의사와 상의하세요.',
-        severity: 'high',
-      },
-      용량주의: {
-        type: '용량 조절 필요',
-        description:
-          '개인의 상태에 따라 용량 조절이 필요할 수 있습니다. 정확한 용량을 지켜 복용하세요.',
-        severity: 'medium',
-      },
-      투여기간주의: {
-        type: '투여 기간 제한',
-        description:
-          '장기간 복용 시 부작용 위험이 증가할 수 있습니다. 의사의 지시에 따라 복용 기간을 조절하세요.',
-        severity: 'medium',
-      },
-      첨가제주의: {
-        type: '첨가제 알레르기 주의',
-        description:
-          '이 약에 포함된 첨가제에 알레르기가 있는 경우 복용하지 마세요. 성분을 확인해주세요.',
-        severity: 'medium',
-      },
-      신장애주의: {
-        type: '신장 질환자 주의',
-        description: '신장 질환이 있는 경우 용량 조절이나 복용 중단이 필요할 수 있습니다.',
-        severity: 'high',
-      },
-      간장애주의: {
-        type: '간 질환자 주의',
-        description: '간 질환이 있는 경우 용량 조절이나 복용 중단이 필요할 수 있습니다.',
-        severity: 'high',
-      },
-      심장애주의: {
-        type: '심장 질환자 주의',
-        description: '심장 질환이 있는 경우 복용 전 의사와 상의하세요.',
-        severity: 'high',
-      },
-      당뇨주의: {
-        type: '당뇨병 환자 주의',
-        description: '당뇨병이 있는 경우 혈당 수치 변화를 주의 깊게 관찰하세요.',
-        severity: 'medium',
-      },
-      운전주의: {
-        type: '운전 및 기계 조작 주의',
-        description:
-          '이 약 복용 후 졸음이나 어지러움이 올 수 있으니 운전이나 기계 조작을 피하세요.',
-        severity: 'medium',
-      },
-      알코올주의: {
-        type: '음주 금지',
-        description: '이 약 복용 중에는 음주를 피하세요. 부작용이 증가할 수 있습니다.',
-        severity: 'medium',
-      },
-    };
-
-    typeList.forEach((type) => {
-      if (warningMap[type]) {
-        warnings.push(warningMap[type]);
-      } else if (type) {
-        // 매핑되지 않은 경고도 처리
-        warnings.push({
-          type: '주의사항',
-          description: `${type} 관련 주의가 필요합니다. 복용 전 의사나 약사와 상의하세요.`,
-          severity: 'medium',
-        });
-      }
-    });
-
-    return warnings;
-  };
-
-  // 기존 generateCautions와 type_name 경고를 합치는 함수
-  const getAllCautions = (medicineData: MedicineData): CautionInfo[] => {
+  // 주의사항 정보 생성
+  const generateCautions = (medicine: NonNullable<typeof medicineData>): CautionInfo[] => {
     const cautions: CautionInfo[] = [];
 
-    // type_name 기반 경고 추가
-    // 테스트용: typeName이 없으면 샘플 데이터 사용
-    const typeNameToUse = medicineData.typeName || '임부금기,용량주의,첨가제주의'; // 테스트용 임시 데이터
-    const typeNameWarnings = parseTypeNameWarnings(typeNameToUse);
-    cautions.push(...typeNameWarnings);
+    // PDF 파싱된 주의사항 활용
+    if (medicine.parsedContent?.caution) {
+      const { caution } = medicine.parsedContent;
 
-    // 기존 parsedContent 기반 경고 추가
-    if (medicineData.parsedContent?.caution) {
-      const { contraindications, warnings, specialGroups } = medicineData.parsedContent.caution;
-
-      contraindications?.forEach((contraindication) => {
+      // 임신 관련 경고
+      if (caution.pregnancyWarning) {
         cautions.push({
-          type: '금기사항',
+          type: "임산부",
+          description: caution.pregnancyWarning,
+          severity: "high",
+        });
+      }
+
+      // 어린이 관련 경고
+      if (caution.childrenWarning) {
+        cautions.push({
+          type: "어린이",
+          description: caution.childrenWarning,
+          severity: "medium",
+        });
+      }
+
+      // 고령자 관련 경고
+      if (caution.elderlyWarning) {
+        cautions.push({
+          type: "고령자",
+          description: caution.elderlyWarning,
+          severity: "medium",
+        });
+      }
+
+      // 금기사항
+      caution.contraindications.forEach((contraindication) => {
+        cautions.push({
+          type: "금기사항",
           description: contraindication,
-          severity: 'high',
+          severity: "high",
         });
       });
 
-      warnings?.forEach((warning) => {
+      // 경고사항
+      caution.warnings.forEach((warning) => {
         cautions.push({
-          type: '주의사항',
+          type: "경고",
           description: warning,
-          severity: 'medium',
+          severity: "medium",
         });
       });
+    }
 
-      specialGroups?.forEach((group) => {
-        let severity: 'high' | 'medium' | 'low' = 'medium';
-
-        if (group.includes('임신') || group.includes('간') || group.includes('심장')) {
-          severity = 'high';
-        } else if (group.includes('고령') || group.includes('소아')) {
-          severity = 'medium';
-        } else {
-          severity = 'low';
-        }
-
-        cautions.push({
-          type: '특수환자군',
-          description: group,
-          severity,
-        });
-      });
+    // 기본 주의사항을 사용자 친화적으로 변환
+    if (cautions.length === 0 && medicine.warnings.typeName) {
+      const friendlyWarnings = convertToFriendlyWarnings(medicine.warnings.typeName);
+      cautions.push(...friendlyWarnings);
     }
 
     return cautions;
   };
 
-  // 영업 상태 확인 함수
-  const checkPharmacyOpen = (pharmacy: PharmacyData): boolean => {
-    const now = new Date();
-    const currentDay = now.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTime = currentHour * 100 + currentMinute;
+  // 의학 용어를 친근한 표현으로 변환하는 함수
+  const convertToFriendlyWarnings = (typeName: string): CautionInfo[] => {
+    const warnings: CautionInfo[] = [];
+    
+    // 쉼표로 구분된 주의사항들을 분리
+    const warningTypes = typeName.split(',').map(warning => warning.trim());
+    
+    warningTypes.forEach(warning => {
+      let friendlyMessage = '';
+      let severity: "high" | "medium" | "low" = "medium";
+      let category = '';
 
-    let openTime: string = '';
-    let closeTime: string = '';
+      // 의학 용어별 친근한 표현 매핑
+      switch (warning) {
+        case '임부금기':
+          category = '임산부';
+          friendlyMessage = '임신 중이거나 임신 가능성이 있는 경우 복용하지 마세요. 태아에게 영향을 줄 수 있습니다.';
+          severity = 'high';
+          break;
 
-    // 요일별 영업시간 확인
-    switch (currentDay) {
-      case 1: // 월요일
-        openTime = pharmacy.duty_time1s;
-        closeTime = pharmacy.duty_time1c;
-        break;
-      case 2: // 화요일
-        openTime = pharmacy.duty_time2s;
-        closeTime = pharmacy.duty_time2c;
-        break;
-      case 3: // 수요일
-        openTime = pharmacy.duty_time3s;
-        closeTime = pharmacy.duty_time3c;
-        break;
-      case 4: // 목요일
-        openTime = pharmacy.duty_time4s;
-        closeTime = pharmacy.duty_time4c;
-        break;
-      case 5: // 금요일
-        openTime = pharmacy.duty_time5s;
-        closeTime = pharmacy.duty_time5c;
-        break;
-      case 6: // 토요일
-        openTime = pharmacy.duty_time6s;
-        closeTime = pharmacy.duty_time6c;
-        break;
-      case 0: // 일요일
-        openTime = pharmacy.duty_time7s;
-        closeTime = pharmacy.duty_time7c;
-        break;
-    }
+        case '수유부금기':
+          category = '수유부';
+          friendlyMessage = '모유 수유 중인 경우 복용하지 마세요. 모유를 통해 아기에게 전달될 수 있습니다.';
+          severity = 'high';
+          break;
 
-    if (!openTime || !closeTime) {
-      return false; // 영업시간 정보가 없으면 닫힌 것으로 간주
-    }
+        case '첨가제주의':
+          category = '알레르기';
+          friendlyMessage = '알레르기가 있는 분은 성분을 꼼꼼히 확인해주세요. 특정 첨가제에 반응할 수 있습니다.';
+          severity = 'medium';
+          break;
 
-    const openTimeInt = parseInt(openTime.replace(':', ''));
-    const closeTimeInt = parseInt(closeTime.replace(':', ''));
+        case '소아금기':
+          category = '어린이';
+          friendlyMessage = '어린이에게는 사용하지 마세요. 성인용으로 제조된 의약품입니다.';
+          severity = 'high';
+          break;
 
-    return currentTime >= openTimeInt && currentTime <= closeTimeInt;
+        case '고령자주의':
+          category = '고령자';
+          friendlyMessage = '65세 이상 어르신은 의사와 상담 후 복용하세요. 부작용 위험이 높을 수 있습니다.';
+          severity = 'medium';
+          break;
+
+        case '신장애주의':
+          category = '신장 질환';
+          friendlyMessage = '신장(콩팥) 기능이 좋지 않은 분은 의사와 상담 후 복용하세요.';
+          severity = 'high';
+          break;
+
+        case '간장애주의':
+          category = '간 질환';
+          friendlyMessage = '간 기능이 좋지 않은 분은 의사와 상담 후 복용하세요.';
+          severity = 'high';
+          break;
+
+        case '심장애주의':
+          category = '심장 질환';
+          friendlyMessage = '심장 질환이 있는 분은 의사와 상담 후 복용하세요.';
+          severity = 'medium';
+          break;
+
+        case '운전주의':
+          category = '운전 및 기계조작';
+          friendlyMessage = '복용 후 졸음이나 어지러움이 올 수 있으니 운전이나 기계 조작 시 주의하세요.';
+          severity = 'medium';
+          break;
+
+        case '중복투여주의':
+          category = '중복 복용';
+          friendlyMessage = '같은 성분의 다른 약과 함께 복용하지 마세요. 과복용 위험이 있습니다.';
+          severity = 'medium';
+          break;
+
+        case '당뇨주의':
+          category = '당뇨병';
+          friendlyMessage = '당뇨병이 있는 분은 혈당 수치 변화를 주의 깊게 관찰하세요.';
+          severity = 'medium';
+          break;
+
+        case '위장장애주의':
+          category = '위장 질환';
+          friendlyMessage = '위장 질환이 있는 분은 식후에 복용하거나 의사와 상담하세요.';
+          severity = 'medium';
+          break;
+
+        case '혈액응고주의':
+          category = '혈액응고 장애';
+          friendlyMessage = '혈액응고 관련 약물을 복용 중인 분은 의사와 상담하세요.';
+          severity = 'high';
+          break;
+
+        case '알코올주의':
+          category = '음주';
+          friendlyMessage = '복용 중에는 음주를 피해주세요. 부작용이 증가할 수 있습니다.';
+          severity = 'medium';
+          break;
+
+        default:
+          // 알 수 없는 용어인 경우 원문 그대로 표시하되 안내 추가
+          category = '일반 주의사항';
+          friendlyMessage = `${warning} - 자세한 내용은 의사나 약사와 상담해주세요.`;
+          severity = 'low';
+          break;
+      }
+
+      warnings.push({
+        type: category,
+        description: friendlyMessage,
+        severity: severity,
+      });
+    });
+
+    return warnings;
   };
 
-  // 거리 포맷팅 함수
-  const formatDistance = (distance?: number): string => {
-    if (!distance) return '-';
-    if (distance < 1) {
-      return `${Math.round(distance * 1000)}m`;
-    }
-    return `${distance.toFixed(1)}km`;
+  const handleReviewSubmit = (selectedOptions: string[], comment: string) => {
+    setUserReviews(selectedOptions);
+    setUserComment(comment);
+    console.log("Review submitted:", { selectedOptions, comment });
   };
 
-  // 재고 수량 확인 함수
-  const getInventoryQuantity = (pharmacy: PharmacyData, medicineName: string): number => {
-    const inventory = pharmacy.inventories.find((inv) => inv.medicines.item_name === medicineName);
-    return inventory?.quantity || 0;
-  };
-
-  // 지도에서 보기 핸들러
-  const handleViewOnMap = () => {
-    if (!medicineData) return;
-
-    const params = new URLSearchParams();
-    params.set('medicine', medicineData.itemName);
-
-    // 재고가 있는 약국들의 정보 전달
-    if (pharmaciesData.length > 0) {
-      // 첫 번째 약국의 위치를 중심점으로 설정
-      const firstPharmacy = pharmaciesData[0];
-      params.set('centerLat', firstPharmacy.wgs84_lat.toString());
-      params.set('centerLng', firstPharmacy.wgs84_lon.toString());
-
-      // 약국 ID 목록 전달 (필터링에 사용)
-      const pharmacyIds = pharmaciesData.map((p) => p.hpid);
-      params.set('pharmacyIds', pharmacyIds.join(','));
-
-      // 자동 포커스 플래그
-      params.set('autoFocus', 'true');
-    }
-
-    window.location.href = `/map?${params.toString()}`;
-  };
-
-  // 주요 성분 데이터 파싱 함수
-  const parseMaterialName = (materialName: string | undefined): string => {
-    if (!materialName) {
-      return '성분 정보를 불러오는 중...';
-    }
-
-    try {
-      // 쉼표와 슬래시로 구분된 성분들을 분리
-      const components = materialName.split('/').filter((component) => component.trim());
-
-      const parsedComponents = components
-        .map((component) => {
-          // 각 성분을 쉼표로 분리하여 파싱
-          const parts = component
-            .split(',')
-            .map((part) => part.trim())
-            .filter((part) => part);
-
-          if (parts.length === 0) return null;
-
-          const componentName = parts[0]; // 첫 번째는 성분명
-          let dosage = '';
-          let unit = '';
-
-          // 용량과 단위 찾기
-          for (let i = 1; i < parts.length; i++) {
-            const part = parts[i];
-
-            // 숫자가 포함된 부분을 용량으로 간주
-            if (/\d/.test(part) && !dosage) {
-              dosage = part;
-            }
-
-            // 단위로 보이는 부분 (밀리그램, 그램, 마이크로그램 등)
-            if (
-              ['밀리그램', '그램', 'mg', 'g', 'μg', '마이크로그램', '밀리리터', 'ml'].some((u) =>
-                part.includes(u)
-              )
-            ) {
-              unit = part;
-            }
-          }
-
-          // 성분명만 있는 경우
-          if (!dosage || dosage === '') {
-            return componentName;
-          }
-
-          // 용량과 단위가 있는 경우
-          if (unit) {
-            return `${componentName} ${dosage}${unit}`;
+  // 용법용량 요약 함수
+  const formatUsageInfo = (medicine: NonNullable<typeof medicineData>): string => {
+    if (medicine.parsedContent?.usage) {
+      const { usage } = medicine.parsedContent;
+      
+      // 기본 용법용량 정보 우선 표시
+      let usageText = '';
+      
+      // 초기용량과 유지용량 정보 추출
+      if (usage.dosage) {
+        const dosageText = usage.dosage;
+        
+        // 이소티논 예시: "초기용량 체중kg당 0.5mg, 유지용량 0.5~1.0mg"
+        if (dosageText.includes('초기용량') || dosageText.includes('유지용량')) {
+          // 초기용량 추출
+          const initialMatch = dosageText.match(/초기용량.*?체중\s*kg당\s*([\d.]+mg)/);
+          const maintenanceMatch = dosageText.match(/유지용량.*?체중\s*kg당\s*([\d.~]+mg)/);
+          
+          if (initialMatch && maintenanceMatch) {
+            usageText = `초기 ${initialMatch[1]}/kg, 유지 ${maintenanceMatch[1]}/kg`;
+          } else if (initialMatch) {
+            usageText = `초기용량: 체중 kg당 ${initialMatch[1]}`;
           } else {
-            return `${componentName} ${dosage}`;
+            usageText = dosageText.substring(0, 100);
           }
-        })
-        .filter((component) => component !== null);
-
-      return parsedComponents.length > 0 ? parsedComponents.join(', ') : materialName; // 파싱 실패 시 원본 반환
-    } catch (error) {
-      console.error('성분 파싱 오류:', error);
-      return materialName; // 오류 시 원본 반환
+        } else {
+          usageText = dosageText.length > 80 ? dosageText.substring(0, 80) + '...' : dosageText;
+        }
+      }
+      
+      // 복용횟수 정보 추가
+      if (usage.frequency && !usageText.includes('1일')) {
+        const frequencyInfo = usage.frequency.length > 50 ? 
+          usage.frequency.substring(0, 50) + '...' : usage.frequency;
+        usageText += usageText ? `, ${frequencyInfo}` : frequencyInfo;
+      }
+      
+      // 식사 관련 정보 추가
+      if (usage.administration && usage.administration.includes('식사')) {
+        usageText += ', 식사와 함께 복용';
+      }
+      
+      return usageText || '용법용량 정보를 확인할 수 없습니다.';
     }
+    
+    return '용법용량 정보 없음';
   };
 
-  // 의약품 이름 포맷팅 함수 - 괄호 부분 줄바꿈 및 용량 작게 표시
-  const formatMedicineName = (itemName: string) => {
-    if (!itemName) return null;
+  // 부작용 요약 함수 (PDF 우선)
+  const formatSideEffects = (medicine: NonNullable<typeof medicineData>): string => {
+    if (medicine.parsedContent?.caution?.sideEffects) {
+      const sideEffects = medicine.parsedContent.caution.sideEffects;
+      
+      if (sideEffects.length > 0) {
+        // 중복 제거 및 정리
+        const uniqueSideEffects = [...new Set(sideEffects)]
+          .filter(effect => effect && effect.trim().length > 2)
+          .map(effect => {
+            // 긴 부작용 설명 단순화
+            if (effect.length > 30) {
+              const sentences = effect.split(/[.,]/).filter(s => s.trim().length > 3);
+              return sentences[0]?.trim() || effect.substring(0, 30);
+            }
+            return effect.trim();
+          })
+          .slice(0, 5); // 최대 5개까지만 표시
+        
+        return uniqueSideEffects.join(', ') + (sideEffects.length > 5 ? ' 등' : '');
+      }
+    }
+    
+    return '부작용 정보를 확인할 수 없습니다.';
+  };
 
-    // 괄호 분리: "타이레놀정 500mg (100정)" -> ["타이레놀정 500mg", "(100정)"]
-    const bracketMatch = itemName.match(/^(.+?)(\s*\([^)]+\))(.*)$/);
+  // 주요 효능 요약 함수 (PDF 우선)
+  const formatMainEffect = (medicine: NonNullable<typeof medicineData>): string => {
+    if (medicine.parsedContent?.effect) {
+      const { effect } = medicine.parsedContent;
+      
+      // 주요 효능이 있으면 우선 표시
+      if (effect.mainEffect) {
+        // 이소티논 예시: "다른치료법으로잘치료되지않는중증의여드름"
+        const mainEffect = effect.mainEffect;
+        
+        // 긴 텍스트 정리
+        if (mainEffect.length > 100) {
+          const sentences = mainEffect.split(/[.,]/).filter(s => s.trim().length > 5);
+          return sentences[0]?.trim() + (sentences.length > 1 ? ' 등' : '') || mainEffect.substring(0, 100) + '...';
+        }
+        
+        return mainEffect;
+      } 
+      
+      // 대상 질병 정보로 대체
+      if (effect.targetDisease.length > 0) {
+        const diseases = effect.targetDisease.slice(0, 3);
+        return diseases.join(', ') + (effect.targetDisease.length > 3 ? ' 등의 치료' : ' 치료');
+      }
+      
+      // 상세 효능에서 추출
+      if (effect.detailedEffect) {
+        const firstSentence = effect.detailedEffect.split(/[.,]/)[0];
+        return firstSentence.length > 80 ? firstSentence.substring(0, 80) + '...' : firstSentence;
+      }
+    }
+    
+    return '효능 정보를 확인할 수 없습니다.';
+  };
 
-    // 약품명에서 용량 정보 추출을 위한 정규식
-    // 공백이 있는 경우 (타이레놀정 500mg)와 공백이 없는 경우 (자디스듀오서방정10/1000밀리그램) 모두 처리
-    const extractDosage = (name: string) => {
-      // 공백 없이 숫자가 바로 붙는 경우 (자디스듀오서방정10/1000밀리그램)
-      const noSpaceMatch = name.match(
-        /^(.+?)((?:\d+(?:\.\d+)?(?:\/\d+(?:\.\d+)?)?)+\s*(?:mg|g|밀리그램|그램|마이크로그램|μg|ml|밀리리터))(.*)$/i
-      );
+  // 성분 정보 정리 함수 (기존 유지)
+  const formatIngredients = (medicine: NonNullable<typeof medicineData>): string => {
+    if (medicine.materialName) {
+      const ingredients = medicine.materialName;
+      
+      // 주성분만 추출 (첫 번째 성분이 보통 주성분)
+      const mainIngredient = ingredients.split(',')[0].trim();
+      
+      // mg, g 등의 단위가 포함되어 있으면 그대로 표시
+      if (/\d+\s*(mg|g|μg|mcg|ml)/i.test(mainIngredient)) {
+        return mainIngredient;
+      }
+      
+      // 단위가 없으면 전체 성분명에서 주요 성분 추출
+      const shortIngredients = ingredients.length > 60 
+        ? ingredients.substring(0, 60) + '...'
+        : ingredients;
+      
+      return shortIngredients;
+    }
+    
+    return '성분 정보 없음';
+  };
 
-      // 공백이 있는 경우 (타이레놀정 500mg)
-      const withSpaceMatch = name.match(
-        /^(.+?)\s+((?:\d+(?:\.\d+)?(?:\/\d+(?:\.\d+)?)?)+\s*(?:mg|g|밀리그램|그램|마이크로그램|μg|ml|밀리리터))(.*)$/i
-      );
-
-      return noSpaceMatch || withSpaceMatch;
-    };
-
-    if (bracketMatch) {
-      const mainPart = bracketMatch[1].trim(); // "타이레놀정 500mg"
-      const bracketPart = bracketMatch[2].trim(); // "(100정)"
-      const afterBracket = bracketMatch[3] ? bracketMatch[3].trim() : ''; // 괄호 뒤 텍스트
-
-      const dosageMatch = extractDosage(mainPart);
-
-      return (
-        <div className="text-center">
-          {/* 메인 부분 - 약품명만 크게 표시 */}
-          <div className="text-xl font-bold">
-            {dosageMatch ? dosageMatch[1] : mainPart} {/* 약품명 */}
+  // 로딩 상태
+  if (loading) {
+    return (
+      <div className="container py-8">
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="text-center">
+            <p className="text-lg font-medium mb-2">의약품 정보를 불러오는 중...</p>
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <p>• 기본 정보 조회</p>
+              <p>• PDF 문서 파싱 (효능효과, 용법용량, 주의사항)</p>
+              <p>• 최대 30초 소요될 수 있습니다</p>
+            </div>
           </div>
-
-          {/* 용량 정보 - 작게 표시하고 줄바꿈 */}
-          {dosageMatch && (
-            <div className="text-base font-medium text-muted-foreground mt-1">
-              {dosageMatch[2]} {/* 용량 */}
-              {dosageMatch[3]} {/* 나머지 */}
-            </div>
-          )}
-
-          {/* 괄호 뒤의 텍스트가 있으면 작게 표시 */}
-          {afterBracket && (
-            <div className="text-base font-medium text-muted-foreground mt-1">{afterBracket}</div>
-          )}
-
-          {/* 괄호 내용 (예: 100정) - 작게 표시 */}
-          <div className="text-sm font-medium text-muted-foreground mt-1">{bracketPart}</div>
         </div>
-      );
-    } else {
-      // 괄호가 없는 경우 - 용량만 작게 표시
-      const dosageMatch = extractDosage(itemName);
+      </div>
+    );
+  }
 
-      return (
-        <div className="text-center">
-          {/* 약품명만 크게 표시 */}
-          <div className="text-xl font-bold">{dosageMatch ? dosageMatch[1] : itemName}</div>
-
-          {/* 용량 정보 - 작게 표시하고 줄바꿈 */}
-          {dosageMatch && (
-            <div className="text-base font-medium text-muted-foreground mt-1">
-              {dosageMatch[2]} {/* 용량 */}
-              {dosageMatch[3]} {/* 나머지 */}
-            </div>
-          )}
-        </div>
-      );
-    }
-  };
-
-  // cautions를 useMemo로 메모이제이션하여 Hook 순서 안정화
-  const cautions = useMemo(() => {
-    return medicineData ? getAllCautions(medicineData) : [];
-  }, [medicineData]);
-
-  // PDF 문서 URL 생성 함수
-  const getPdfDocumentUrl = (docId: string | null): string | null => {
-    if (!docId || !medicineData) return null;
-    return `https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetail?itemSeq=${medicineData.itemSeq}&openDataInfoSeq=${docId}`;
-  };
-
-  // 에러 상태 - Hook 순서 안정화를 위해 여기로 이동
-  if (error && !medicineData) {
+  // 에러 상태
+  if (error || !medicineData) {
     return (
       <div className="container py-8">
         <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
           <AlertTriangle className="h-12 w-12 text-destructive" />
-          <div className="text-center space-y-4">
-            <h2 className="text-xl font-bold">의약품 정보를 찾을 수 없습니다</h2>
-            <p className="text-muted-foreground max-w-md">
-              {error || '요청하신 의약품의 상세 정보를 불러올 수 없습니다.'}
-            </p>
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">의약품 정보를 찾을 수 없습니다</h2>
+            <p className="text-muted-foreground mb-4">{error}</p>
             <div className="flex gap-2">
               <Button onClick={() => fetchMedicineDetail(itemSeq)} variant="outline">
                 다시 시도
@@ -882,10 +598,8 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
     );
   }
 
-  // 의약품 데이터가 없는 경우 로딩 상태 유지
-  if (!medicineData) {
-    return null; // LoadingProvider가 로딩 화면을 처리
-  }
+  const medicine = medicineData;
+  const cautions = generateCautions(medicine);
 
   return (
     <div className="container py-8">
@@ -900,7 +614,10 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
           <h1 className="text-2xl font-bold">약 상세 정보</h1>
         </div>
 
-        <MedicineWarningDialog medicineName={medicineData.itemName} warnings={cautions} />
+        {/* Warning Dialog for high severity cautions */}
+        {cautions.length > 0 && (
+          <MedicineWarningDialog medicineName={medicine.itemName} warnings={cautions} />
+        )}
 
         <div className="grid gap-6 md:grid-cols-[300px_1fr]">
           <div className="flex flex-col gap-4">
@@ -914,10 +631,12 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                   className="rounded-md object-cover mb-4"
                 />
                 <div className="text-center">
-                  {formatMedicineName(medicineData.itemName)}
-                  <p className="text-base font-medium text-black mt-2">{medicineData.entpName}</p>
+                  <h2 className="text-xl font-bold">{medicine.itemName}</h2>
+                  <p className="text-sm text-muted-foreground">{medicine.entpName || '제조사 정보 없음'}</p>
                   <div className="flex justify-center mt-2">
-                    <Badge variant="outline">{medicineData.etcOtcName || '일반의약품'}</Badge>
+                    <Badge variant="outline">
+                      {medicine.warnings.etcOtcCode === 'ETC' ? '전문의약품' : '일반의약품'}
+                    </Badge>
                   </div>
                 </div>
               </CardContent>
@@ -925,86 +644,16 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center justify-between">
-                  재고 보유 약국
-                  {pharmaciesLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                </CardTitle>
+                <CardTitle className="text-lg">재고 보유 약국</CardTitle>
               </CardHeader>
               <CardContent className="p-4">
-                {pharmaciesLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="text-center">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">재고 정보를 확인하는 중...</p>
-                    </div>
-                  </div>
-                ) : pharmaciesData.length > 0 ? (
-                  <div className="space-y-4">
-                    {pharmaciesData.map((pharmacy) => {
-                      const isOpen = checkPharmacyOpen(pharmacy);
-                      const quantity = getInventoryQuantity(pharmacy, medicineData.itemName);
-
-                      return (
-                        <div
-                          key={pharmacy.hpid}
-                          className="flex items-start gap-3 border-b pb-3 last:border-0 last:pb-0"
-                        >
-                          <div className="mt-1">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <h3 className="font-medium">{pharmacy.duty_name}</h3>
-                              <Badge
-                                variant={isOpen ? 'default' : 'outline'}
-                                className={isOpen ? 'bg-green-500' : ''}
-                              >
-                                {isOpen ? '영업중' : '영업종료'}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{pharmacy.duty_addr}</p>
-                            <div className="flex items-center justify-between mt-1">
-                              <span className="text-xs">{formatDistance(pharmacy.distance)}</span>
-                              <div className="flex items-center gap-2">
-                                <Badge
-                                  variant={quantity > 0 ? 'default' : 'outline'}
-                                  className={quantity > 0 ? 'bg-primary' : ''}
-                                >
-                                  {quantity > 0 ? `재고 ${quantity}개` : '재고 없음'}
-                                </Badge>
-                              </div>
-                            </div>
-                            {pharmacy.duty_tel1 && (
-                              <div className="mt-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-xs"
-                                  onClick={() => {
-                                    window.location.href = `tel:${pharmacy.duty_tel1}`;
-                                  }}
-                                >
-                                  📞 {pharmacy.duty_tel1}
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="text-muted-foreground space-y-2">
-                      <p>현재 이 의약품을 보유한</p>
-                      <p>주변 약국이 없습니다.</p>
-                      <p className="text-xs">다른 지역에서 재고를 확인해보세요.</p>
-                    </div>
-                  </div>
-                )}
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <MapPin className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">약국 정보 준비중</p>
+                </div>
                 <div className="mt-4">
-                  <Button className="w-full" onClick={handleViewOnMap}>
-                    지도에서 보기
+                  <Button asChild className="w-full">
+                    <Link href={`/map?medicine=${medicine.itemName}`}>지도에서 보기</Link>
                   </Button>
                 </div>
               </CardContent>
@@ -1012,411 +661,575 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
           </div>
 
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardContent className="p-4">
-                  <h3 className="text-lg font-bold">주요 성분</h3>
-                  <div className="h-px bg-gray-200 w-full mt-2 mb-3"></div>
-                  <div className="bg-muted/30 p-3 rounded-md">
-                    <p className="text-sm leading-relaxed">
-                      {parseMaterialName(medicineData.materialName)}
-                    </p>
+            {/* 핵심 정보 요약 카드 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">핵심 정보</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div>
+                    <h3 className="font-bold text-lg mb-3 text-primary">주요 성분</h3>
+                    <p className="text-base leading-relaxed">{formatIngredients(medicine)}</p>
                   </div>
-                 
-                  {medicineData.storageMethod && (
-                    <div className="mt-4">
-                      <h3 className="text-lg font-bold">보관 방법</h3>
-                      <div className="h-px bg-gray-200 w-full mt-2 mb-3"></div>
-                      <div className="bg-muted/30 p-3 rounded-md">
-                        <p className="text-sm leading-relaxed">{medicineData.storageMethod}</p>
-                      </div>
+                  
+                  <div>
+                    <h3 className="font-bold text-lg mb-3 text-primary">용법 용량</h3>
+                    <p className="text-base leading-relaxed">{formatUsageInfo(medicine)}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold text-lg mb-3 text-primary">주요 부작용</h3>
+                    <p className="text-base leading-relaxed">{formatSideEffects(medicine)}</p>
+                  </div>
+
+                  {medicine.parsedContent?.effect && (
+                    <div>
+                      <h3 className="font-bold text-lg mb-3 text-primary">효능 효과</h3>
+                      <p className="text-base leading-relaxed">{formatMainEffect(medicine)}</p>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </CardContent>
+            </Card>
 
-              {cautions.length > 0 ? (
-                <Card>
-                  <CardHeader className="pb-0">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5 text-orange-500" />
-                      주의 사항
-                    </CardTitle>
-                    <div className="h-px bg-gray-200 w-full mt-2"></div>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div
-                      className="max-h-[300px] overflow-y-auto scroll-container"
-                      style={{
-                        WebkitOverflowScrolling: 'touch',
-                        boxSizing: 'border-box',
-                        paddingRight: '24px', // 스크롤바와 내용 사이 간격 증가
-                      }}
-                    >
-                      {/* type_name 기반 중요 경고 먼저 표시 */}
-                      {(() => {
-                        const typeNameWarnings = parseTypeNameWarnings(medicineData.typeName);
-                        const highSeverityCautions = cautions.filter(
-                          (caution) => caution.severity === 'high'
-                        );
-                        const mediumSeverityCautions = cautions.filter(
-                          (caution) => caution.severity === 'medium'
-                        );
-                        const lowSeverityCautions = cautions.filter(
-                          (caution) => caution.severity === 'low'
-                        );
+            {/* 상세 정보 탭 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">상세 정보</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <Tabs defaultValue="effect" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="effect">효능·효과</TabsTrigger>
+                    <TabsTrigger value="usage">용법·용량</TabsTrigger>
+                    <TabsTrigger value="caution">주의사항</TabsTrigger>
+                  </TabsList>
+                  
+                  {/* 효능·효과 탭 */}
+                  <TabsContent value="effect" className="mt-6">
+                    {medicine.parsedContent?.effect ? (
+                      <div className="space-y-6">
+                        {/* PDF 파싱 성공 안내 */}
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm font-medium text-green-800">
+                              EE 문서 파싱 완료 - 효능효과 상세 정보
+                            </span>
+                          </div>
+                          <p className="text-xs text-green-600">
+                            PDF 문서에서 추출한 정확한 효능효과 정보입니다.
+                          </p>
+                        </div>
 
-                        return (
-                          <>
-                            {/* 높은 위험도 경고 */}
-                            {highSeverityCautions.length > 0 && (
-                              <div className="space-y-3">
-                                <h4 className="font-semibold text-red-600 flex items-center gap-2 text-base whitespace-nowrap">
-                                  🚨 필수 확인 사항
-                                </h4>
-                                {highSeverityCautions.map((caution, index) => (
-                                  <div
-                                    key={`high-${index}`}
-                                    className="bg-red-50 border border-red-200 rounded-lg overflow-hidden"
-                                  >
-                                    <div className="bg-red-100 px-4 py-2 border-b border-red-200">
-                                      <span className="font-bold text-red-800">{caution.type}</span>
-                                    </div>
-                                    <div className="p-3 text-red-700">{caution.description}</div>
-                                  </div>
-                                ))}
+                        {medicine.parsedContent.effect.mainEffect && (
+                          <div className="p-6 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                            <h4 className="font-bold text-blue-800 mb-3 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                              주요 효능
+                            </h4>
+                            <div className="prose prose-blue max-w-none">
+                              <p className="text-blue-700 whitespace-pre-line leading-relaxed text-base">
+                                {formatMedicalText(medicine.parsedContent.effect.mainEffect)}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {medicine.parsedContent.effect.detailedEffect && (
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                              상세 효능효과
+                            </h4>
+                            <div className="prose max-w-none">
+                              <div className="text-gray-700 whitespace-pre-line leading-relaxed space-y-3">
+                                {medicine.parsedContent.effect.detailedEffect.split('\n').map((line, index) => {
+                                  if (line.trim().length === 0) return null;
+                                  const formattedLine = formatMedicalText(line.trim());
+                                  return (
+                                    <p key={index} className="mb-2 pl-3 border-l-2 border-gray-200">
+                                      {formattedLine}
+                                    </p>
+                                  );
+                                })}
                               </div>
-                            )}
-
-                            {/* 중간 위험도 경고 */}
-                            {mediumSeverityCautions.length > 0 && (
-                              <div className="space-y-3 mt-4">
-                                <h4 className="font-semibold text-orange-600 flex items-center gap-2 text-base whitespace-nowrap">
-                                  ⚠️ 주의 필요 사항
-                                </h4>
-                                {mediumSeverityCautions.map((caution, index) => (
-                                  <div
-                                    key={`medium-${index}`}
-                                    className="bg-yellow-50 border border-yellow-200 rounded-lg overflow-hidden"
-                                  >
-                                    <div className="bg-yellow-100 px-4 py-2 border-b border-yellow-200">
-                                      <span className="font-bold text-yellow-800">
-                                        {caution.type}
-                                      </span>
-                                    </div>
-                                    <div className="p-3 text-yellow-700">{caution.description}</div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {medicine.parsedContent.effect.targetDisease.length > 0 && (
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                              대상 질병 및 치료 범위
+                            </h4>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              {medicine.parsedContent.effect.targetDisease.map((disease, index) => (
+                                <div key={index} className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <span className="text-purple-600 font-semibold text-sm">{index + 1}</span>
                                   </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* 낮은 위험도 경고 */}
-                            {lowSeverityCautions.length > 0 && (
-                              <div className="space-y-3 mt-4">
-                                <h4 className="font-semibold text-blue-600 flex items-center gap-2 text-base whitespace-nowrap">
-                                  📋 일반 주의사항
-                                </h4>
-                                {lowSeverityCautions.map((caution, index) => (
-                                  <div
-                                    key={`low-${index}`}
-                                    className="bg-blue-50 border border-blue-200 rounded-lg overflow-hidden"
-                                  >
-                                    <div className="bg-blue-100 px-4 py-2 border-b border-blue-200">
-                                      <span className="font-bold text-blue-800">
-                                        {caution.type}
-                                      </span>
-                                    </div>
-                                    <div className="p-3 text-blue-700">{caution.description}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* 전문의 상담 권고 */}
-                            <div className="mt-5 p-4 bg-white border border-gray-200 rounded-lg">
-                              <div className="flex items-start gap-3">
-                                <div className="bg-gray-100 p-2 rounded-full mt-0.5">
-                                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                                  <span className="text-purple-800 font-medium">
+                                    {formatMedicalText(disease)}
+                                  </span>
                                 </div>
-                                <div>
-                                  <h5 className="font-bold text-black">전문의 상담 권고</h5>
-                                  <p className="text-sm text-gray-800 mt-1">
-                                    위 주의사항에 해당하거나 복용 중 이상 반응이 나타날 경우, 즉시
-                                    복용을 중단하고 의사나 약사와 상의하세요.
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {medicine.parsedContent.effect.therapeuticClass && (
+                          <div className="bg-gray-50 rounded-lg p-4 border">
+                            <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                              <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                              약물 분류
+                            </h4>
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 rounded-full">
+                              <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                              <span className="text-indigo-800 font-semibold">
+                                {formatMedicalText(medicine.parsedContent.effect.therapeuticClass)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 max-w-md mx-auto">
+                          <div className="flex items-center justify-center mb-4">
+                            <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+                            <span className="text-orange-800 font-medium">EE 문서 파싱 실패</span>
+                          </div>
+                          <p className="text-orange-700 mb-2">효능·효과 PDF 문서를 파싱할 수 없습니다.</p>
+                          <p className="text-sm text-orange-600">
+                            문서 ID: {medicine.documents.effectDocId || '문서 없음'}
+                          </p>
+                          <p className="text-xs text-orange-500 mt-2">
+                            의약품 공공데이터에서 해당 PDF를 확인해주세요.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
+                  
+                  {/* 용법·용량 탭 */}
+                  <TabsContent value="usage" className="mt-6">
+                    {medicine.parsedContent?.usage ? (
+                      <div className="space-y-6">
+                        {/* PDF 파싱 성공 안내 */}
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm font-medium text-green-800">
+                              UD 문서 파싱 완료 - 용법용량 상세 정보
+                            </span>
+                          </div>
+                          <p className="text-xs text-green-600">
+                            PDF 문서에서 추출한 정확한 용법용량 정보입니다.
+                          </p>
+                        </div>
+
+                        {/* 핵심 용법용량 정보 */}
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {medicine.parsedContent.usage.dosage && (
+                            <div className="p-6 bg-green-50 rounded-lg border-l-4 border-green-500">
+                              <h4 className="font-bold text-green-800 mb-3 text-lg flex items-center gap-2">
+                                <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                                투여 용량
+                              </h4>
+                              <div className="prose prose-green max-w-none">
+                                <div className="text-green-700 whitespace-pre-line leading-relaxed">
+                                  {formatDosageInfo(medicine.parsedContent.usage.dosage).split('\n').map((line, index) => {
+                                    if (line.trim().length === 0) return null;
+                                    return (
+                                      <p key={index} className="mb-2 font-medium">
+                                        {line.trim()}
+                                      </p>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {medicine.parsedContent.usage.frequency && (
+                            <div className="p-6 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                              <h4 className="font-bold text-blue-800 mb-3 text-lg flex items-center gap-2">
+                                <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                                복용 횟수
+                              </h4>
+                              <div className="prose prose-blue max-w-none">
+                                <p className="text-blue-700 whitespace-pre-line leading-relaxed font-medium">
+                                  {formatMedicalText(medicine.parsedContent.usage.frequency)}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {medicine.parsedContent.usage.administration && (
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                              복용법 및 투여방법
+                            </h4>
+                            <div className="bg-indigo-50 border-l-4 border-indigo-400 p-4 rounded-r-lg">
+                              <div className="prose max-w-none">
+                                <div className="text-indigo-800 whitespace-pre-line leading-relaxed space-y-2">
+                                  {medicine.parsedContent.usage.administration.split('\n').map((line, index) => {
+                                    if (line.trim().length === 0) return null;
+                                    const formattedLine = formatMedicalText(line.trim());
+                                    return (
+                                      <p key={index} className="mb-2">
+                                        {formattedLine}
+                                      </p>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {medicine.parsedContent.usage.specialInstructions && (
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                              특별 지시사항
+                            </h4>
+                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                              <div className="flex items-start gap-3">
+                                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                                <div className="prose max-w-none">
+                                  <p className="text-yellow-800 whitespace-pre-line leading-relaxed font-medium">
+                                    {formatMedicalText(medicine.parsedContent.usage.specialInstructions)}
                                   </p>
                                 </div>
                               </div>
                             </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardHeader className="pb-0">
-                    <CardTitle className="text-lg">주의사항</CardTitle>
-                    <div className="h-px bg-gray-200 w-full mt-2"></div>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div
-                      className="max-h-[300px] overflow-y-auto scroll-container"
-                      style={{
-                        WebkitOverflowScrolling: 'touch',
-                        boxSizing: 'border-box',
-                        paddingRight: '24px', // 스크롤바와 내용 사이 간격 증가
-                      }}
-                    >
-                      <p className="text-muted-foreground">주의사항 정보가 없습니다.</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+                          </div>
+                        )}
 
-            {/* 통합된 PDF 문서 링크 - 모든 문서가 있는 경우에만 표시 */}
-            {(medicineData.documents.effectDocId ||
-              medicineData.documents.usageDocId ||
-              medicineData.documents.cautionDocId) && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="bg-primary/10 p-4 rounded-lg border border-primary/20">
-                    <h3 className="font-bold text-lg mb-3">의약품 상세 정보</h3>
-
-                    <div className="bg-white p-3 rounded-md border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                      <a
-                        href={
-                          getPdfDocumentUrl(
-                            medicineData.documents.effectDocId ||
-                              medicineData.documents.usageDocId ||
-                              medicineData.documents.cautionDocId
-                          ) || '#'
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 text-black hover:text-primary"
-                      >
-                        <div className="bg-primary/20 p-2 rounded-full flex-shrink-0">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="lucide lucide-file-text text-primary"
-                            aria-label="문서 아이콘"
-                          >
-                            <title>문서 아이콘</title>
-                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                            <polyline points="14 2 14 8 20 8" />
-                            <line x1="16" x2="8" y1="13" y2="13" />
-                            <line x1="16" x2="8" y1="17" y2="17" />
-                            <line x1="10" x2="8" y1="9" y2="9" />
-                          </svg>
+                        {medicine.parsedContent.usage.duration && (
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                              치료 기간
+                            </h4>
+                            <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-r-lg">
+                              <p className="text-purple-800 whitespace-pre-line leading-relaxed font-medium">
+                                {formatMedicalText(medicine.parsedContent.usage.duration)}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* 연령별 용량 정보 */}
+                        <div className="border rounded-lg p-6">
+                          <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                            <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                            연령별 맞춤 용량
+                          </h4>
+                          <div className="grid gap-4 md:grid-cols-3">
+                            <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <h5 className="font-semibold text-blue-700">성인</h5>
+                              </div>
+                              <p className="text-sm text-blue-600 leading-relaxed">
+                                {formatMedicalText(medicine.parsedContent.usage.ageSpecificDosage.adult || '별도 지시사항 없음')}
+                              </p>
+                            </div>
+                            <div className="p-4 border border-green-200 rounded-lg bg-green-50">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <h5 className="font-semibold text-green-700">소아</h5>
+                              </div>
+                              <p className="text-sm text-green-600 leading-relaxed">
+                                {formatMedicalText(medicine.parsedContent.usage.ageSpecificDosage.child || '별도 지시사항 없음')}
+                              </p>
+                            </div>
+                            <div className="p-4 border border-purple-200 rounded-lg bg-purple-50">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                <h5 className="font-semibold text-purple-700">고령자</h5>
+                              </div>
+                              <p className="text-sm text-purple-600 leading-relaxed">
+                                {formatMedicalText(medicine.parsedContent.usage.ageSpecificDosage.elderly || '별도 지시사항 없음')}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <span className="font-medium text-primary">
-                            효능효과, 용법용량, 부작용 정보 보기
-                          </span>
-                          <p className="text-xs text-gray-600 mt-1">
-                            상세 설명서를 새 창에서 확인할 수 있습니다
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 max-w-md mx-auto">
+                          <div className="flex items-center justify-center mb-4">
+                            <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+                            <span className="text-orange-800 font-medium">UD 문서 파싱 실패</span>
+                          </div>
+                          <p className="text-orange-700 mb-2">용법·용량 PDF 문서를 파싱할 수 없습니다.</p>
+                          <p className="text-sm text-orange-600">
+                            문서 ID: {medicine.documents.usageDocId || '문서 없음'}
+                          </p>
+                          <p className="text-xs text-orange-500 mt-2">
+                            의약품 공공데이터에서 해당 PDF를 확인해주세요.
                           </p>
                         </div>
-                        <div className="flex-shrink-0 text-primary">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="black"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="lucide lucide-external-link"
-                            aria-label="외부 링크 아이콘"
-                          >
-                            <title>외부 링크 아이콘</title>
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                            <polyline points="15 3 21 3 21 9"></polyline>
-                            <line x1="10" y1="14" x2="21" y2="3"></line>
-                          </svg>
+                      </div>
+                    )}
+                  </TabsContent>
+                  
+                  {/* 주의사항 탭 */}
+                  <TabsContent value="caution" className="mt-6">
+                    {medicine.parsedContent?.caution ? (
+                      <div className="space-y-6">
+                        {/* PDF 파싱 성공 안내 */}
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm font-medium text-green-800">
+                              NB 문서 파싱 완료 - 사용상의 주의사항 상세 정보
+                            </span>
+                          </div>
+                          <p className="text-xs text-green-600">
+                            PDF 문서에서 추출한 정확한 주의사항 정보입니다.
+                          </p>
                         </div>
-                      </a>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+
+                        {/* 임신 관련 경고 (최우선) */}
+                        {medicine.parsedContent.caution.pregnancyWarning && (
+                          <Alert variant="destructive" className="border-2 border-red-300">
+                            <AlertTriangle className="h-6 w-6" />
+                            <AlertTitle className="text-lg font-bold">🚨 임신 관련 중요 경고</AlertTitle>
+                            <AlertDescription className="mt-3 whitespace-pre-line leading-relaxed text-base">
+                              {formatMedicalText(medicine.parsedContent.caution.pregnancyWarning)}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
+                        {/* 금기사항 */}
+                        {medicine.parsedContent.caution.contraindications.length > 0 && (
+                          <div className="border-2 border-red-200 rounded-lg p-6 bg-red-50">
+                            <h4 className="font-bold text-red-700 mb-4 text-xl flex items-center gap-2">
+                              <div className="w-3 h-3 bg-red-600 rounded-full"></div>
+                              금기사항 (절대 복용 금지)
+                            </h4>
+                            <div className="space-y-3">
+                              {medicine.parsedContent.caution.contraindications.map((item, index) => (
+                                <Alert key={index} variant="destructive" className="border-red-300">
+                                  <AlertTriangle className="h-5 w-5" />
+                                  <AlertDescription className="whitespace-pre-line leading-relaxed text-base font-medium">
+                                    <span className="font-bold text-red-800">{index + 1}. </span>
+                                    {formatMedicalText(item)}
+                                  </AlertDescription>
+                                </Alert>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 경고사항 */}
+                        {medicine.parsedContent.caution.warnings.length > 0 && (
+                          <div className="border-2 border-orange-200 rounded-lg p-6 bg-orange-50">
+                            <h4 className="font-bold text-orange-700 mb-4 text-xl flex items-center gap-2">
+                              <div className="w-3 h-3 bg-orange-600 rounded-full"></div>
+                              경고사항
+                            </h4>
+                            <div className="space-y-3">
+                              {medicine.parsedContent.caution.warnings.map((warning, index) => (
+                                <Alert key={index} className="border-orange-300 bg-orange-100">
+                                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                                  <AlertDescription className="text-orange-800 whitespace-pre-line leading-relaxed text-base">
+                                    <span className="font-bold">{index + 1}. </span>
+                                    {formatMedicalText(warning)}
+                                  </AlertDescription>
+                                </Alert>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 일반 주의사항 */}
+                        {medicine.parsedContent.caution.precautions.length > 0 && (
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-blue-700 mb-4 text-xl flex items-center gap-2">
+                              <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                              일반 주의사항
+                            </h4>
+                            <div className="grid gap-4">
+                              {medicine.parsedContent.caution.precautions.map((precaution, index) => (
+                                <div key={index} className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+                                  <div className="flex items-start gap-3">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-600 rounded-full text-sm font-bold">
+                                      {index + 1}
+                                    </span>
+                                    <p className="text-blue-800 whitespace-pre-line leading-relaxed flex-1">
+                                      {formatMedicalText(precaution)}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 부작용 상세 */}
+                        {medicine.parsedContent.caution.sideEffects.length > 0 && (
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-purple-700 mb-4 text-xl flex items-center gap-2">
+                              <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
+                              부작용 정보
+                            </h4>
+                            <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-r-lg">
+                              <div className="grid gap-3 md:grid-cols-2">
+                                {formatBulletPoints(medicine.parsedContent.caution.sideEffects.map(effect => formatMedicalText(effect))).map((effect, index) => (
+                                  <div key={index} className="flex items-start gap-2">
+                                    <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></span>
+                                    <p className="text-purple-800 text-sm leading-relaxed">
+                                      {effect.replace(/^[•·-]\s*/, '')}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 상호작용 */}
+                        {medicine.parsedContent.caution.interactions.length > 0 && (
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-xl flex items-center gap-2">
+                              <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+                              약물 상호작용
+                            </h4>
+                            <div className="space-y-3">
+                              {medicine.parsedContent.caution.interactions.map((interaction, index) => (
+                                <div key={index} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                  <div className="flex items-start gap-3">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 bg-gray-200 text-gray-600 rounded-full text-sm font-bold">
+                                      {index + 1}
+                                    </span>
+                                    <p className="text-gray-700 whitespace-pre-line leading-relaxed flex-1">
+                                      {formatMedicalText(interaction)}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 특수 환자군 주의사항 */}
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {medicine.parsedContent.caution.childrenWarning && (
+                            <div className="p-6 bg-green-50 border-l-4 border-green-400 rounded-r-lg border border-green-200">
+                              <h5 className="font-bold text-green-800 mb-3 text-lg flex items-center gap-2">
+                                <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                                소아 주의사항
+                              </h5>
+                              <p className="text-green-700 whitespace-pre-line leading-relaxed">
+                                {formatMedicalText(medicine.parsedContent.caution.childrenWarning)}
+                              </p>
+                            </div>
+                          )}
+
+                          {medicine.parsedContent.caution.elderlyWarning && (
+                            <div className="p-6 bg-indigo-50 border-l-4 border-indigo-400 rounded-r-lg border border-indigo-200">
+                              <h5 className="font-bold text-indigo-800 mb-3 text-lg flex items-center gap-2">
+                                <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
+                                고령자 주의사항
+                              </h5>
+                              <p className="text-indigo-700 whitespace-pre-line leading-relaxed">
+                                {formatMedicalText(medicine.parsedContent.caution.elderlyWarning)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 max-w-md mx-auto">
+                          <div className="flex items-center justify-center mb-4">
+                            <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+                            <span className="text-orange-800 font-medium">NB 문서 파싱 실패</span>
+                          </div>
+                          <p className="text-orange-700 mb-2">사용상의 주의사항 PDF 문서를 파싱할 수 없습니다.</p>
+                          <p className="text-sm text-orange-600">
+                            문서 ID: {medicine.documents.cautionDocId || '문서 없음'}
+                          </p>
+                          <p className="text-xs text-orange-500 mt-2">
+                            의약품 공공데이터에서 해당 PDF를 확인해주세요.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+
+            {/* 기존 주의사항 (PDF 파싱 실패 시 폴백) */}
+            {(!medicine.parsedContent?.caution && cautions.length > 0) && (
+              <div className="space-y-4">
+                <h3 className="font-bold text-lg">기본 주의사항</h3>
+                {cautions.map((caution, index) => (
+                  <Alert
+                    key={index}
+                    variant={
+                      caution.severity === "high" ? "destructive" : caution.severity === "medium" ? "default" : undefined
+                    }
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>{caution.type}</AlertTitle>
+                    <AlertDescription>{caution.description}</AlertDescription>
+                  </Alert>
+                ))}
+              </div>
             )}
 
+            {/* PDF 파싱 상태 표시 */}
+            {pdfParsingStatus === 'failed' && medicineData && (
+              <Alert className="mb-6">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>PDF 파싱 정보</AlertTitle>
+                <AlertDescription>
+                  일부 상세 정보(PDF 문서)를 불러오지 못했습니다. 기본 정보는 정상적으로 표시됩니다.
+                  {medicineData.documents.effectDocId && <span className="block text-xs mt-1">• 효능효과 문서 파싱 실패</span>}
+                  {medicineData.documents.usageDocId && <span className="block text-xs mt-1">• 용법용량 문서 파싱 실패</span>}
+                  {medicineData.documents.cautionDocId && <span className="block text-xs mt-1">• 주의사항 문서 파싱 실패</span>}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {pdfParsingStatus === 'completed' && medicineData?.parsedContent && (
+              <Alert className="mb-6 border-green-200 bg-green-50">
+                <ThumbsUp className="h-4 w-4 text-green-600" />
+                <AlertTitle className="text-green-800">상세 정보 로드 완료</AlertTitle>
+                <AlertDescription className="text-green-700">
+                  PDF 문서에서 추출한 상세한 효능효과, 용법용량, 주의사항 정보를 확인하실 수 있습니다.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* 임시 리뷰 섹션 (추후 실제 API 연동) */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">리뷰</CardTitle>
               </CardHeader>
               <CardContent className="p-4">
-                {reviewStatsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="text-center space-y-2">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                      <p className="text-sm text-muted-foreground">리뷰 통계를 불러오는 중...</p>
-                    </div>
-                  </div>
-                ) : Object.keys(reviewStats).length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground">아직 등록된 리뷰가 없습니다.</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      첫 번째 리뷰를 작성해보세요!
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {/* 동적 리뷰 통계 표시 - 카테고리 순서 고정 */}
-                    {(() => {
-                      // 카테고리 순서 정의
-                      const categoryOrder = [
-                        '효과',
-                        '복용 편의성',
-                        '부작용',
-                        '가격/접근성',
-                        '기타 만족도',
-                        '부정적 리뷰',
-                      ];
-
-                      return categoryOrder
-                        .map((categoryName) => {
-                          const reviews = reviewStats[categoryName];
-                          if (!reviews || reviews.length === 0) return null;
-
-                          // 리뷰 개수(count)가 많은 순으로 정렬
-                          const sortedReviews = [...reviews].sort((a, b) => b.count - a.count);
-                          
-                          // 각 카테고리당 최대 5개의 리뷰만 표시
-                          const limitedReviews = sortedReviews.slice(0, 5);
-
-                          return (
-                            <div key={categoryName} className="mb-6">
-                              <h4
-                                className={`font-semibold text-base mb-3 flex items-center gap-2 ${
-                                  categoryName === '부정적 리뷰' ? 'text-red-600' : ''
-                                }`}
-                              >
-                                {categoryName}
-                              </h4>
-                              <div className="grid grid-cols-2 gap-2 mb-4">
-                                {limitedReviews.map((review) => {
-                                  // 사용자가 이 리뷰를 선택했는지 확인
-                                  const isUserSelected = userReviews.includes(review.text);
-
-                                  return (
-                                    <div
-                                      key={review.id}
-                                      className={`flex items-center gap-2 p-2 rounded-md border ${
-                                        isUserSelected
-                                          ? categoryName === '부정적 리뷰'
-                                            ? 'bg-red-100 border-red-500 ring-1 ring-red-300'
-                                            : 'bg-primary/10 border-primary ring-1 ring-primary/20'
-                                          : 'bg-muted/50 border-border'
-                                      }`}
-                                    >
-                                      <span>{review.emoji}</span>
-                                      <span
-                                        className={`text-sm ${
-                                          isUserSelected
-                                            ? categoryName === '부정적 리뷰'
-                                              ? 'font-medium text-red-700'
-                                              : 'font-medium text-primary'
-                                            : categoryName === '부정적 리뷰'
-                                              ? 'text-red-600'
-                                              : ''
-                                        }`}
-                                      >
-                                        {review.text}
-                                      </span>
-                                      <span
-                                        className={`text-xs ml-auto ${
-                                          isUserSelected
-                                            ? categoryName === '부정적 리뷰'
-                                              ? 'text-red-600 font-medium'
-                                              : 'text-primary font-medium'
-                                            : 'text-muted-foreground'
-                                        }`}
-                                      >
-                                        {review.count}
-                                      </span>
-                                      {isUserSelected && (
-                                        <span
-                                          className={`text-xs font-bold ${
-                                            categoryName === '부정적 리뷰'
-                                              ? 'text-red-600'
-                                              : 'text-primary'
-                                          }`}
-                                        >
-                                          ✓
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })
-                        .filter(Boolean);
-                    })()}
-
-                    {/* 리뷰 통계 요약 */}
-                    <div className="mb-6 p-4 bg-muted/30 rounded-lg">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="font-medium">
-                          총 리뷰 수: {totalReviews.toLocaleString()}개
-                        </span>
-                        <span className="text-muted-foreground">
-                          참여자: {totalParticipants.toLocaleString()}명
-                        </span>
-                      </div>
-                      {userReviews.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-border">
-                          <div className="flex items-center gap-2">
-                            <span className="text-primary font-bold">✓</span>
-                            <span className="text-xs text-muted-foreground">
-                              체크표시는 내가 선택한 리뷰입니다
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <ThumbsUp className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">리뷰 기능 준비중</p>
+                </div>
                 <div className="mt-4">
-                  {status === 'loading' ? (
-                    <Button variant="outline" className="w-full" disabled>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      로딩 중...
+                  <MedicineReviewDialog onSubmit={handleReviewSubmit}>
+                    <Button variant="outline" className="w-full">
+                      리뷰 작성하기
                     </Button>
-                  ) : session ? (
-                    <MedicineReviewDialog userReviews={userReviews} isEditing={userReviews.length > 0} onSubmit={handleReviewSubmit}>
-                      <Button variant="outline" className="w-full">
-                        {userReviews.length > 0 ? '리뷰 수정하기' : '리뷰 작성하기'}
-                      </Button>
-                    </MedicineReviewDialog>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="text-center p-4 bg-muted/30 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-2">
-                          리뷰를 작성하려면 로그인이 필요합니다
-                        </p>
-                        <Button asChild variant="outline" className="w-full">
-                          <Link href="/auth">로그인하고 리뷰 작성하기</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  </MedicineReviewDialog>
                 </div>
               </CardContent>
             </Card>
@@ -1424,5 +1237,5 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
     </div>
-  );
+  )
 }

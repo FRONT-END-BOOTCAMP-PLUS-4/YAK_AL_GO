@@ -1,7 +1,5 @@
 // 의약품 상세 정보 DTO
 
-import type { ParsedMedicineContent } from '@/backend/infra/external/pdf/types/ParsedContent';
-
 /**
  * 의약품 PDF 문서 정보
  */
