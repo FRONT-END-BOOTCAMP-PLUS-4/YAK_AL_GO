@@ -62,7 +62,14 @@ export default function SignupMedicationStep({ formData, setFormData }: any) {
   // 약 선택 핸들러
   const handleSelectMedicine = (medicine: Medicine) => {
     if (!selectedMedicines.some((m) => m.item_seq === medicine.item_seq)) {
-      setSelectedMedicines([...selectedMedicines, medicine]);
+      const newSelectedMedicines = [...selectedMedicines, medicine];
+      setSelectedMedicines(newSelectedMedicines);
+// 부모 컴포넌트의 formData 업데이트
+    setFormData({
+      ...formData,
+      itemSeq: newSelectedMedicines.map(m => m.item_seq)
+    });
+      
     }
     setSearchTerm("");
     setShowResults(false);
@@ -71,22 +78,39 @@ export default function SignupMedicationStep({ formData, setFormData }: any) {
 
   // 약 삭제 핸들러
   const handleRemoveMedicine = (itemSeq: string) => {
-    setSelectedMedicines(selectedMedicines.filter((medicine) => medicine.item_seq !== itemSeq));
+    const newSelectedMedicines = selectedMedicines.filter(medicine => medicine.item_seq !== itemSeq);
+    setSelectedMedicines(newSelectedMedicines);
+    // 부모 컴포넌트의 formData 업데이트
+  setFormData({
+    ...formData,
+    itemSeq: newSelectedMedicines.map(m => m.item_seq)
+  });
   };
 
-  // 계속 복용 체크박스 핸들러
-  const handleOngoingChange = (checked: boolean) => {
-    setIsOngoing(checked);
-    if (checked) {
-      setEndDate(""); // 계속 복용 시 종료일 초기화
-    }
-  };
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const newStartDate = e.target.value;
+  setStartDate(newStartDate);
+  setFormData({
+    ...formData,
+    startDate: newStartDate
+  });
+};
+
+// 복용 종료일 변경 핸들러
+const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const newEndDate = e.target.value;
+  setEndDate(newEndDate);
+  setFormData({
+    ...formData,
+    endDate: newEndDate
+  });
+};
 
   return (
     <div className="space-y-4">
       {/* 복용 중인 약 */}
       <div className="space-y-2">
-        <Label>복용 중인 약</Label>
+        <Label className ="text-lg font - medium">복용 중인 약</Label>
         <div className="relative">
           <Input
             placeholder="약 이름을 검색하세요 (2글자 이상)"
@@ -135,7 +159,7 @@ export default function SignupMedicationStep({ formData, setFormData }: any) {
 
       {/* 복용 기간 */}
       <div className="space-y-4">
-        <Label>복용 기간</Label>
+        <Label className = "text-lg font-medium">복용 기간</Label>
         
         {/* 시작 날짜 */}
         <div className="space-y-2">
@@ -144,20 +168,13 @@ export default function SignupMedicationStep({ formData, setFormData }: any) {
             id="startDate"
             type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={handleStartDateChange}
             required
           />
         </div>
 
-        {/* 계속 복용 체크박스 */}
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="ongoing"
-            checked={isOngoing}
-            onCheckedChange={handleOngoingChange}
-          />
-          <Label htmlFor="ongoing">계속 복용 중</Label>
-        </div>
+
+        
 
         {/* 종료 날짜 - 계속 복용이 아닐 때만 표시 */}
         {!isOngoing && (
@@ -167,8 +184,8 @@ export default function SignupMedicationStep({ formData, setFormData }: any) {
               id="endDate"
               type="date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              min={startDate} // 시작일 이후만 선택 가능
+              onChange={handleEndDateChange} // 시작일 이후만 선택 가능
+                          
             />
           </div>
         )}
