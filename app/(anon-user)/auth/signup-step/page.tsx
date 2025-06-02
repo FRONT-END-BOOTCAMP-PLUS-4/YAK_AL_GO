@@ -113,9 +113,9 @@ export default function SignupStepPage() {
     }
   }
 
-  if (status === "loading") {
-    return <div>Loading...</div>
-  }
+  // if (status === "loading") {
+  //   return <div>Loading...</div>
+  // }
 
   return (
     <div className="container flex h-screen items-center justify-center">
