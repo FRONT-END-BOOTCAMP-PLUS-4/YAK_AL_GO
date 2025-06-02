@@ -14,54 +14,42 @@ type ReviewOption = {
   category: string
 }
 
-const reviewOptions: Record<string, ReviewOption[]> = {
-  스타일: [
-    { emoji: "💚", text: "원하는 스타일로 잘해줬어요", category: "스타일" },
-    { emoji: "👩", text: "스타일 추천을 잘해줬어요", category: "스타일" },
-    { emoji: "😎", text: "트렌디해요", category: "스타일" },
-    { emoji: "🌹", text: "고급스러워요", category: "스타일" },
-  ],
-  "시술/서비스": [
-    { emoji: "🔍", text: "시술이 꼼꼼해요", category: "시술/서비스" },
-    { emoji: "💖", text: "친절해요", category: "시술/서비스" },
-    { emoji: "📋", text: "상담이 자세해요", category: "시술/서비스" },
-    { emoji: "👏", text: "손이 빨라요", category: "시술/서비스" },
-  ],
-  "가격/기타": [
-    { emoji: "✨", text: "매장이 청결해요", category: "가격/기타" },
-    { emoji: "💰", text: "가격이 합리적이에요", category: "가격/기타" },
-    { emoji: "💎", text: "비싼 만큼 가치있어요", category: "가격/기타" },
-    { emoji: "🪑", text: "좋은 제품을 사용해요", category: "가격/기타" },
-    { emoji: "🅿️", text: "주차하기 편해요", category: "가격/기타" },
-    { emoji: "✅", text: "가격 안내가 명확해요", category: "가격/기타" },
-    { emoji: "❤️", text: "과도한 권유가 없어요", category: "가격/기타" },
-    { emoji: "🛋️", text: "대기공간이 잘 되어있어요", category: "가격/기타" },
-  ],
-}
-
 const medicineReviewOptions: Record<string, ReviewOption[]> = {
   효과: [
-    { emoji: "😀", text: "음식이 맛있어요", category: "효과" },
-    { emoji: "🌿", text: "재료가 신선해요", category: "효과" },
-    { emoji: "👀", text: "매장이 넓어요", category: "효과" },
-    { emoji: "💖", text: "친절해요", category: "효과" },
-    { emoji: "❄️", text: "양이 많아요", category: "효과" },
-    { emoji: "✨", text: "매장이 청결해요", category: "효과" },
-    { emoji: "🕒", text: "음식이 빨리 나와요", category: "효과" },
-    { emoji: "🍚", text: "혼밥하기 좋아요", category: "효과" },
-    { emoji: "👨‍👩‍👧‍👦", text: "단체모임 하기 좋아요", category: "효과" },
-    { emoji: "⏱️", text: "음식이 빨리 나와요", category: "효과" },
+    { emoji: "💊", text: "효과가 빨라요", category: "효과" },
+    { emoji: "✨", text: "효과가 확실해요", category: "효과" },
+    { emoji: "🎯", text: "증상이 많이 개선됐어요", category: "효과" },
+    { emoji: "👍", text: "기대했던 효과가 있어요", category: "효과" },
   ],
-  가격: [
-    { emoji: "✨", text: "매장이 청결해요", category: "가격" },
-    { emoji: "💰", text: "가격이 합리적이에요", category: "가격" },
-    { emoji: "💎", text: "비싼 만큼 가치있어요", category: "가격" },
-    { emoji: "🧴", text: "좋은 제품을 사용해요", category: "가격" },
-    { emoji: "🅿️", text: "주차하기 편해요", category: "가격" },
-    { emoji: "✅", text: "가격 안내가 명확해요", category: "가격" },
-    { emoji: "❤️", text: "과도한 권유가 없어요", category: "가격" },
-    { emoji: "🛋️", text: "대기공간이 잘 되어있어요", category: "가격" },
-    { emoji: "📞", text: "예약이 편리해요", category: "가격" },
+  "복용 편의성": [
+    { emoji: "😋", text: "맛이 괜찮아요", category: "복용 편의성" },
+    { emoji: "💧", text: "삼키기 쉬워요", category: "복용 편의성" },
+    { emoji: "📏", text: "크기가 적당해요", category: "복용 편의성" },
+    { emoji: "⏰", text: "복용법이 간단해요", category: "복용 편의성" },
+    { emoji: "📦", text: "포장이 편리해요", category: "복용 편의성" },
+  ],
+  부작용: [
+    { emoji: "😊", text: "부작용이 없어요", category: "부작용" },
+    { emoji: "🌱", text: "순하고 자극이 적어요", category: "부작용" },
+    { emoji: "😴", text: "졸음이 오지 않아요", category: "부작용" },
+    { emoji: "🤢", text: "속이 불편하지 않아요", category: "부작용" },
+  ],
+  "가격/접근성": [
+    { emoji: "💰", text: "가격이 합리적이에요", category: "가격/접근성" },
+    { emoji: "🏪", text: "구하기 쉬워요", category: "가격/접근성" },
+    { emoji: "📋", text: "처방받기 편해요", category: "가격/접근성" },
+  ],
+  "기타 만족도": [
+    { emoji: "❤️", text: "전반적으로 만족해요", category: "기타 만족도" },
+    { emoji: "🔄", text: "재구매 의향이 있어요", category: "기타 만족도" },
+    { emoji: "👨‍⚕️", text: "의사가 추천했어요", category: "기타 만족도" },
+    { emoji: "📈", text: "꾸준히 복용하고 있어요", category: "기타 만족도" },
+  ],
+  "부정적 리뷰": [
+    { emoji: "😵", text: "부작용이 있어요", category: "부정적 리뷰" },
+    { emoji: "⏳", text: "효과가 늦어요", category: "부정적 리뷰" },
+    { emoji: "💸", text: "가격이 비싸요", category: "부정적 리뷰" },
+    { emoji: "😷", text: "맛이 쓰거나 냄새가 나요", category: "부정적 리뷰" },
   ],
 }
 
@@ -95,57 +83,33 @@ export function MedicineReviewDialog({ children, onSubmit }: MedicineReviewDialo
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>약품 리뷰 작성</DialogTitle>
         </DialogHeader>
         <div className="py-4 space-y-6">
-          <div className="space-y-4">
-            <h3 className="font-medium">효과</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {medicineReviewOptions["효과"].map((option) => (
-                <button
-                  key={option.text}
-                  className={`flex items-center gap-2 p-3 rounded-md border text-left ${
-                    selectedOptions.includes(option.text) ? "border-primary bg-primary/10" : "border-border"
-                  }`}
-                  onClick={() => handleOptionToggle(option.text)}
-                >
-                  <span className="text-xl">{option.emoji}</span>
-                  <span className="text-sm">{option.text}</span>
-                </button>
-              ))}
+          {Object.entries(medicineReviewOptions).map(([categoryName, options]) => (
+            <div key={categoryName} className="space-y-4">
+              <h3 className="font-medium text-base">{categoryName}</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {options.map((option) => (
+                  <button
+                    key={option.text}
+                    className={`flex items-center gap-2 p-3 rounded-md border text-left transition-colors ${
+                      selectedOptions.includes(option.text) 
+                        ? "border-primary bg-primary/10 text-primary" 
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => handleOptionToggle(option.text)}
+                  >
+                    <span className="text-lg">{option.emoji}</span>
+                    <span className="text-sm">{option.text}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          ))}
 
-          <div className="space-y-4">
-            <h3 className="font-medium">가격</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {medicineReviewOptions["가격"].map((option) => (
-                <button
-                  key={option.text}
-                  className={`flex items-center gap-2 p-3 rounded-md border text-left ${
-                    selectedOptions.includes(option.text) ? "border-primary bg-primary/10" : "border-border"
-                  }`}
-                  onClick={() => handleOptionToggle(option.text)}
-                >
-                  <span className="text-xl">{option.emoji}</span>
-                  <span className="text-sm">{option.text}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="comment">추가 의견 (선택사항)</Label>
-            <Textarea
-              id="comment"
-              placeholder="약품에 대한 추가 의견을 작성해주세요."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="min-h-[100px]"
-            />
-          </div>
         </div>
         <DialogFooter>
           <Button onClick={handleSubmit} disabled={selectedOptions.length === 0}>
