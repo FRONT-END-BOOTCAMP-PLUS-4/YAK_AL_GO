@@ -753,50 +753,106 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                   <TabsContent value="effect" className="mt-6">
                     {medicine.parsedContent?.effect ? (
                       <div className="space-y-6">
+                        {/* PDF 파싱 성공 안내 */}
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm font-medium text-green-800">
+                              EE 문서 파싱 완료 - 효능효과 상세 정보
+                            </span>
+                          </div>
+                          <p className="text-xs text-green-600">
+                            PDF 문서에서 추출한 정확한 효능효과 정보입니다.
+                          </p>
+                        </div>
+
                         {medicine.parsedContent.effect.mainEffect && (
-                          <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                            <h4 className="font-bold text-blue-800 mb-2">주요 효능</h4>
-                            <p className="text-blue-700 whitespace-pre-line leading-relaxed">
-                              {formatMedicalText(medicine.parsedContent.effect.mainEffect)}
-                            </p>
+                          <div className="p-6 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                            <h4 className="font-bold text-blue-800 mb-3 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                              주요 효능
+                            </h4>
+                            <div className="prose prose-blue max-w-none">
+                              <p className="text-blue-700 whitespace-pre-line leading-relaxed text-base">
+                                {formatMedicalText(medicine.parsedContent.effect.mainEffect)}
+                              </p>
+                            </div>
                           </div>
                         )}
                         
                         {medicine.parsedContent.effect.detailedEffect && (
-                          <div>
-                            <h4 className="font-bold text-gray-800 mb-3">상세 효능</h4>
-                            <p className="text-gray-700 whitespace-pre-line leading-relaxed">
-                              {formatMedicalText(medicine.parsedContent.effect.detailedEffect)}
-                            </p>
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                              상세 효능효과
+                            </h4>
+                            <div className="prose max-w-none">
+                              <div className="text-gray-700 whitespace-pre-line leading-relaxed space-y-3">
+                                {medicine.parsedContent.effect.detailedEffect.split('\n').map((line, index) => {
+                                  if (line.trim().length === 0) return null;
+                                  const formattedLine = formatMedicalText(line.trim());
+                                  return (
+                                    <p key={index} className="mb-2 pl-3 border-l-2 border-gray-200">
+                                      {formattedLine}
+                                    </p>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           </div>
                         )}
                         
                         {medicine.parsedContent.effect.targetDisease.length > 0 && (
-                          <div>
-                            <h4 className="font-bold text-gray-800 mb-3">대상 질병</h4>
-                            <div className="flex flex-wrap gap-2">
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                              대상 질병 및 치료 범위
+                            </h4>
+                            <div className="grid gap-3 md:grid-cols-2">
                               {medicine.parsedContent.effect.targetDisease.map((disease, index) => (
-                                <Badge key={index} variant="secondary" className="text-sm py-1 px-3">
-                                  {formatMedicalText(disease)}
-                                </Badge>
+                                <div key={index} className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <span className="text-purple-600 font-semibold text-sm">{index + 1}</span>
+                                  </div>
+                                  <span className="text-purple-800 font-medium">
+                                    {formatMedicalText(disease)}
+                                  </span>
+                                </div>
                               ))}
                             </div>
                           </div>
                         )}
                         
                         {medicine.parsedContent.effect.therapeuticClass && (
-                          <div>
-                            <h4 className="font-bold text-gray-800 mb-3">치료 분류</h4>
-                            <Badge variant="outline" className="text-sm py-1 px-3">
-                              {formatMedicalText(medicine.parsedContent.effect.therapeuticClass)}
-                            </Badge>
+                          <div className="bg-gray-50 rounded-lg p-4 border">
+                            <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                              <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                              약물 분류
+                            </h4>
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 rounded-full">
+                              <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                              <span className="text-indigo-800 font-semibold">
+                                {formatMedicalText(medicine.parsedContent.effect.therapeuticClass)}
+                              </span>
+                            </div>
                           </div>
                         )}
                       </div>
                     ) : (
-                      <div className="text-center py-12">
-                        <p className="text-muted-foreground">효능·효과 정보를 파싱할 수 없습니다.</p>
-                        <p className="text-sm text-muted-foreground mt-2">PDF 문서에서 정보를 추출하지 못했습니다.</p>
+                      <div className="text-center py-16">
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 max-w-md mx-auto">
+                          <div className="flex items-center justify-center mb-4">
+                            <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+                            <span className="text-orange-800 font-medium">EE 문서 파싱 실패</span>
+                          </div>
+                          <p className="text-orange-700 mb-2">효능·효과 PDF 문서를 파싱할 수 없습니다.</p>
+                          <p className="text-sm text-orange-600">
+                            문서 ID: {medicine.documents.effectDocId || '문서 없음'}
+                          </p>
+                          <p className="text-xs text-orange-500 mt-2">
+                            의약품 공공데이터에서 해당 PDF를 확인해주세요.
+                          </p>
+                        </div>
                       </div>
                     )}
                   </TabsContent>
@@ -805,75 +861,145 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                   <TabsContent value="usage" className="mt-6">
                     {medicine.parsedContent?.usage ? (
                       <div className="space-y-6">
-                        {/* 기본 용법용량 */}
+                        {/* PDF 파싱 성공 안내 */}
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm font-medium text-green-800">
+                              UD 문서 파싱 완료 - 용법용량 상세 정보
+                            </span>
+                          </div>
+                          <p className="text-xs text-green-600">
+                            PDF 문서에서 추출한 정확한 용법용량 정보입니다.
+                          </p>
+                        </div>
+
+                        {/* 핵심 용법용량 정보 */}
                         <div className="grid gap-4 md:grid-cols-2">
                           {medicine.parsedContent.usage.dosage && (
-                            <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-400">
-                              <h4 className="font-bold text-green-800 mb-2">용량</h4>
-                              <p className="text-green-700 whitespace-pre-line leading-relaxed">
-                                {formatDosageInfo(medicine.parsedContent.usage.dosage)}
-                              </p>
+                            <div className="p-6 bg-green-50 rounded-lg border-l-4 border-green-500">
+                              <h4 className="font-bold text-green-800 mb-3 text-lg flex items-center gap-2">
+                                <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                                투여 용량
+                              </h4>
+                              <div className="prose prose-green max-w-none">
+                                <div className="text-green-700 whitespace-pre-line leading-relaxed">
+                                  {formatDosageInfo(medicine.parsedContent.usage.dosage).split('\n').map((line, index) => {
+                                    if (line.trim().length === 0) return null;
+                                    return (
+                                      <p key={index} className="mb-2 font-medium">
+                                        {line.trim()}
+                                      </p>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             </div>
                           )}
                           
                           {medicine.parsedContent.usage.frequency && (
-                            <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-400">
-                              <h4 className="font-bold text-green-800 mb-2">복용 횟수</h4>
-                              <p className="text-green-700 whitespace-pre-line leading-relaxed">
-                                {formatMedicalText(medicine.parsedContent.usage.frequency)}
-                              </p>
+                            <div className="p-6 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                              <h4 className="font-bold text-blue-800 mb-3 text-lg flex items-center gap-2">
+                                <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                                복용 횟수
+                              </h4>
+                              <div className="prose prose-blue max-w-none">
+                                <p className="text-blue-700 whitespace-pre-line leading-relaxed font-medium">
+                                  {formatMedicalText(medicine.parsedContent.usage.frequency)}
+                                </p>
+                              </div>
                             </div>
                           )}
                         </div>
 
                         {medicine.parsedContent.usage.administration && (
-                          <div>
-                            <h4 className="font-bold text-gray-800 mb-3">복용법</h4>
-                            <p className="text-gray-700 whitespace-pre-line leading-relaxed bg-gray-50 p-4 rounded-lg">
-                              {formatMedicalText(medicine.parsedContent.usage.administration)}
-                            </p>
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                              복용법 및 투여방법
+                            </h4>
+                            <div className="bg-indigo-50 border-l-4 border-indigo-400 p-4 rounded-r-lg">
+                              <div className="prose max-w-none">
+                                <div className="text-indigo-800 whitespace-pre-line leading-relaxed space-y-2">
+                                  {medicine.parsedContent.usage.administration.split('\n').map((line, index) => {
+                                    if (line.trim().length === 0) return null;
+                                    const formattedLine = formatMedicalText(line.trim());
+                                    return (
+                                      <p key={index} className="mb-2">
+                                        {formattedLine}
+                                      </p>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         )}
                         
                         {medicine.parsedContent.usage.specialInstructions && (
-                          <div>
-                            <h4 className="font-bold text-gray-800 mb-3">특별 지시사항</h4>
-                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-                              <p className="text-yellow-800 whitespace-pre-line leading-relaxed">
-                                {formatMedicalText(medicine.parsedContent.usage.specialInstructions)}
-                              </p>
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                              특별 지시사항
+                            </h4>
+                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                              <div className="flex items-start gap-3">
+                                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                                <div className="prose max-w-none">
+                                  <p className="text-yellow-800 whitespace-pre-line leading-relaxed font-medium">
+                                    {formatMedicalText(medicine.parsedContent.usage.specialInstructions)}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}
 
                         {medicine.parsedContent.usage.duration && (
-                          <div>
-                            <h4 className="font-bold text-gray-800 mb-3">치료 기간</h4>
-                            <p className="text-gray-700 whitespace-pre-line leading-relaxed bg-gray-50 p-4 rounded-lg">
-                              {formatMedicalText(medicine.parsedContent.usage.duration)}
-                            </p>
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                              치료 기간
+                            </h4>
+                            <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-r-lg">
+                              <p className="text-purple-800 whitespace-pre-line leading-relaxed font-medium">
+                                {formatMedicalText(medicine.parsedContent.usage.duration)}
+                              </p>
+                            </div>
                           </div>
                         )}
                         
-                        {/* 연령별 용량 */}
-                        <div>
-                          <h4 className="font-bold text-gray-800 mb-4">연령별 용량</h4>
+                        {/* 연령별 용량 정보 */}
+                        <div className="border rounded-lg p-6">
+                          <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                            <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                            연령별 맞춤 용량
+                          </h4>
                           <div className="grid gap-4 md:grid-cols-3">
-                            <div className="p-4 border rounded-lg">
-                              <h5 className="font-semibold text-blue-600 mb-2">성인</h5>
-                              <p className="text-sm text-gray-700">
+                            <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <h5 className="font-semibold text-blue-700">성인</h5>
+                              </div>
+                              <p className="text-sm text-blue-600 leading-relaxed">
                                 {formatMedicalText(medicine.parsedContent.usage.ageSpecificDosage.adult || '별도 지시사항 없음')}
                               </p>
                             </div>
-                            <div className="p-4 border rounded-lg">
-                              <h5 className="font-semibold text-green-600 mb-2">소아</h5>
-                              <p className="text-sm text-gray-700">
+                            <div className="p-4 border border-green-200 rounded-lg bg-green-50">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <h5 className="font-semibold text-green-700">소아</h5>
+                              </div>
+                              <p className="text-sm text-green-600 leading-relaxed">
                                 {formatMedicalText(medicine.parsedContent.usage.ageSpecificDosage.child || '별도 지시사항 없음')}
                               </p>
                             </div>
-                            <div className="p-4 border rounded-lg">
-                              <h5 className="font-semibold text-purple-600 mb-2">고령자</h5>
-                              <p className="text-sm text-gray-700">
+                            <div className="p-4 border border-purple-200 rounded-lg bg-purple-50">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                <h5 className="font-semibold text-purple-700">고령자</h5>
+                              </div>
+                              <p className="text-sm text-purple-600 leading-relaxed">
                                 {formatMedicalText(medicine.parsedContent.usage.ageSpecificDosage.elderly || '별도 지시사항 없음')}
                               </p>
                             </div>
@@ -881,9 +1007,20 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-12">
-                        <p className="text-muted-foreground">용법·용량 정보를 파싱할 수 없습니다.</p>
-                        <p className="text-sm text-muted-foreground mt-2">PDF 문서에서 정보를 추출하지 못했습니다.</p>
+                      <div className="text-center py-16">
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 max-w-md mx-auto">
+                          <div className="flex items-center justify-center mb-4">
+                            <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+                            <span className="text-orange-800 font-medium">UD 문서 파싱 실패</span>
+                          </div>
+                          <p className="text-orange-700 mb-2">용법·용량 PDF 문서를 파싱할 수 없습니다.</p>
+                          <p className="text-sm text-orange-600">
+                            문서 ID: {medicine.documents.usageDocId || '문서 없음'}
+                          </p>
+                          <p className="text-xs text-orange-500 mt-2">
+                            의약품 공공데이터에서 해당 PDF를 확인해주세요.
+                          </p>
+                        </div>
                       </div>
                     )}
                   </TabsContent>
@@ -892,12 +1029,25 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                   <TabsContent value="caution" className="mt-6">
                     {medicine.parsedContent?.caution ? (
                       <div className="space-y-6">
+                        {/* PDF 파싱 성공 안내 */}
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm font-medium text-green-800">
+                              NB 문서 파싱 완료 - 사용상의 주의사항 상세 정보
+                            </span>
+                          </div>
+                          <p className="text-xs text-green-600">
+                            PDF 문서에서 추출한 정확한 주의사항 정보입니다.
+                          </p>
+                        </div>
+
                         {/* 임신 관련 경고 (최우선) */}
                         {medicine.parsedContent.caution.pregnancyWarning && (
-                          <Alert variant="destructive" className="border-2">
-                            <AlertTriangle className="h-5 w-5" />
-                            <AlertTitle className="text-lg">임신 관련 경고</AlertTitle>
-                            <AlertDescription className="mt-2 whitespace-pre-line leading-relaxed">
+                          <Alert variant="destructive" className="border-2 border-red-300">
+                            <AlertTriangle className="h-6 w-6" />
+                            <AlertTitle className="text-lg font-bold">🚨 임신 관련 중요 경고</AlertTitle>
+                            <AlertDescription className="mt-3 whitespace-pre-line leading-relaxed text-base">
                               {formatMedicalText(medicine.parsedContent.caution.pregnancyWarning)}
                             </AlertDescription>
                           </Alert>
@@ -905,13 +1055,17 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
                         {/* 금기사항 */}
                         {medicine.parsedContent.caution.contraindications.length > 0 && (
-                          <div>
-                            <h4 className="font-bold text-red-700 mb-4 text-lg">금기사항 (절대 복용 금지)</h4>
+                          <div className="border-2 border-red-200 rounded-lg p-6 bg-red-50">
+                            <h4 className="font-bold text-red-700 mb-4 text-xl flex items-center gap-2">
+                              <div className="w-3 h-3 bg-red-600 rounded-full"></div>
+                              금기사항 (절대 복용 금지)
+                            </h4>
                             <div className="space-y-3">
                               {medicine.parsedContent.caution.contraindications.map((item, index) => (
-                                <Alert key={index} variant="destructive">
-                                  <AlertTriangle className="h-4 w-4" />
-                                  <AlertDescription className="whitespace-pre-line leading-relaxed">
+                                <Alert key={index} variant="destructive" className="border-red-300">
+                                  <AlertTriangle className="h-5 w-5" />
+                                  <AlertDescription className="whitespace-pre-line leading-relaxed text-base font-medium">
+                                    <span className="font-bold text-red-800">{index + 1}. </span>
                                     {formatMedicalText(item)}
                                   </AlertDescription>
                                 </Alert>
@@ -922,13 +1076,17 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
                         {/* 경고사항 */}
                         {medicine.parsedContent.caution.warnings.length > 0 && (
-                          <div>
-                            <h4 className="font-bold text-orange-700 mb-4 text-lg">경고사항</h4>
+                          <div className="border-2 border-orange-200 rounded-lg p-6 bg-orange-50">
+                            <h4 className="font-bold text-orange-700 mb-4 text-xl flex items-center gap-2">
+                              <div className="w-3 h-3 bg-orange-600 rounded-full"></div>
+                              경고사항
+                            </h4>
                             <div className="space-y-3">
                               {medicine.parsedContent.caution.warnings.map((warning, index) => (
-                                <Alert key={index} className="border-orange-200 bg-orange-50">
-                                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                                  <AlertDescription className="text-orange-800 whitespace-pre-line leading-relaxed">
+                                <Alert key={index} className="border-orange-300 bg-orange-100">
+                                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                                  <AlertDescription className="text-orange-800 whitespace-pre-line leading-relaxed text-base">
+                                    <span className="font-bold">{index + 1}. </span>
                                     {formatMedicalText(warning)}
                                   </AlertDescription>
                                 </Alert>
@@ -939,14 +1097,22 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
                         {/* 일반 주의사항 */}
                         {medicine.parsedContent.caution.precautions.length > 0 && (
-                          <div>
-                            <h4 className="font-bold text-blue-700 mb-4 text-lg">일반 주의사항</h4>
-                            <div className="grid gap-3">
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-blue-700 mb-4 text-xl flex items-center gap-2">
+                              <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                              일반 주의사항
+                            </h4>
+                            <div className="grid gap-4">
                               {medicine.parsedContent.caution.precautions.map((precaution, index) => (
                                 <div key={index} className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
-                                  <p className="text-blue-800 whitespace-pre-line leading-relaxed">
-                                    {formatMedicalText(precaution)}
-                                  </p>
+                                  <div className="flex items-start gap-3">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-600 rounded-full text-sm font-bold">
+                                      {index + 1}
+                                    </span>
+                                    <p className="text-blue-800 whitespace-pre-line leading-relaxed flex-1">
+                                      {formatMedicalText(precaution)}
+                                    </p>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -955,14 +1121,20 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
                         {/* 부작용 상세 */}
                         {medicine.parsedContent.caution.sideEffects.length > 0 && (
-                          <div>
-                            <h4 className="font-bold text-purple-700 mb-4 text-lg">부작용 상세</h4>
-                            <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-400">
-                              <div className="grid gap-2 md:grid-cols-2">
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-purple-700 mb-4 text-xl flex items-center gap-2">
+                              <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
+                              부작용 정보
+                            </h4>
+                            <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-r-lg">
+                              <div className="grid gap-3 md:grid-cols-2">
                                 {formatBulletPoints(medicine.parsedContent.caution.sideEffects.map(effect => formatMedicalText(effect))).map((effect, index) => (
-                                  <p key={index} className="text-purple-800 text-sm">
-                                    {effect}
-                                  </p>
+                                  <div key={index} className="flex items-start gap-2">
+                                    <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></span>
+                                    <p className="text-purple-800 text-sm leading-relaxed">
+                                      {effect.replace(/^[•·-]\s*/, '')}
+                                    </p>
+                                  </div>
                                 ))}
                               </div>
                             </div>
@@ -971,14 +1143,22 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
                         {/* 상호작용 */}
                         {medicine.parsedContent.caution.interactions.length > 0 && (
-                          <div>
-                            <h4 className="font-bold text-gray-800 mb-4 text-lg">약물 상호작용</h4>
-                            <div className="space-y-2">
+                          <div className="border rounded-lg p-6">
+                            <h4 className="font-bold text-gray-800 mb-4 text-xl flex items-center gap-2">
+                              <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+                              약물 상호작용
+                            </h4>
+                            <div className="space-y-3">
                               {medicine.parsedContent.caution.interactions.map((interaction, index) => (
-                                <div key={index} className="p-3 bg-gray-50 border rounded-lg">
-                                  <p className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">
-                                    {formatMedicalText(interaction)}
-                                  </p>
+                                <div key={index} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                  <div className="flex items-start gap-3">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 bg-gray-200 text-gray-600 rounded-full text-sm font-bold">
+                                      {index + 1}
+                                    </span>
+                                    <p className="text-gray-700 whitespace-pre-line leading-relaxed flex-1">
+                                      {formatMedicalText(interaction)}
+                                    </p>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -988,18 +1168,24 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                         {/* 특수 환자군 주의사항 */}
                         <div className="grid gap-4 md:grid-cols-2">
                           {medicine.parsedContent.caution.childrenWarning && (
-                            <div className="p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
-                              <h5 className="font-bold text-green-800 mb-2">소아 주의사항</h5>
-                              <p className="text-green-700 text-sm whitespace-pre-line leading-relaxed">
+                            <div className="p-6 bg-green-50 border-l-4 border-green-400 rounded-r-lg border border-green-200">
+                              <h5 className="font-bold text-green-800 mb-3 text-lg flex items-center gap-2">
+                                <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                                소아 주의사항
+                              </h5>
+                              <p className="text-green-700 whitespace-pre-line leading-relaxed">
                                 {formatMedicalText(medicine.parsedContent.caution.childrenWarning)}
                               </p>
                             </div>
                           )}
 
                           {medicine.parsedContent.caution.elderlyWarning && (
-                            <div className="p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded-r-lg">
-                              <h5 className="font-bold text-indigo-800 mb-2">고령자 주의사항</h5>
-                              <p className="text-indigo-700 text-sm whitespace-pre-line leading-relaxed">
+                            <div className="p-6 bg-indigo-50 border-l-4 border-indigo-400 rounded-r-lg border border-indigo-200">
+                              <h5 className="font-bold text-indigo-800 mb-3 text-lg flex items-center gap-2">
+                                <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
+                                고령자 주의사항
+                              </h5>
+                              <p className="text-indigo-700 whitespace-pre-line leading-relaxed">
                                 {formatMedicalText(medicine.parsedContent.caution.elderlyWarning)}
                               </p>
                             </div>
@@ -1007,9 +1193,20 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-12">
-                        <p className="text-muted-foreground">주의사항 정보를 파싱할 수 없습니다.</p>
-                        <p className="text-sm text-muted-foreground mt-2">PDF 문서에서 정보를 추출하지 못했습니다.</p>
+                      <div className="text-center py-16">
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 max-w-md mx-auto">
+                          <div className="flex items-center justify-center mb-4">
+                            <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+                            <span className="text-orange-800 font-medium">NB 문서 파싱 실패</span>
+                          </div>
+                          <p className="text-orange-700 mb-2">사용상의 주의사항 PDF 문서를 파싱할 수 없습니다.</p>
+                          <p className="text-sm text-orange-600">
+                            문서 ID: {medicine.documents.cautionDocId || '문서 없음'}
+                          </p>
+                          <p className="text-xs text-orange-500 mt-2">
+                            의약품 공공데이터에서 해당 PDF를 확인해주세요.
+                          </p>
+                        </div>
                       </div>
                     )}
                   </TabsContent>
