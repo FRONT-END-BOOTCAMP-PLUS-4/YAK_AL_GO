@@ -3,16 +3,17 @@ import { SignupDto } from "@/backend/application/usecases/member/dto/SignupDto";
 import { JoinUsecase } from "@/backend/application/usecases/member/JoinUsecase";
 import { PrismaUsersRepository } from "@/backend/infra/repositories/prisma/PrismaUsersRepository";
 import { PrismaUserHealthRepository } from "@/backend/infra/repositories/prisma/PrismaUserHealthRepository";
+import { PrismaUserMedisRepository } from "@/backend/infra/repositories/prisma/PrismaUserMedisRepository";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        console.log("요청 본문:", body);
+        
 
         const session = await getServerSession(authOptions);
-        console.log("현재 세션:", session);
+        
         
         if (!session) {
             console.log("세션이 없음");
@@ -35,16 +36,20 @@ export async function POST(req: NextRequest) {
             body.diabetes,
             body.heartDisease,
             body.liverDisease,
-            body.kidneyDisease
+            body.kidneyDisease,
+            body.itemSeq,
+            body.startDate,
+            body.endDate
         );
         
-        console.log("생성된 DTO:", dto);
+        
         
         // 인스턴스 생성
         const usersRepository = new PrismaUsersRepository();
         const userHealthRepository = new PrismaUserHealthRepository();
+        const userMedisRepository = new PrismaUserMedisRepository();
         // 주입
-        const joinUsecase = new JoinUsecase(usersRepository, userHealthRepository);
+        const joinUsecase = new JoinUsecase(usersRepository, userHealthRepository, userMedisRepository);
         
         console.log("UseCase 실행 시작");
         const createdUser = await joinUsecase.execute(dto);

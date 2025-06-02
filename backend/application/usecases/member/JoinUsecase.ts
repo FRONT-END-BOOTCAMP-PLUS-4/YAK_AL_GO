@@ -3,7 +3,7 @@ import { UserHealthRepository } from '../../../domain/repositories/UserHealthRep
 import { UserMedisRepository } from '../../../domain/repositories/UserMedisRepository';
 import { User } from '../../../domain/entities/UsersEntity';
 import { UserHealth } from '../../../domain/entities/UserHealthEntity';
-import { UserMedication } from '../../../domain/entities/UserMedisEntity';
+import { UserMedis } from '../../../domain/entities/UserMedisEntity';
 import { SignupDto } from './dto/SignupDto'; // 경로 수정
 
 export class JoinUsecase {
@@ -67,7 +67,7 @@ export class JoinUsecase {
 
     // 3. UserMedication DB에 저장 (itemSeq가 있는 경우만)
     if (dto.itemSeq && dto.itemSeq.length > 0) {
-      const medications: UserMedication[] = [];
+      const medications: UserMedis[] = [];
       
       // 시작일과 종료일 변환
       const startDate = dto.startDate ? new Date(dto.startDate) : null;
@@ -75,7 +75,7 @@ export class JoinUsecase {
       
       // 각 약품 코드마다 사용자 약물 정보 생성
       dto.itemSeq.forEach(itemSeq => {
-        medications.push(new UserMedication(
+        medications.push(new UserMedis(
           null, // DB에서 자동 생성
           createdUser.id,
           itemSeq,

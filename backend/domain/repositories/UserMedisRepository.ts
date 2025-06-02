@@ -1,6 +1,6 @@
-import { UserMedication } from '../entities/UserMedicationEntity';
+import { UserMedis } from '../entities/UserMedisEntity';
 
-export interface UserMedicationRepository {
-  saveMedications(medications: UserMedication[]): Promise<void>;
-  findMedicationsByUserId(userId: string): Promise<UserMedication[]>;
+export interface UserMedisRepository {
+  saveMedications(medications: UserMedis[]): Promise<void>;
+  findMedicationsByUserId(userId: string): Promise<UserMedis[]>;
 }
