@@ -35,7 +35,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Pill, MessageSquare, User, Store } from 'lucide-react';
+import { Pill, MessageSquare, User, Store, Loader2 } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 
 interface Medicine {
@@ -90,6 +90,7 @@ export default function ProfilePage() {
     entp_name: string;
   } | null>(null);
   const [healths, setHealths] = useState<Health[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const { data: session } = useSession();
   const name = session?.user?.name ?? '';
@@ -121,43 +122,50 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
+      setIsLoading(true); // 데이터 로딩 시작
 
-      // fetch medicines
       try {
+        // 약국 정보 가져오기
+        if (member_type === 1 && hpid) {
+          const pharmacyRes = await fetch(`/api/mypage/phamacy?hpid=${hpid}`);
+          if (pharmacyRes.ok) {
+            const data = await pharmacyRes.json();
+            setPharmacyInfo(data);
+          }
+        }
+
+        // 약 정보 가져오기
         const medRes = await fetch(`/api/mypage/medicine?userId=${id}`);
         if (medRes.ok) {
           const medData = await medRes.json();
           setMedicines(medData);
         }
-      } catch (error) {
-        console.error('Failed to fetch medicines:', error);
-      }
 
-      // fetch posts
-      try {
+        // 게시글 가져오기
         const postRes = await fetch(`/api/mypage/post?userId=${id}`);
         if (postRes.ok) {
           const postData = await postRes.json();
           setPosts([...(postData.qnas || []), ...(postData.posts || [])]);
         }
-      } catch (error) {
-        console.error('Failed to fetch posts:', error);
-      }
 
-      // fetch health data
-      try {
+        // 건강 데이터 가져오기
         const healthRes = await fetch(`/api/mypage/health?userId=${id}`);
         if (healthRes.ok) {
           const healthData = await healthRes.json();
           setHealths(healthData);
         }
       } catch (error) {
-        console.error('Failed to fetch healths:', error);
+        console.error('Failed to fetch data:', error);
+      } finally {
+        // 최소 로딩 시간 보장 (250ms)
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 250);
       }
     };
 
     fetchData();
-  }, [id]);
+  }, [id, hpid, member_type]);
 
   useEffect(() => {
     async function loadMedicines() {
@@ -269,6 +277,19 @@ export default function ProfilePage() {
       console.error('약 추가 실패:', err);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container py-8">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">데이터를 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8">
