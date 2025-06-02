@@ -12,7 +12,10 @@ export class SignupDto {
         public readonly diabetes: number,
         public readonly heartDisease: number,
         public readonly liverDisease: number,
-        public readonly kidneyDisease: number
+        public readonly kidneyDisease: number,
+        public readonly itemSeq: string[] = [],
+        public readonly startDate: string = "",
+        public readonly endDate  : string = ""
     ) {}
 
     getFormData() {
@@ -26,7 +29,10 @@ export class SignupDto {
             diabetes: this.diabetes,
             heartDisease: this.heartDisease,
             liverDisease: this.liverDisease,
-            kidneyDisease: this.kidneyDisease
+            kidneyDisease: this.kidneyDisease,
+            itemSeq: this.itemSeq,
+            startDate: this.startDate,
+            endDate: this.endDate
         };
     }
 
