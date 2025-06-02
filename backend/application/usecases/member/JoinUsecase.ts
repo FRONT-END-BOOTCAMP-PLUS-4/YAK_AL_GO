@@ -16,6 +16,9 @@ export class JoinUsecase {
     // 1. Users DB에 저장
     const now = new Date();
 
+    // hpid 처리: 일반 사용자(member_type: 0)는 null, 약사(member_type: 1)는 실제 값
+    const hpidValue = dto.member_type === 1 && dto.hpid ? dto.hpid : null;
+
     const newUser = new User(
       '', // DB에서 UUID 자동 생성
       dto.name,        // tokenData.name → dto.name
@@ -26,7 +29,7 @@ export class JoinUsecase {
       dto.member_type, // formData.member_type → dto.member_type
       now,
       null,
-      dto.hpid        // formData.hpid → dto.hpid
+      hpidValue       // 조건부 hpid 설정
     );
 
     const createdUser = await this.usersRepository.createUser(newUser);

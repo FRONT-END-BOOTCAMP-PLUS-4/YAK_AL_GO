@@ -22,7 +22,7 @@ import SignupMedicationStep from "@/components/auth/SignupMedicationStep"
 
 
 export default function SignupStepPage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const router = useRouter()
 
   const [userType, setUserType] = useState<"general" | "pharmacist">("general")
@@ -82,27 +82,34 @@ export default function SignupStepPage() {
       return
     }
 
-    // 완료 시 db에 회원가입 요청
-    const response = await fetch('api/auth/signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    });
+    try {
+      // 완료 시 db에 회원가입 요청
+      const response = await fetch('/api/auth/update-user-db', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      console.log("회원가입 성공:", data);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("회원가입 성공:", data);
 
-      // db에서 받은 response에 따라 세션 업데이트
-      
-
-      router.push('/auth/complete'); // 회원가입 완료 페이지로 이동
-    } else {
-      const errorData = await response.json();
-      console.error("회원가입 실패:", errorData);
-      setError(errorData.message || "회원가입에 실패했습니다. 다시 시도해주세요.");
+        // 세션 업데이트하여 needsSignup을 false로 변경
+        await update();
+        
+        router.push('/auth/complete'); // 회원가입 완료 페이지로 이동
+      } else {
+        const errorData = await response.json().catch(() => ({ 
+          message: `HTTP ${response.status} 오류` 
+        }));
+        console.error("회원가입 실패:", errorData);
+        setError(errorData.message || `회원가입에 실패했습니다. (상태 코드: ${response.status})`);
+      }
+    } catch (error) {
+      console.error("네트워크 오류:", error);
+      setError("네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.");
     }
   }
 

@@ -1,15 +1,12 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { UsersRepository } from '../../../domain/repositories/UsersRepository';
 import { User } from '../../../domain/entities/UsersEntity';
 
 export class PrismaUsersRepository implements UsersRepository {
-    private prisma = new PrismaClient();
-
     async createUser(user: User): Promise<User> {
         try {
-            const userData = await this.prisma.users.create({
+            const userData = await prisma.users.create({
                 data: {
-                    id: user.id, // UUID는 DB에서 자동 생성되므로 빈 문자열로 설정
                     name: user.name,
                     email: user.email,
                     photo: user.photo,
@@ -19,7 +16,6 @@ export class PrismaUsersRepository implements UsersRepository {
                     created_at: user.created_at,
                     deleted_at: user.deleted_at,
                     hpid: user.hpid
-
                 }
             });
 
@@ -42,7 +38,7 @@ export class PrismaUsersRepository implements UsersRepository {
 
     async findById(userId: string): Promise<User | null> {
         try {
-            const userData = await this.prisma.users.findUnique({
+            const userData = await prisma.users.findUnique({
                 where: { id: userId }
             });
 
@@ -67,7 +63,7 @@ export class PrismaUsersRepository implements UsersRepository {
 
     async findByEmail(email: string): Promise<User | null> {
         try {
-            const userData = await this.prisma.users.findUnique({
+            const userData = await prisma.users.findUnique({
                 where: { email }
             });
 
@@ -92,10 +88,9 @@ export class PrismaUsersRepository implements UsersRepository {
 
     async updateUser(id: string, user: Partial<User>): Promise<User> {
         try {
-            const userData = await this.prisma.users.update({
+            const userData = await prisma.users.update({
                 where: { id },
                 data: {
-                    id: user.id, // UUID는 DB에서 자동 생성되므로 빈 문자열로 설정
                     name: user.name,
                     email: user.email,
                     photo: user.photo,
