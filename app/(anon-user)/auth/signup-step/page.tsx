@@ -22,7 +22,8 @@ import SignupMedicationStep from "@/components/auth/SignupMedicationStep"
 
 
 export default function SignupStepPage() {
-  const { data: session, status, update } = useSession()
+  const { data: session, update } = useSession()
+  // status로 로딩 상태 확인해서 컴포넌트 렌더링 제어 가능
   const router = useRouter()
 
   const [userType, setUserType] = useState<"general" | "pharmacist">("general")
@@ -49,6 +50,9 @@ export default function SignupStepPage() {
     heartDisease: 0, // 0없음 5심장질환
     liverDisease: 0, // 0없음 6간질환
     kidneyDisease: 0, // 0없음 7신장질환
+    itemSeq: [], // 복용약품 item_seq
+    startDate: "", // 복용약품 시작일
+    endDate: "", // 복용약품 종료일
   })
 
   const [step, setStep] = useState(1)
