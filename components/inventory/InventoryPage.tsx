@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Filter, Pencil, Trash, Save, X } from 'lucide-react';
+import { Plus, Filter, Pencil, Trash, Save, X, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -82,41 +82,79 @@ export default function InventoryPage() {
   >([]);
   const [companyFilter, setCompanyFilter] = useState<string[]>([]);
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const companyList = Array.from(new Set(inventory.map((item) => item.company)));
   const typeList = Array.from(new Set(inventory.map((item) => item.type)));
   const { data: session } = useSession();
   const HPID = session?.user?.hpid ?? '';
 
   useEffect(() => {
-    async function loadMedicines() {
-      const res = await fetch('/api/inventory/medicines');
-      const data = await res.json();
-      setAllMedicines(data);
-    }
+    const fetchData = async () => {
+      setIsLoading(true);
+      const startTime = Date.now();
 
-    loadMedicines();
-  }, []);
+      try {
+        if (!HPID) return;
 
+        // 약품 데이터와 재고 데이터를 병렬로 가져오기
+        const [medicinesRes, inventoryRes] = await Promise.all([
+          fetch('/api/inventory/medicines'),
+          fetch(`/api/inventory?hpid=${HPID}`),
+        ]);
+
+        const [medicinesData, inventoryData] = await Promise.all([
+          medicinesRes.json(),
+          inventoryRes.json(),
+        ]);
+
+        // 재고 데이터 처리
+        const inventoryWithStatus = inventoryData.map((item: InventoryItem) => ({
+          ...item,
+          status: determineStatus(item.stock),
+        }));
+
+        setAllMedicines(medicinesData);
+        setInventory(inventoryWithStatus);
+        setFilteredInventory(inventoryWithStatus);
+
+        // 최소 로딩 시간 보장 (250ms)
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 250 - elapsedTime);
+
+        setTimeout(() => {
+          setIsLoading(false);
+        }, remainingTime);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [HPID]);
+
+  // 검색어에 따른 의약품 필터링
   useEffect(() => {
     const trimmed = medicineQuery.trim();
-
     if (trimmed === '' || trimmed.length < 2) {
       setFilteredMedicines([]);
-    } else {
-      const lower = trimmed.toLowerCase();
-      const result = allMedicines.filter(
-        (m) =>
-          m.item_name.toLowerCase().includes(lower) || m.entp_name.toLowerCase().includes(lower)
-      );
-      setFilteredMedicines(result);
+      return;
     }
+
+    const lower = trimmed.toLowerCase();
+    const filtered = allMedicines.filter(
+      (m) => m.item_name.toLowerCase().includes(lower) || m.entp_name.toLowerCase().includes(lower)
+    );
+    setFilteredMedicines(filtered);
   }, [medicineQuery, allMedicines]);
 
+  // 필터 적용
   useEffect(() => {
     const filtered = inventory.filter((item) => {
       const matchCompany = companyFilter.length === 0 || companyFilter.includes(item.company);
       const matchType = typeFilter.length === 0 || typeFilter.includes(item.type);
       const matchSearch =
+        !searchQuery ||
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.type.toLowerCase().includes(searchQuery.toLowerCase());
@@ -126,29 +164,6 @@ export default function InventoryPage() {
 
     setFilteredInventory(filtered);
   }, [inventory, searchQuery, companyFilter, typeFilter]);
-
-  useEffect(() => {
-    if (!HPID) return; // 세션 로딩 전에는 실행 안 함
-
-    async function fetchInventory() {
-      try {
-        const res = await fetch(`/api/inventory?hpid=${HPID}`);
-        const data: InventoryItem[] = await res.json();
-
-        const dataWithStatus = data.map((item) => ({
-          ...item,
-          status: determineStatus(item.stock),
-        }));
-
-        setInventory(dataWithStatus);
-        setFilteredInventory(dataWithStatus);
-      } catch (error) {
-        console.error('Failed to fetch inventory', error);
-      }
-    }
-
-    fetchInventory();
-  }, [HPID]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -326,6 +341,19 @@ export default function InventoryPage() {
   ) => {
     setter(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
   };
+
+  if (isLoading) {
+    return (
+      <div className="container py-8">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">재고 데이터를 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8">

@@ -1,4 +1,3 @@
-import { Health } from '../../../domain/entities/mypage/Health';
 import { HealthRepository } from '../../../domain/repositories/mypage/HealthRepository';
 import { HealthDTO } from './dto/HealthDTO';
 
