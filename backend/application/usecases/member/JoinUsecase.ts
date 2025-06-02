@@ -1,13 +1,16 @@
 import { UsersRepository } from '../../../domain/repositories/UsersRepository';
 import { UserHealthRepository } from '../../../domain/repositories/UserHealthRepository';
+import { UserMedisRepository } from '../../../domain/repositories/UserMedisRepository';
 import { User } from '../../../domain/entities/UsersEntity';
 import { UserHealth } from '../../../domain/entities/UserHealthEntity';
+import { UserMedication } from '../../../domain/entities/UserMedisEntity';
 import { SignupDto } from './dto/SignupDto'; // 경로 수정
 
 export class JoinUsecase {
   constructor(
     private readonly usersRepository: UsersRepository,
-    private readonly userHealthRepository: UserHealthRepository
+    private readonly userHealthRepository: UserHealthRepository,
+    private readonly userMedisRepository: UserMedisRepository
   ) {
     // 자동으로 this.usersRepository = usersRepository; 처리됨
   }
@@ -60,6 +63,32 @@ export class JoinUsecase {
     if (healthConditions.length > 0) {
       await this.userHealthRepository.saveHealth(healthConditions);
     }
+
+
+    // 3. UserMedication DB에 저장 (itemSeq가 있는 경우만)
+    if (dto.itemSeq && dto.itemSeq.length > 0) {
+      const medications: UserMedication[] = [];
+      
+      // 시작일과 종료일 변환
+      const startDate = dto.startDate ? new Date(dto.startDate) : null;
+      const endDate = dto.endDate ? new Date(dto.endDate) : null;
+      
+      // 각 약품 코드마다 사용자 약물 정보 생성
+      dto.itemSeq.forEach(itemSeq => {
+        medications.push(new UserMedication(
+          null, // DB에서 자동 생성
+          createdUser.id,
+          itemSeq,
+          startDate,
+          endDate
+        ));
+      });
+      
+      // 생성된 약물 정보를 DB에 저장
+      await this.userMedisRepository.saveMedications(medications);
+    }
+
+
 
     return createdUser; // 생성된 사용자 정보 반환
   }
