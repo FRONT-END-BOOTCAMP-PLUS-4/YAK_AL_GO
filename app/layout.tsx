@@ -20,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        <title>약알고</title>
+        <title>약알고 - 당신의 약, 한눈에</title>
       </head>
       <body className={inter.className}>
         <MouseFollower />
