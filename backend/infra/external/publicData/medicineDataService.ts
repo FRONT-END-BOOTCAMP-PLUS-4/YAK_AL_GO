@@ -16,7 +16,7 @@ export interface DurMedicineDataInterface {
   BAR_CODE?: string; // 표준코드
   MATERIAL_NAME?: string; // 원료성분
   EE_DOC_ID?: string; // 효능효과 문서ID
-  BIZRNO?: string; // 사업자등록번호
+  BIZRNO?: string; // 제조업체 사업자등록번호
   CANCEL_DATE?: string; // 취소일자
   CANCEL_NAME?: string; // 취소사유
   CHANGE_DATE?: string; // 변경일자

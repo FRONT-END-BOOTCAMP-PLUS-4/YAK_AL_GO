@@ -11,7 +11,7 @@ export class Medicine {
     public readonly barCode?: string, // 표준코드
     public readonly materialName?: string, // 원료성분
     public readonly eeDocId?: string, // 효능효과 문서ID
-    public readonly bizrno?: string, // 사업자등록번호
+    public readonly bizrno?: string, // 제조업체 사업자등록번호
     public readonly cancelDate?: Date, // 취소일자
     public readonly cancelName?: string, // 취소사유
     public readonly changeDate?: Date, // 변경일자

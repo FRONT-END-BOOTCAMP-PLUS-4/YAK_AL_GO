@@ -1,7 +1,5 @@
 // 의약품 상세 정보 DTO
 
-import type { ParsedMedicineContent } from '@/backend/infra/external/pdf/types/ParsedContent';
-
 /**
  * 의약품 PDF 문서 정보
  */
@@ -43,7 +41,7 @@ export interface MediIdentificationInfo {
  * 의약품 기타 상세 정보
  */
 export interface MediAdditionalInfo {
-  bizrno: string | null; // 사업자등록번호
+  bizrno: string | null; // 제조업체 사업자등록번호
   reexamDate: Date | null; // 재심사일자
   reexamTarget: string | null; // 재심사대상
   cancelDate: Date | null; // 취소일자
@@ -62,7 +60,7 @@ export interface MediSystemInfo {
 
 /**
  * 의약품 상세 정보 응답 DTO
- * 상세페이지에서 사용할 모든 데이터를 체계적으로 구조화
+ * 기본 의약품 정보만 포함 (PDF 파싱 없음)
  */
 export interface MediDetailDto {
   // 기본 식별 정보
@@ -74,13 +72,10 @@ export interface MediDetailDto {
   chart: string | null; // 성상 (모양, 색깔 등)
   materialName: string | null; // 원료성분
 
-  // PDF 문서 정보 (상세페이지 핵심)
+  // PDF 문서 정보 (참고용)
   documents: MediDocumentInfo;
 
-  // PDF 파싱된 상세 내용 (상세페이지 메인 컨텐츠)
-  parsedContent?: ParsedMedicineContent;
-
-  // 주의사항 정보 (모달/경고용)
+  // 주의사항 정보 (기본)
   warnings: MediWarningInfo;
 
   // 보관/포장 정보
