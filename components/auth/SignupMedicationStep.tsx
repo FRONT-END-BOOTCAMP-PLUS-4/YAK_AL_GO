@@ -2,51 +2,86 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 
-const medicineList = [
-  { id: 1, name: "타이레놀" },
-  { id: 2, name: "판콜에이" },
-  { id: 3, name: "게보린" },
-  { id: 4, name: "베아제" },
-  { id: 5, name: "훼스탈골드" },
-]
+interface Medicine {
+  item_seq: string;
+  item_name: string;
+  entp_name: string;
+}
 
 export default function SignupMedicationStep({ formData, setFormData }: any) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showResults, setShowResults] = useState(false);
+  const [selectedMedicines, setSelectedMedicines] = useState<Medicine[]>([]);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [isOngoing, setIsOngoing] = useState(false);
+  const [searchResults, setSearchResults] = useState<Medicine[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-    const [searchTerm, setSearchTerm] = useState("")
-    const [showResults, setShowResults] = useState(false)
-    const [selectedMedicines, setSelectedMedicines] = useState<{ id: number; name: string }[]>([])
-    const [medicationTimes, setMedicationTimes] = useState<string[]>([])
+  // 의약품 검색 API 호출
+  const searchMedicines = async (query: string) => {
+    if (!query || query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
 
-      // 약 검색 결과 필터링
-  const filteredMedicines = medicineList.filter((medicine) =>
-    medicine.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+    setIsSearching(true);
+    try {
+      const response = await fetch(`/api/mypage/medicinedb?query=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const medicines = await response.json();
+        setSearchResults(medicines);
+      } else {
+        console.error('의약품 검색 실패:', response.statusText);
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error('의약품 검색 중 오류 발생:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // 검색어 변경 시 API 호출 (디바운싱)
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (searchTerm) {
+        searchMedicines(searchTerm);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300); // 300ms 디바운싱
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm]);
 
   // 약 선택 핸들러
-  const handleSelectMedicine = (medicine: { id: number; name: string }) => {
-    if (!selectedMedicines.some((m) => m.id === medicine.id)) {
-      setSelectedMedicines([...selectedMedicines, medicine])
+  const handleSelectMedicine = (medicine: Medicine) => {
+    if (!selectedMedicines.some((m) => m.item_seq === medicine.item_seq)) {
+      setSelectedMedicines([...selectedMedicines, medicine]);
     }
-    setSearchTerm("")
-    setShowResults(false)
-  }
+    setSearchTerm("");
+    setShowResults(false);
+    setSearchResults([]);
+  };
 
   // 약 삭제 핸들러
-  const handleRemoveMedicine = (id: number) => {
-    setSelectedMedicines(selectedMedicines.filter((medicine) => medicine.id !== id))
-  }
+  const handleRemoveMedicine = (itemSeq: string) => {
+    setSelectedMedicines(selectedMedicines.filter((medicine) => medicine.item_seq !== itemSeq));
+  };
 
-  // 복용 시간 토글 핸들러
-  const handleTimeToggle = (time: string) => {
-    if (medicationTimes.includes(time)) {
-      setMedicationTimes(medicationTimes.filter((t) => t !== time))
-    } else {
-      setMedicationTimes([...medicationTimes, time])
+  // 계속 복용 체크박스 핸들러
+  const handleOngoingChange = (checked: boolean) => {
+    setIsOngoing(checked);
+    if (checked) {
+      setEndDate(""); // 계속 복용 시 종료일 초기화
     }
-  }
-    
+  };
+
   return (
     <div className="space-y-4">
       {/* 복용 중인 약 */}
@@ -54,24 +89,27 @@ export default function SignupMedicationStep({ formData, setFormData }: any) {
         <Label>복용 중인 약</Label>
         <div className="relative">
           <Input
-            placeholder="약 이름을 검색하세요"
+            placeholder="약 이름을 검색하세요 (2글자 이상)"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              setShowResults(e.target.value.length > 0);
+              setShowResults(e.target.value.length >= 2);
             }}
           />
-          {showResults && searchTerm && (
-            <div className="absolute w-full mt-1 bg-background border rounded-md shadow-lg z-10">
-              {filteredMedicines.length > 0 ? (
-                filteredMedicines.map((medicine) => (
+          {showResults && searchTerm.length >= 2 && (
+            <div className="absolute w-full mt-1 bg-background border rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
+              {isSearching ? (
+                <div className="p-2 text-center text-muted-foreground">검색 중...</div>
+              ) : searchResults.length > 0 ? (
+                searchResults.map((medicine) => (
                   <button
                     type="button"
-                    key={medicine.id}
-                    className="w-full text-left p-2 hover:bg-muted cursor-pointer"
+                    key={medicine.item_seq}
+                    className="w-full text-left p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
                     onClick={() => handleSelectMedicine(medicine)}
                   >
-                    {medicine.name}
+                    <div className="font-medium">{medicine.item_name}</div>
+                    <div className="text-sm text-muted-foreground">{medicine.entp_name}</div>
                   </button>
                 ))
               ) : (
@@ -82,9 +120,12 @@ export default function SignupMedicationStep({ formData, setFormData }: any) {
         </div>
         <div className="mt-2 space-y-2">
           {selectedMedicines.map((medicine) => (
-            <div key={medicine.id} className="flex items-center justify-between p-2 border rounded-md">
-              <span>{medicine.name}</span>
-              <Button variant="outline" size="sm" onClick={() => handleRemoveMedicine(medicine.id)}>
+            <div key={medicine.item_seq} className="flex items-center justify-between p-3 border rounded-md bg-muted/20">
+              <div>
+                <div className="font-medium">{medicine.item_name}</div>
+                <div className="text-sm text-muted-foreground">{medicine.entp_name}</div>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => handleRemoveMedicine(medicine.item_seq)}>
                 삭제
               </Button>
             </div>
@@ -92,24 +133,45 @@ export default function SignupMedicationStep({ formData, setFormData }: any) {
         </div>
       </div>
 
-      {/* 복용 시간 */}
-      <div className="space-y-2">
-        <Label>복용 시간</Label>
-        <div className="grid grid-cols-4 gap-2">
-          {Array.from({ length: 24 }).map((_, i) => {
-            const time = `${i.toString().padStart(2, "0")}:00`;
-            return (
-              <Button
-                key={i}
-                variant={medicationTimes.includes(time) ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleTimeToggle(time)}
-              >
-                {time}
-              </Button>
-            );
-          })}
+      {/* 복용 기간 */}
+      <div className="space-y-4">
+        <Label>복용 기간</Label>
+        
+        {/* 시작 날짜 */}
+        <div className="space-y-2">
+          <Label htmlFor="startDate">복용 시작일</Label>
+          <Input
+            id="startDate"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+          />
         </div>
+
+        {/* 계속 복용 체크박스 */}
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="ongoing"
+            checked={isOngoing}
+            onCheckedChange={handleOngoingChange}
+          />
+          <Label htmlFor="ongoing">계속 복용 중</Label>
+        </div>
+
+        {/* 종료 날짜 - 계속 복용이 아닐 때만 표시 */}
+        {!isOngoing && (
+          <div className="space-y-2">
+            <Label htmlFor="endDate">복용 종료일</Label>
+            <Input
+              id="endDate"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              min={startDate} // 시작일 이후만 선택 가능
+            />
+          </div>
+        )}
       </div>
     </div>
   );

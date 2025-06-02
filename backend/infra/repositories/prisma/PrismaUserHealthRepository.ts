@@ -1,14 +1,12 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { UserHealthRepository } from '../../../domain/repositories/UserHealthRepository';
 import { UserHealth } from '../../../domain/entities/UserHealthEntity';
 
 export class PrismaUserHealthRepository implements UserHealthRepository {
-  private prisma = new PrismaClient();
-
   async saveHealth(healthData: UserHealth[]): Promise<void> {
     try {
       // 배치로 여러 건강 정보를 한 번에 저장
-      await this.prisma.userHealth.createMany({
+      await prisma.user_healths.createMany({
         data: healthData.map(health => ({
           userId: health.userId,
           healthId: health.healthId
@@ -21,7 +19,7 @@ export class PrismaUserHealthRepository implements UserHealthRepository {
 
   async findHealthByUserId(userId: string): Promise<UserHealth[]> {
     try {
-      const healthRecords = await this.prisma.userHealth.findMany({
+      const healthRecords = await prisma.user_healths.findMany({
         where: { userId },
         select: {
           userId: true,

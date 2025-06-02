@@ -38,24 +38,33 @@ export default function GeneralForm({ formData, setFormData }: any) {
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox
-              id="allergy"
-              checked={formData.allergy === 2}
-              onCheckedChange={(checked) => handleCheckboxChange("allergy", checked ? 2 : 0)}
+              id="smoking"
+              checked={formData.smoking === 2}
+              onCheckedChange={(checked) => handleCheckboxChange("smoking", checked ? 2 : 0)}
             />
-            <Label htmlFor="allergy">알레르기</Label>
+            <Label htmlFor="smoking">흡연</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="drinking"
+              checked={formData.drinking === 3}
+              onCheckedChange={(checked) => handleCheckboxChange("drinking", checked ? 3 : 0)}
+            />
+            <Label htmlFor="drinking">음주</Label>
           </div>
         </div>
       </div>
-      {/* 추가 질병 정보 */}
+      {/* 질병 정보 */}
       <div className="space-y-2">
         <Label htmlFor="disease">질병 정보</Label>
         <div className="space-y-2">
           {[
-            { id: "hypertension", label: "고혈압", value: 3 },
-            { id: "diabetes", label: "당뇨", value: 4 },
-            { id: "heartDisease", label: "심장질환", value: 5 },
-            { id: "liverDisease", label: "간질환", value: 6 },
-            { id: "kidneyDisease", label: "신장질환", value: 7 },
+            { id: "hypertension", label: "고혈압", value: 4 },
+            { id: "diabetes", label: "당뇨", value: 5 },
+            { id: "heartDisease", label: "심장질환", value: 6 },
+            { id: "liverDisease", label: "간질환", value: 7 },
+            { id: "kidneyDisease", label: "신장질환", value: 8 },
+            { id: "allergy", label: "알레르기", value: 9 },
           ].map((disease) => (
             <div key={disease.id} className="flex items-center space-x-2">
               <Checkbox

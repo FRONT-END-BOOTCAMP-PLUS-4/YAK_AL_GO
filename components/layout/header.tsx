@@ -25,7 +25,7 @@ export default function Header() {
   const { navigate } = useLoadingContext();
   const name = session?.user?.name ?? '';
   const photo = session?.user?.photo ?? '';
-  const isAuthenticated = !!session;
+  const isAuthenticated = !!session && !session.user.needsSignup;
 
   const handleNavigation = (href: string, loadingText: string) => {
     setIsOpen(false);

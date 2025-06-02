@@ -13,7 +13,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile, trigger }) {
       // 로그인 후 최초 jwt 콜백
       if (account && profile) {
         token.email = profile.kakao_account?.email;
@@ -41,6 +41,23 @@ export const authOptions: NextAuthOptions = {
           token.needsSignup = true;
         }
         // 사용자 isActive 여부 판단 완료
+      }
+
+      // 세션 업데이트 시 DB 상태 재확인
+      if (trigger === 'update' && token.email) {
+        const dbUser = await prisma.users.findUnique({
+          where: { email: token.email as string },
+        });
+
+        if (dbUser) {
+          // 회원가입이 완료된 경우 토큰 업데이트
+          token.id = dbUser.id;
+          token.birthyear = dbUser.birthyear;
+          token.member_type = dbUser.member_type;
+          token.created_at = dbUser.created_at;
+          token.hpid = dbUser.hpid;
+          token.needsSignup = false;
+        }
       }
 
       return token;
