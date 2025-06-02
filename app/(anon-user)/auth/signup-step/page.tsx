@@ -67,7 +67,7 @@ export default function SignupStepPage() {
   // 일반 회원일 경우에 다음 컴포넌트 로드
   const handleNextButton = () => {
     if (!formData.birthyear) {
-      setError("나이, 항목을 입력해주세요.")
+      setError("필수항목 : 나이를 입력해주세요.")
       return
     }
     setStep(2);
