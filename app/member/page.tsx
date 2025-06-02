@@ -586,6 +586,9 @@ export default function ProfilePage() {
                               </Link>
                             </Card>
                           ))}
+                        <Button className="w-full" onClick={() => setShowAddDialog(true)}>
+                          약 추가하기
+                        </Button>
                       </div>
                     </TabsContent>
                   </Tabs>
