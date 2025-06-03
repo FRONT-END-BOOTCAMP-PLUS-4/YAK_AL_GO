@@ -12,11 +12,15 @@ export interface UpdatePostDto {
 }
 
 export class UpdatePostUseCase {
+<<<<<<< HEAD
   constructor(
     private postRepository: PostRepository,
     private algoliaSyncUseCase?: AlgoliaSyncUseCase,
     private commentRepository?: CommentRepository
   ) {}
+=======
+  constructor(private postRepository: PostRepository, private algoliaSyncUseCase?: AlgoliaSyncUseCase) {}
+>>>>>>> 2ae9005 ([feat/#102] feat: Algolia 검색 백엔드 구현)
 
   async execute(postId: number, userId: string, dto: UpdatePostDto): Promise<Post> {
     // 게시물 존재 여부 확인
@@ -48,6 +52,7 @@ export class UpdatePostUseCase {
     // 태그 업데이트 (기존 태그 삭제 후 새 태그 추가)
     await this.postRepository.updateTags(postId, dto.tags);
 
+<<<<<<< HEAD
     // Get the full updated post with tags and comments for Algolia sync
     if (this.algoliaSyncUseCase) {
       const fullPost = await this.postRepository.findById(postId);
@@ -55,6 +60,14 @@ export class UpdatePostUseCase {
         // 실제 댓글들을 가져와서 Algolia에 동기화
         const comments = this.commentRepository ? await this.commentRepository.findByPostId(postId) : [];
         await this.algoliaSyncUseCase.updatePost(fullPost, comments);
+=======
+    // Get the full updated post with tags and comments count for Algolia sync
+    if (this.algoliaSyncUseCase) {
+      const fullPost = await this.postRepository.findById(postId);
+      if (fullPost) {
+        const commentCount = fullPost.comments?.length || 0;
+        await this.algoliaSyncUseCase.updatePost(fullPost, commentCount);
+>>>>>>> 2ae9005 ([feat/#102] feat: Algolia 검색 백엔드 구현)
       }
     }
 
