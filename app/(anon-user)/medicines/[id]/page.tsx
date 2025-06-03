@@ -13,6 +13,15 @@ import { useLoadingContext } from '@/providers/LoadingProvider';
 import { selectMedicineImage } from '@/utils/medicineFormatter';
 import { useSession } from 'next-auth/react';
 
+// 스크롤바 숨김 스타일
+const hideScrollbarStyle = {
+  scrollbarWidth: 'none',
+  msOverflowStyle: 'none',
+  '&::-webkit-scrollbar': {
+    display: 'none'
+  }
+};
+
 // API 응답 타입 정의
 interface MediDetailApiResponse {
   success: boolean;
@@ -755,10 +764,10 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
     // 공백이 있는 경우 (타이레놀정 500mg)와 공백이 없는 경우 (자디스듀오서방정10/1000밀리그램) 모두 처리
     const extractDosage = (name: string) => {
       // 공백 없이 숫자가 바로 붙는 경우 (자디스듀오서방정10/1000밀리그램)
-      const noSpaceMatch = name.match(/^(.+?)((?:\d+)(?:\/\d+)?(?:\.\d+)?\s*(?:mg|g|밀리그램|그램|마이크로그램|μg|ml|밀리리터))(.*)$/i);
+      const noSpaceMatch = name.match(/^(.+?)((?:\d+(?:\.\d+)?(?:\/\d+(?:\.\d+)?)?)+\s*(?:mg|g|밀리그램|그램|마이크로그램|μg|ml|밀리리터))(.*)$/i);
       
       // 공백이 있는 경우 (타이레놀정 500mg)
-      const withSpaceMatch = name.match(/^(.+?)\s+(\d+(?:\/\d+)?(?:\.\d+)?\s*(?:mg|g|밀리그램|그램|마이크로그램|μg|ml|밀리리터))(.*)$/i);
+      const withSpaceMatch = name.match(/^(.+?)\s+((?:\d+(?:\.\d+)?(?:\/\d+(?:\.\d+)?)?)+\s*(?:mg|g|밀리그램|그램|마이크로그램|μg|ml|밀리리터))(.*)$/i);
       
       return noSpaceMatch || withSpaceMatch;
     };
@@ -825,6 +834,12 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
   const cautions = useMemo(() => {
     return medicineData ? getAllCautions(medicineData) : [];
   }, [medicineData]);
+
+  // PDF 문서 URL 생성 함수
+  const getPdfDocumentUrl = (docId: string | null): string | null => {
+    if (!docId || !medicineData) return null;
+    return `https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetail?itemSeq=${medicineData.itemSeq}&openDataInfoSeq=${docId}`;
+  };
 
   // 에러 상태 - Hook 순서 안정화를 위해 여기로 이동
   if (error && !medicineData) {
@@ -985,167 +1000,313 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
           </div>
 
           <div className="space-y-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-bold text-lg">주요 성분</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">주요 성분</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div 
+                    className="max-h-[300px] overflow-y-auto pr-2 scroll-container" 
+                    style={{ 
+                      WebkitOverflowScrolling: 'touch',
+                      boxSizing: 'border-box',
+                      paddingRight: '16px' // 스크롤바 너비만큼 여백 추가
+                    }}
+                  >
+                    <style jsx>{`
+                      .scroll-container {
+                        scrollbar-width: thin;
+                        -ms-overflow-style: auto;
+                        scrollbar-gutter: stable both-edges;
+                      }
+                      .scroll-container::-webkit-scrollbar {
+                        width: 8px; /* 스크롤바 너비 증가 */
+                        background-color: #f1f1f1;
+                        margin-right: 4px; /* 오른쪽 여백 추가 */
+                      }
+                      .scroll-container::-webkit-scrollbar-thumb {
+                        background-color: rgba(0, 0, 0, 0.2);
+                        border-radius: 4px;
+                        border: 2px solid transparent; /* 테두리 추가로 스크롤바 실제 영역 축소 */
+                        background-clip: padding-box; /* 배경이 테두리 안쪽에만 적용되도록 */
+                      }
+                      .scroll-container::-webkit-scrollbar-thumb:hover {
+                        background-color: rgba(0, 0, 0, 0.3);
+                      }
+                      
+                      /* 레이아웃 안정성을 위한 스타일 */
+                      h4, p, div {
+                        white-space: normal;
+                        overflow-wrap: break-word;
+                        word-wrap: break-word;
+                        hyphens: auto;
+                      }
+                      
+                      /* 스크롤바 위치 공간 항상 확보 (구형 브라우저 지원) */
+                      @supports not (scrollbar-gutter: stable) {
+                        .scroll-container {
+                          padding-right: 24px;
+                          margin-right: -8px; /* 스크롤바 너비에 맞게 조정 */
+                        }
+                      }
+                    `}</style>
                     <div className="bg-muted/30 p-3 rounded-md">
                       <p className="text-sm leading-relaxed">
                         {parseMaterialName(medicineData.materialName)}
                       </p>
                     </div>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg">효능 효과</h3>
-                    <p>{medicineData.parsedContent?.effect?.mainEffect || medicineData.parsedContent?.effect?.detailedEffect || "효능효과 정보를 파싱하는 중..."}</p>
-                    {medicineData.parsedContent?.effect?.targetDiseases && medicineData.parsedContent.effect.targetDiseases.length > 0 && (
-                      <div className="mt-2">
-                        <span className="text-sm font-medium">대상 질병: </span>
-                        <span className="text-sm">{medicineData.parsedContent.effect.targetDiseases.join(', ')}</span>
+                    
+                    {medicineData.storageMethod && (
+                      <div className="mt-4">
+                        <h3 className="font-bold text-lg">보관방법</h3>
+                        <p>{medicineData.storageMethod}</p>
                       </div>
                     )}
                   </div>
-                  <div>
-                    <h3 className="font-bold text-lg">용법 용량</h3>
-                    <div className="space-y-2">
-                      {medicineData.parsedContent?.usage?.dosage && (
-                        <p><span className="font-medium">용량:</span> {medicineData.parsedContent.usage.dosage}</p>
-                      )}
-                      {medicineData.parsedContent?.usage?.frequency && (
-                        <p><span className="font-medium">빈도:</span> {medicineData.parsedContent.usage.frequency}</p>
-                      )}
-                      {medicineData.parsedContent?.usage?.administrationMethod && (
-                        <p><span className="font-medium">복용법:</span> {medicineData.parsedContent.usage.administrationMethod}</p>
-                      )}
-                      {!medicineData.parsedContent?.usage && (
-                        <p>용법용량 정보를 파싱하는 중...</p>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg">부작용</h3>
-                    <div>
-                      {medicineData.parsedContent?.caution?.sideEffects && medicineData.parsedContent.caution.sideEffects.length > 0 ? (
-                        <ul className="list-disc list-inside space-y-1">
-                          {medicineData.parsedContent.caution.sideEffects.map((sideEffect, index) => (
-                            <li key={index} className="text-sm">{sideEffect}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p>부작용 정보를 파싱하는 중...</p>
-                      )}
-                    </div>
-                  </div>
-                  {medicineData.storageMethod && (
-                    <div>
-                      <h3 className="font-bold text-lg">보관방법</h3>
-                      <p>{medicineData.storageMethod}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {cautions.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="font-bold text-lg flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-orange-500" />
-                  주의사항
-                </h3>
-                
-                {/* type_name 기반 중요 경고 먼저 표시 */}
-                {(() => {
-                  const typeNameWarnings = parseTypeNameWarnings(medicineData.typeName);
-                  const highSeverityCautions = cautions.filter(caution => caution.severity === "high");
-                  const mediumSeverityCautions = cautions.filter(caution => caution.severity === "medium");
-                  const lowSeverityCautions = cautions.filter(caution => caution.severity === "low");
+              {cautions.length > 0 ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-orange-500" />
+                      주의사항
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <div 
+                      className="max-h-[300px] overflow-y-auto scroll-container" 
+                      style={{ 
+                        WebkitOverflowScrolling: 'touch',
+                        boxSizing: 'border-box',
+                        paddingRight: '24px' // 스크롤바와 내용 사이 간격 증가
+                      }}
+                    >
+                      <style jsx>{`
+                        .scroll-container {
+                          scrollbar-width: thin;
+                          -ms-overflow-style: auto;
+                          scrollbar-gutter: stable both-edges;
+                        }
+                        .scroll-container::-webkit-scrollbar {
+                          width: 8px; /* 스크롤바 너비 증가 */
+                          background-color: #f1f1f1;
+                          margin-right: 4px; /* 오른쪽 여백 추가 */
+                        }
+                        .scroll-container::-webkit-scrollbar-thumb {
+                          background-color: rgba(0, 0, 0, 0.2);
+                          border-radius: 4px;
+                          border: 2px solid transparent; /* 테두리 추가로 스크롤바 실제 영역 축소 */
+                          background-clip: padding-box; /* 배경이 테두리 안쪽에만 적용되도록 */
+                        }
+                        .scroll-container::-webkit-scrollbar-thumb:hover {
+                          background-color: rgba(0, 0, 0, 0.3);
+                        }
+                        
+                        /* 레이아웃 안정성을 위한 스타일 */
+                        h4, p, div {
+                          white-space: normal;
+                          overflow-wrap: break-word;
+                          word-wrap: break-word;
+                          hyphens: auto;
+                        }
+                        
+                        /* 스크롤바 위치 공간 항상 확보 (구형 브라우저 지원) */
+                        @supports not (scrollbar-gutter: stable) {
+                          .scroll-container {
+                            padding-right: 24px;
+                            margin-right: -8px; /* 스크롤바 너비에 맞게 조정 */
+                          }
+                        }
+                      `}</style>
+                      {/* type_name 기반 중요 경고 먼저 표시 */}
+                      {(() => {
+                        const typeNameWarnings = parseTypeNameWarnings(medicineData.typeName);
+                        const highSeverityCautions = cautions.filter(caution => caution.severity === "high");
+                        const mediumSeverityCautions = cautions.filter(caution => caution.severity === "medium");
+                        const lowSeverityCautions = cautions.filter(caution => caution.severity === "low");
 
-                  return (
-                    <>
-                      {/* 높은 위험도 경고 */}
-                      {highSeverityCautions.length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-red-600 flex items-center gap-2 text-base">                          
-                            🚨 필수 확인 사항
-                          </h4>
-                          {highSeverityCautions.map((caution, index) => (
-                            <Alert key={`high-${index}`} variant="destructive" className="bg-red-50 border-red-200">
-                              <AlertTriangle className="h-4 w-4" />
-                              <div>
-                                <AlertTitle className="text-red-800 font-semibold">
-                                  {caution.type}
-                                </AlertTitle>
-                                <AlertDescription className="text-red-700 mt-1">
-                                  {caution.description}
-                                </AlertDescription>
+                        return (
+                          <>
+                            {/* 높은 위험도 경고 */}
+                            {highSeverityCautions.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="font-semibold text-red-600 flex items-center gap-2 text-base whitespace-nowrap">                          
+                                  🚨 필수 확인 사항
+                                </h4>
+                                {highSeverityCautions.map((caution, index) => (
+                                  <div key={`high-${index}`} className="bg-red-50 border border-red-200 rounded-lg overflow-hidden">
+                                    <div className="bg-red-100 px-4 py-2 border-b border-red-200">
+                                      <span className="font-bold text-red-800">
+                                        {caution.type}
+                                      </span>
+                                    </div>
+                                    <div className="p-3 text-red-700">
+                                      {caution.description}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            </Alert>
-                          ))}
-                        </div>
-                      )}
+                            )}
 
-                      {/* 중간 위험도 경고 */}
-                      {mediumSeverityCautions.length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-orange-600 flex items-center gap-2 text-base">
-                            ⚠️ 주의 필요 사항
-                          </h4>
-                          {mediumSeverityCautions.map((caution, index) => (
-                            <Alert key={`medium-${index}`} variant="default" className="bg-yellow-50 border-yellow-200">
-                              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                              <div>
-                                <AlertTitle className="text-yellow-800 font-semibold">
-                                  {caution.type}
-                                </AlertTitle>
-                                <AlertDescription className="text-yellow-700 mt-1">
-                                  {caution.description}
-                                </AlertDescription>
+                            {/* 중간 위험도 경고 */}
+                            {mediumSeverityCautions.length > 0 && (
+                              <div className="space-y-3 mt-4">
+                                <h4 className="font-semibold text-orange-600 flex items-center gap-2 text-base whitespace-nowrap">
+                                  ⚠️ 주의 필요 사항
+                                </h4>
+                                {mediumSeverityCautions.map((caution, index) => (
+                                  <div key={`medium-${index}`} className="bg-yellow-50 border border-yellow-200 rounded-lg overflow-hidden">
+                                    <div className="bg-yellow-100 px-4 py-2 border-b border-yellow-200">
+                                      <span className="font-bold text-yellow-800">
+                                        {caution.type}
+                                      </span>
+                                    </div>
+                                    <div className="p-3 text-yellow-700">
+                                      {caution.description}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            </Alert>
-                          ))}
-                        </div>
-                      )}
+                            )}
 
-                      {/* 낮은 위험도 경고 */}
-                      {lowSeverityCautions.length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-blue-600 flex items-center gap-2 text-base">
-                            📋 일반 주의사항
-                          </h4>
-                          {lowSeverityCautions.map((caution, index) => (
-                            <Alert key={`low-${index}`} variant="default" className="bg-blue-50 border-blue-200">
-                              <AlertTriangle className="h-4 w-4 text-blue-600" />
-                              <div>
-                                <AlertTitle className="text-blue-800 font-semibold">
-                                  {caution.type}
-                                </AlertTitle>
-                                <AlertDescription className="text-blue-700 mt-1">
-                                  {caution.description}
-                                </AlertDescription>
+                            {/* 낮은 위험도 경고 */}
+                            {lowSeverityCautions.length > 0 && (
+                              <div className="space-y-3 mt-4">
+                                <h4 className="font-semibold text-blue-600 flex items-center gap-2 text-base whitespace-nowrap">
+                                  📋 일반 주의사항
+                                </h4>
+                                {lowSeverityCautions.map((caution, index) => (
+                                  <div key={`low-${index}`} className="bg-blue-50 border border-blue-200 rounded-lg overflow-hidden">
+                                    <div className="bg-blue-100 px-4 py-2 border-b border-blue-200">
+                                      <span className="font-bold text-blue-800">
+                                        {caution.type}
+                                      </span>
+                                    </div>
+                                    <div className="p-3 text-blue-700">
+                                      {caution.description}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            </Alert>
-                          ))}
-                        </div>
-                      )}
+                            )}
 
-                      {/* 전문의 상담 권고 */}
-                      <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                        <div className="flex items-start gap-3">
-                          <AlertTriangle className="h-5 w-5 text-primary mt-0.5" />
-                          <div>
-                            <h5 className="font-semibold text-primary">전문의 상담 권고</h5>
-                            <p className="text-sm text-primary/80 mt-1">
-                              위 주의사항에 해당하거나 복용 중 이상 반응이 나타날 경우, 
-                              즉시 복용을 중단하고 의사나 약사와 상의하세요.
-                            </p>
-                          </div>
-                        </div>
+                            {/* 전문의 상담 권고 */}
+                            <div className="mt-5 p-4 bg-primary/10 border border-primary/30 rounded-lg">
+                              <div className="flex items-start gap-3">
+                                <div className="bg-primary/20 p-2 rounded-full mt-0.5">
+                                  <AlertTriangle className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                  <h5 className="font-bold text-primary">전문의 상담 권고</h5>
+                                  <p className="text-sm text-primary/90 mt-1">
+                                    위 주의사항에 해당하거나 복용 중 이상 반응이 나타날 경우, 
+                                    즉시 복용을 중단하고 의사나 약사와 상의하세요.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">주의사항</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <div 
+                      className="max-h-[300px] overflow-y-auto scroll-container" 
+                      style={{ 
+                        WebkitOverflowScrolling: 'touch',
+                        boxSizing: 'border-box',
+                        paddingRight: '24px' // 스크롤바와 내용 사이 간격 증가
+                      }}
+                    >
+                      <style jsx>{`
+                        .scroll-container {
+                          scrollbar-width: thin;
+                          -ms-overflow-style: auto;
+                          scrollbar-gutter: stable both-edges;
+                        }
+                        .scroll-container::-webkit-scrollbar {
+                          width: 8px; /* 스크롤바 너비 증가 */
+                          background-color: #f1f1f1;
+                          margin-right: 4px; /* 오른쪽 여백 추가 */
+                        }
+                        .scroll-container::-webkit-scrollbar-thumb {
+                          background-color: rgba(0, 0, 0, 0.2);
+                          border-radius: 4px;
+                          border: 2px solid transparent; /* 테두리 추가로 스크롤바 실제 영역 축소 */
+                          background-clip: padding-box; /* 배경이 테두리 안쪽에만 적용되도록 */
+                        }
+                        .scroll-container::-webkit-scrollbar-thumb:hover {
+                          background-color: rgba(0, 0, 0, 0.3);
+                        }
+                        
+                        /* 레이아웃 안정성을 위한 스타일 */
+                        h4, p, div {
+                          white-space: normal;
+                          overflow-wrap: break-word;
+                          word-wrap: break-word;
+                          hyphens: auto;
+                        }
+                        
+                        /* 스크롤바 위치 공간 항상 확보 (구형 브라우저 지원) */
+                        @supports not (scrollbar-gutter: stable) {
+                          .scroll-container {
+                            padding-right: 24px;
+                            margin-right: -8px; /* 스크롤바 너비에 맞게 조정 */
+                          }
+                        }
+                      `}</style>
+                      <p className="text-muted-foreground">주의사항 정보가 없습니다.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+            
+            {/* 통합된 PDF 문서 링크 - 모든 문서가 있는 경우에만 표시 */}
+            {(medicineData.documents.effectDocId || 
+              medicineData.documents.usageDocId || 
+              medicineData.documents.cautionDocId) && (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h3 className="font-bold text-lg mb-2">의약품 상세 정보</h3>
+                    <a 
+                      href={getPdfDocumentUrl(
+                        medicineData.documents.effectDocId || 
+                        medicineData.documents.usageDocId || 
+                        medicineData.documents.cautionDocId
+                      ) || "#"} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-blue-700 hover:text-blue-900 transition-colors"
+                    >
+                      <div className="bg-blue-100 p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-file-text">
+                          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                          <line x1="16" x2="8" y1="13" y2="13"/>
+                          <line x1="16" x2="8" y1="17" y2="17"/>
+                          <line x1="10" x2="8" y1="9" y2="9"/>
+                        </svg>
                       </div>
-                    </>
-                  );
-                })()}
-              </div>
+                      <div>
+                        <span className="font-medium">효능효과, 용법용량, 부작용 정보 보기</span>
+                        <p className="text-xs text-blue-600 mt-1">상세 설명서를 새 창에서 확인할 수 있습니다</p>
+                      </div>
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             <Card>
