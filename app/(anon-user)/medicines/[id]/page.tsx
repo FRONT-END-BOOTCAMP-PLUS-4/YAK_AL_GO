@@ -373,12 +373,42 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
         })
       });
 
+      // 응답 상태 확인
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || '리뷰 등록에 실패했습니다.');
+        // 응답 내용 확인 (빈 응답 처리)
+        const responseText = await response.text();
+        let errorData;
+        
+        try {
+          errorData = responseText ? JSON.parse(responseText) : {};
+        } catch (parseError) {
+          console.error('서버 응답 파싱 오류:', parseError);
+          throw new Error(`서버 오류 (${response.status}): 응답을 해석할 수 없습니다.`);
+        }
+        
+        throw new Error(errorData.error?.message || `리뷰 등록에 실패했습니다. (${response.status})`);
       }
 
-      const result = await response.json();
+      // Content-Type 검증
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        throw new Error('서버에서 올바르지 않은 응답 형식을 받았습니다.');
+      }
+
+      // 응답 텍스트 확인 후 JSON 파싱
+      const responseText = await response.text();
+      if (!responseText) {
+        throw new Error('서버에서 빈 응답을 받았습니다.');
+      }
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON 파싱 오류:', parseError);
+        console.error('응답 내용:', responseText);
+        throw new Error('서버 응답을 해석할 수 없습니다.');
+      }
 
       if (!result.success) {
         throw new Error(result.error?.message || '리뷰 등록에 실패했습니다.');
@@ -406,6 +436,8 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
       
       if (error.message.includes('최대') && error.message.includes('개까지')) {
         errorMessage = '선택할 수 있는 리뷰 개수를 초과했습니다. 최대 5개까지만 선택해주세요.';
+      } else if (error.message.includes('네트워크') || error instanceof TypeError) {
+        errorMessage = '네트워크 연결을 확인해주세요.';
       }
       
       alert(errorMessage);
@@ -902,9 +934,9 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                       {userReviews.length > 0 && (
                         <div className="mt-2 pt-2 border-t border-border">
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 bg-primary/20 border border-primary rounded"></div>
+                            <span className="text-primary font-bold">✓</span>
                             <span className="text-xs text-muted-foreground">
-                              색칠된 항목은 내가 선택한 리뷰입니다
+                              체크표시는 내가 선택한 리뷰입니다
                             </span>
                           </div>
                         </div>
