@@ -140,6 +140,11 @@ export class MediDetailUsecase {
       entpName: medicine.entpName || null,
       chart: medicine.chart || null,
       materialName: medicine.materialName || null,
+      // 프론트엔드 호환성을 위해 추가 필드들
+      etcOtcName: medicine.etcOtcCode || null,
+      storageMethod: medicine.storageMethod || null,
+      validTerm: medicine.validTerm || null,
+      typeName: medicine.typeName || null, // type_name 필드 직접 매핑
       documents,
       warnings,
       storage,
