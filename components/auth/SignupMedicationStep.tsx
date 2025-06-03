@@ -90,6 +90,10 @@ export default function SignupMedicationStep({ formData, setFormData }: any) {
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const newStartDate = e.target.value;
   setStartDate(newStartDate);
+
+  if (endDate && new Date(endDate) < new Date(newStartDate)) {
+    setEndDate("");
+  }
   setFormData({
     ...formData,
     startDate: newStartDate
@@ -99,7 +103,16 @@ export default function SignupMedicationStep({ formData, setFormData }: any) {
 // 복용 종료일 변경 핸들러
 const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const newEndDate = e.target.value;
+  
+  // 종료일이 시작일보다 이전인지 확인
+
+  if (startDate && new Date(newEndDate) < new Date(startDate)) {
+    alert("종료일은 시작일 이후여야 합니다.");
+    return;
+  }
+
   setEndDate(newEndDate);
+
   setFormData({
     ...formData,
     endDate: newEndDate
@@ -185,8 +198,13 @@ const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               type="date"
               value={endDate}
               onChange={handleEndDateChange} // 시작일 이후만 선택 가능
-                          
+              min={startDate}
+              disabled = {!startDate} // 시작일이 없으면 비활성화
+              
+            
             />
+            {!startDate && ( <p className = "text-xs text-muted-foreground">시작일을 먼저 선택해주세요.</p>
+          )}
           </div>
         )}
       </div>
