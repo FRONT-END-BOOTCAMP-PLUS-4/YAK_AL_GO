@@ -865,6 +865,9 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                         const reviews = reviewStats[categoryName];
                         if (!reviews || reviews.length === 0) return null;
 
+                        // 리뷰 개수(count)가 많은 순으로 정렬
+                        const sortedReviews = [...reviews].sort((a, b) => b.count - a.count);
+
                         return (
                           <div key={categoryName} className="mb-6">
                             <h4 className={`font-semibold text-base mb-3 flex items-center gap-2 ${
@@ -873,7 +876,7 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                               {categoryName}
                             </h4>
                             <div className="grid grid-cols-2 gap-2 mb-4">
-                              {reviews.map((review) => {
+                              {sortedReviews.map((review) => {
                                 // 사용자가 이 리뷰를 선택했는지 확인
                                 const isUserSelected = userReviews.includes(review.text);
                                 
