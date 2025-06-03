@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaQuestionRepository } from '@/backend/infra/repositories/prisma/PrismaQuestionRepository';
 import { CreateQuestionDto } from '@/backend/application/usecases/question/dto/QuestionDto';
 import { CreateQuestionUseCase } from '@/backend/application/usecases/question/CreateQuestionUseCase';
-import { GetAllQuestionsUseCase } from '@/backend/application/usecases/question/GetAllQuestionsUsecase';
+import { GetAllQuestionsUseCase } from '@/backend/application/usecases/question/GetAllQuestionsUseCase';
 import prisma from '@/lib/prisma';
 
 import { getToken } from 'next-auth/jwt';
