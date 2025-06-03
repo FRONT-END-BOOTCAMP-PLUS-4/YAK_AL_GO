@@ -32,7 +32,8 @@ export class PrismaUsersRepository implements UsersRepository {
         userData.hpid
       );
     } catch (error: any) {
-      throw new Error(`올바른 hpid를 대문자로 입력하세요. 다음과 같은 오류 발생 : ${error.message}`);
+      // 오류 로깅 (서버 로그에만 표시)
+      throw new Error('올바른 hpid를 대문자로 입력하세요.');
     }
   }
 
