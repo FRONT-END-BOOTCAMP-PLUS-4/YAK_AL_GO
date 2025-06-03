@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PostRepository } from '@/backend/domain/repositories/mypage/PostRepository';
+import { GetPostUseCase } from '@/backend/application/usecases/mypage/GetPostUseCase';
+import { QnaPost, CommunityPost } from '@/backend/domain/entities/mypage/Post';
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('userId');
-
-  if (!userId) {
-    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-  }
-
-  try {
-    // QNA 게시글 조회
+class PrismaPostRepository implements PostRepository {
+  async findQnasByUserId(userId: string): Promise<QnaPost[]> {
     const qnas = await prisma.qnas.findMany({
       where: {
         userId: userId,
@@ -35,7 +30,15 @@ export async function GET(request: Request) {
       },
     });
 
-    // 일반 게시글 조회
+    return qnas.map(qna => new QnaPost(
+      qna.id,
+      qna.title,
+      qna.createdAt,
+      qna._count.answers
+    ));
+  }
+
+  async findPostsByUserId(userId: string): Promise<CommunityPost[]> {
     const posts = await prisma.posts.findMany({
       where: {
         userId: userId,
@@ -60,22 +63,29 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      qnas: qnas.map((qna) => ({
-        id: qna.id,
-        title: qna.title,
-        date: qna.createdAt.toISOString().split('T')[0],
-        answers: qna._count.answers,
-        type: 'expert'
-      })),
-      posts: posts.map((post) => ({
-        id: post.id,
-        title: post.title,
-        date: post.createdAt.toISOString().split('T')[0],
-        answers: post._count.comments,
-        type: 'community'
-      }))
-    });
+    return posts.map(post => new CommunityPost(
+      post.id,
+      post.title,
+      post.createdAt,
+      post._count.comments
+    ));
+  }
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get('userId');
+
+  if (!userId) {
+    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+  }
+
+  try {
+    const postRepository = new PrismaPostRepository();
+    const getPostUseCase = new GetPostUseCase(postRepository);
+    const result = await getPostUseCase.execute(userId);
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching posts:', error);
     return NextResponse.json(

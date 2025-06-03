@@ -1,27 +1,28 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
-import dynamic from "next/dynamic";
-import { PharmacySearch } from "@/components/map/PharmacySearch";
-import { PharmacyList } from "@/components/map/PharmacyList";
-import { PharmacyDetail } from "@/components/map/PharmacyDetail";
-import type { PharmacyType } from "@/types/map/types";
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Card, CardContent } from '@/components/ui/card';
+import dynamic from 'next/dynamic';
+import { PharmacySearch } from '@/components/map/PharmacySearch';
+import { PharmacyList } from '@/components/map/PharmacyList';
+import { PharmacyDetail } from '@/components/map/PharmacyDetail';
+import type { PharmacyType } from '@/types/map/types';
 import {
   formatTimeString,
   checkPharmacyOpenAtTime,
   calculateDistance,
-} from "@/backend/utils/map/utils";
+} from '@/backend/utils/map/utils';
+import { Loader2 } from 'lucide-react';
 
 // KakaoMap 컴포넌트 동적 import (SSR 비활성화)
-const KakaoMap = dynamic(() => import("@/components/map/KakaoMap"), {
+const KakaoMap = dynamic(() => import('@/components/map/KakaoMap'), {
   ssr: false,
 });
 
 export default function MapPage() {
   const searchParams = useSearchParams();
-  const medicineName = searchParams.get("medicine");
+  const medicineName = searchParams.get('medicine');
 
   // 현재 시간 가져오기
   const now = new Date();
@@ -29,30 +30,18 @@ export default function MapPage() {
   const currentMinute = now.getMinutes();
   const currentDay = now.getDay().toString(); // 현재 요일 (0-6)
 
-  const [selectedPharmacyIndex, setSelectedPharmacyIndex] = useState<
-    number | null
-  >(null);
-  const [selectedPharmacy, setSelectedPharmacy] = useState<PharmacyType | null>(
-    null
-  );
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPharmacyIndex, setSelectedPharmacyIndex] = useState<number | null>(null);
+  const [selectedPharmacy, setSelectedPharmacy] = useState<PharmacyType | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [pharmacies, setPharmacies] = useState<PharmacyType[]>([]);
-  const [filteredPharmacies, setFilteredPharmacies] = useState<PharmacyType[]>(
-    []
-  );
+  const [filteredPharmacies, setFilteredPharmacies] = useState<PharmacyType[]>([]);
 
-  const [selectedMedicine, setSelectedMedicine] = useState(
-    medicineName || "전체"
-  );
+  const [selectedMedicine, setSelectedMedicine] = useState(medicineName || '전체');
 
   // 시간 필터 상태 변경
   const [selectedDays, setSelectedDays] = useState<string[]>([currentDay]); // 다중 선택을 위해 배열로 변경
-  const [selectedHour, setSelectedHour] = useState<string>(
-    currentHour.toString()
-  );
-  const [selectedMinute, setSelectedMinute] = useState<string>(
-    currentMinute.toString()
-  );
+  const [selectedHour, setSelectedHour] = useState<string>(currentHour.toString());
+  const [selectedMinute, setSelectedMinute] = useState<string>(currentMinute.toString());
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(true); // 기본적으로 영업중인 약국만 표시
 
   const [showFilterPopover, setShowFilterPopover] = useState(false);
@@ -69,22 +58,32 @@ export default function MapPage() {
   });
 
   // 지도 중심 위치를 추적하는 상태 변수 추가
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(
-    defaultLocation
-  );
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(defaultLocation);
+
+  const [isLoading, setIsLoading] = useState(true);
 
   // 위치 업데이트 소스를 추적하기 위한 ref
-  const locationUpdateSourceRef = useRef<"user" | "map" | "init">("init");
+  const locationUpdateSourceRef = useRef<'user' | 'map' | 'init'>('init');
 
   // 1) API 호출 + 정렬 + 상태 세팅
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
+      const startTime = Date.now(); // 로딩 시작 시간 기록
+
       try {
-        const pharmaciesUrl = "/api/map";
+        // 약국 데이터와 의약품 데이터를 병렬로 가져오기
+        const [pharmaciesRes, medicinesRes] = await Promise.all([
+          fetch('/api/map'),
+          fetch('/api/map/medicines'),
+        ]);
 
-        const pharmaciesRes = await fetch(pharmaciesUrl);
-        const pharmaciesData = await pharmaciesRes.json();
+        const [pharmaciesData, medicinesData] = await Promise.all([
+          pharmaciesRes.json(),
+          medicinesRes.json(),
+        ]);
 
+        // 약국 데이터 처리
         if (Array.isArray(pharmaciesData)) {
           const pharmaciesWithOpenStatus = pharmaciesData.map((pharmacy) => ({
             ...pharmacy,
@@ -96,25 +95,29 @@ export default function MapPage() {
             ),
           }));
 
-          // 정렬 먼저 한 뒤에 상태 세팅
-          const sortedPharmacies = sortPharmaciesByDistance(
-            pharmaciesWithOpenStatus,
-            mapCenter
-          );
+          const sortedPharmacies = sortPharmaciesByDistance(pharmaciesWithOpenStatus, mapCenter);
           setPharmacies(sortedPharmacies);
         }
 
-        const medicinesRes = await fetch("/api/map/medicines");
-        const medicinesData = await medicinesRes.json();
-
+        // 의약품 데이터 처리
         if (Array.isArray(medicinesData)) {
-          const medicineNames = [
-            ...new Set(medicinesData.map((med: any) => med.item_name)),
-          ];
+          const medicineNames = [...new Set(medicinesData.map((med: any) => med.item_name))];
           setMedicines(medicineNames);
         }
+
+        // 필터링 적용
+        filterPharmacies();
+
+        // 최소 로딩 시간 보장 (250ms)
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 250 - elapsedTime);
+
+        setTimeout(() => {
+          setIsLoading(false);
+        }, remainingTime);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error('Error fetching data:', error);
+        setIsLoading(false);
       }
     };
 
@@ -165,16 +168,10 @@ export default function MapPage() {
   };
 
   // 선택된 요일과 시간에 약국이 영업 중인지 확인하는 함수 (다중 요일 지원)
-  const checkPharmacyOpenAtSelectedDaysAndTime = (
-    pharmacy: PharmacyType
-  ): boolean => {
+  const checkPharmacyOpenAtSelectedDaysAndTime = (pharmacy: PharmacyType): boolean => {
     // 선택된 시간이 없으면 현재 시간 사용
-    const hour = selectedHour
-      ? Number.parseInt(selectedHour)
-      : new Date().getHours();
-    const minute = selectedMinute
-      ? Number.parseInt(selectedMinute)
-      : new Date().getMinutes();
+    const hour = selectedHour ? Number.parseInt(selectedHour) : new Date().getHours();
+    const minute = selectedMinute ? Number.parseInt(selectedMinute) : new Date().getMinutes();
 
     // 선택된 요일이 없으면 항상 닫힘으로 처리
     if (selectedDays.length === 0) return false;
@@ -196,18 +193,14 @@ export default function MapPage() {
           pharmacy.duty_name.includes(searchQuery) ||
           pharmacy.duty_addr.includes(searchQuery) ||
           // 약품명으로도 검색 가능하도록 추가
-          pharmacy.inventories.some((inv) =>
-            inv.medicines.item_name.includes(searchQuery)
-          )
+          pharmacy.inventories.some((inv) => inv.medicines.item_name.includes(searchQuery))
       );
     }
 
     // 약품으로 필터링 (selectedMedicine이 "전체"가 아닐 때)
-    if (selectedMedicine && selectedMedicine !== "전체") {
+    if (selectedMedicine && selectedMedicine !== '전체') {
       filtered = filtered.filter((pharmacy) =>
-        pharmacy.inventories.some(
-          (inv) => inv.medicines.item_name === selectedMedicine
-        )
+        pharmacy.inventories.some((inv) => inv.medicines.item_name === selectedMedicine)
       );
     }
 
@@ -250,11 +243,11 @@ export default function MapPage() {
 
   const resetFilters = () => {
     const now = new Date();
-    setSelectedMedicine("전체");
+    setSelectedMedicine('전체');
     setSelectedDays([now.getDay().toString()]);
     setSelectedHour(now.getHours().toString());
     setSelectedMinute(now.getMinutes().toString());
-    setSearchQuery("");
+    setSearchQuery('');
   };
 
   const getCurrentLocation = () => {
@@ -265,7 +258,7 @@ export default function MapPage() {
           const newLocation = { lat: latitude, lng: longitude };
           setCurrentLocation(newLocation);
           setMapCenter(newLocation); // 현재 위치를 지도 중심으로 설정
-          locationUpdateSourceRef.current = "user";
+          locationUpdateSourceRef.current = 'user';
 
           // 선택된 약국 초기화
           if (selectedPharmacyIndex !== null) {
@@ -274,8 +267,8 @@ export default function MapPage() {
           }
         },
         (error) => {
-          console.error("Error getting location:", error);
-          alert("위치 정보를 가져오는데 실패했습니다.");
+          console.error('Error getting location:', error);
+          alert('위치 정보를 가져오는데 실패했습니다.');
         },
         {
           enableHighAccuracy: true,
@@ -283,21 +276,14 @@ export default function MapPage() {
         }
       );
     } else {
-      alert("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
+      alert('이 브라우저에서는 위치 정보를 지원하지 않습니다.');
     }
   };
 
   // Format distance for display
   const formatDistance = (lat: number, lon: number) => {
-    const distance = calculateDistance(
-      mapCenter.lat,
-      mapCenter.lng,
-      Number(lat),
-      Number(lon)
-    );
-    return distance < 1
-      ? `${(distance * 1000).toFixed(0)}m`
-      : `${distance.toFixed(1)}km`;
+    const distance = calculateDistance(mapCenter.lat, mapCenter.lng, Number(lat), Number(lon));
+    return distance < 1 ? `${(distance * 1000).toFixed(0)}m` : `${distance.toFixed(1)}km`;
   };
 
   // Get formatted operating hours for today
@@ -336,10 +322,10 @@ export default function MapPage() {
         endTime = formatTimeString(pharmacy.duty_time6c);
         break;
       default:
-        return "정보 없음";
+        return '정보 없음';
     }
 
-    if (!startTime || !endTime) return "휴무일";
+    if (!startTime || !endTime) return '휴무일';
 
     return `${startTime} - ${endTime}`;
   };
@@ -357,7 +343,7 @@ export default function MapPage() {
         lng: Number(pharmacy.wgs84_lon),
       };
       setMapCenter(pharmacyLocation);
-      locationUpdateSourceRef.current = "user";
+      locationUpdateSourceRef.current = 'user';
     }
     // 선택이 해제될 때는 지도 중심을 변경하지 않음 (else 블록 없음)
   };
@@ -367,12 +353,12 @@ export default function MapPage() {
     startTimeStr: string | null | undefined,
     endTimeStr: string | null | undefined
   ) => {
-    if (!startTimeStr || !endTimeStr) return "휴무일";
+    if (!startTimeStr || !endTimeStr) return '휴무일';
 
     const startTime = formatTimeString(startTimeStr);
     const endTime = formatTimeString(endTimeStr);
 
-    if (!startTime || !endTime) return "휴무일";
+    if (!startTime || !endTime) return '휴무일';
 
     return `${startTime} - ${endTime}`;
   };
@@ -381,7 +367,7 @@ export default function MapPage() {
   const handleMapCenterChanged = (center: { lat: number; lng: number }) => {
     // 항상 mapCenter 업데이트 및 약국 리스트 재정렬
     setMapCenter(center);
-    locationUpdateSourceRef.current = "map";
+    locationUpdateSourceRef.current = 'map';
 
     // 지도 중심이 변경되면 약국 리스트를 재정렬
     if (filteredPharmacies.length > 0) {
@@ -390,7 +376,7 @@ export default function MapPage() {
 
     // 플래그 초기화
     setTimeout(() => {
-      locationUpdateSourceRef.current = "map";
+      locationUpdateSourceRef.current = 'map';
     }, 100);
   };
 
@@ -401,21 +387,32 @@ export default function MapPage() {
     setSelectedPharmacyIndex(null);
 
     // 지도 중심 변경 방지를 위한 플래그 설정
-    locationUpdateSourceRef.current = "map";
+    locationUpdateSourceRef.current = 'map';
 
     // 현재 지도 중심 유지
     const currentCenter = { ...mapCenter };
     setMapCenter(currentCenter);
   };
 
+  if (isLoading) {
+    return (
+      <div className="container py-8">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">데이터를 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-8">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">약국 찾기</h1>
-          <p className="text-muted-foreground">
-            내 주변 약국을 찾고 약품 재고를 확인해보세요.
-          </p>
+          <p className="text-muted-foreground">내 주변 약국을 찾고 약품 재고를 확인해보세요.</p>
         </div>
 
         <PharmacySearch

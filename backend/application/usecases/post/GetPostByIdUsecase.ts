@@ -41,6 +41,7 @@ export class GetPostByIdUseCase {
             ? {
                 id: comment.user.id,
                 name: comment.user.name,
+                image: comment.user.image,
                 member_type: comment.user.member_type || 0,
               }
             : undefined,

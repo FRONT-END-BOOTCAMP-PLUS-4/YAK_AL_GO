@@ -56,6 +56,9 @@ export class PrismaPostRepository implements PostRepository {
           },
         },
         comments: {
+          where: {
+            deletedAt: null,
+          },
           select: {
             id: true,
             content: true,
@@ -138,7 +141,11 @@ export class PrismaPostRepository implements PostRepository {
           },
           _count: {
             select: {
-              comments: true,
+              comments: {
+                where: {
+                  deletedAt: null, // 소프트 삭제된 댓글 제외
+                },
+              },
             },
           },
         },

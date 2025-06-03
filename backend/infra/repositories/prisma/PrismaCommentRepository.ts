@@ -47,6 +47,59 @@ export class PrismaCommentRepository implements CommentRepository {
     return comments.map(this.mapToEntity);
   }
 
+  async findById(id: number): Promise<Comment | null> {
+    const prismaComment = await this.prisma.comments.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
+      },
+    });
+
+    return prismaComment ? this.mapToEntity(prismaComment) : null;
+  }
+
+  async update(id: number, comment: Comment): Promise<Comment> {
+    const updated = await this.prisma.comments.update({
+      where: { id },
+      data: {
+        content: comment.content,
+        updatedAt: new Date(),
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
+      },
+    });
+    return this.mapToEntity(updated);
+  }
+
+  async delete(id: number): Promise<void> {
+    await this.prisma.comments.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
+
   private mapToEntity(prismaComment: any): Comment {
     return new Comment({
       id: prismaComment.id,

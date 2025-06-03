@@ -29,6 +29,104 @@ export class PrismaAnswerRepository implements AnswerRepository {
     return this.mapToEntity(created);
   }
 
+  async findById(id: number): Promise<Answer | null> {
+    const prismaAnswer = await this.prisma.answers.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
+      },
+    });
+
+    return prismaAnswer ? this.mapToEntity(prismaAnswer) : null;
+  }
+
+  async update(id: number, answer: Answer): Promise<Answer> {
+    const updated = await this.prisma.answers.update({
+      where: { id },
+      data: {
+        content: answer.content,
+        contentHTML: answer.contentHTML,
+        updatedAt: new Date(),
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
+      },
+    });
+    return this.mapToEntity(updated);
+  }
+
+  async delete(id: number): Promise<void> {
+    await this.prisma.answers.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
+
+  async findAcceptedByQuestionId(questionId: number): Promise<Answer | null> {
+    const prismaAnswer = await this.prisma.answers.findFirst({
+      where: {
+        qnaId: questionId,
+        isAccepted: true,
+        deletedAt: null,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
+      },
+    });
+
+    return prismaAnswer ? this.mapToEntity(prismaAnswer) : null;
+  }
+
+  async acceptAnswer(id: number): Promise<Answer> {
+    const updated = await this.prisma.answers.update({
+      where: { id },
+      data: {
+        isAccepted: true,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
+      },
+    });
+    return this.mapToEntity(updated);
+  }
+
   private mapToEntity(prismaAnswer: any): Answer {
     return new Answer({
       id: prismaAnswer.id,
@@ -37,6 +135,7 @@ export class PrismaAnswerRepository implements AnswerRepository {
       createdAt: prismaAnswer.createdAt,
       updatedAt: prismaAnswer.updatedAt,
       deletedAt: prismaAnswer.deletedAt,
+      isAccepted: prismaAnswer.isAccepted,
       userId: prismaAnswer.userId,
       user: prismaAnswer.users
         ? new User({

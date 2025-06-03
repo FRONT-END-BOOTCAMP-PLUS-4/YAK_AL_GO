@@ -3,6 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock } from 'lucide-react';
 import { formatDate } from '@/lib/community/formatDate';
 import { CommentOptionDropdown } from '@/components/post/CommentOptionDropdown';
+import { CommentEditForm } from '@/components/post/CommentEditForm';
+import { Suspense } from 'react';
 
 interface CommentDetailCardProps {
   comment: {
@@ -18,9 +20,10 @@ interface CommentDetailCardProps {
     };
   };
   currentUserId: string;
+  isEditing?: boolean;
 }
 
-export function CommentDetailCard({ comment, currentUserId }: CommentDetailCardProps) {
+export function CommentDetailCard({ comment, currentUserId, isEditing = false }: CommentDetailCardProps) {
   return (
     <Card className="h-full border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg overflow-hidden">
       <CardContent className="p-0">
@@ -65,11 +68,19 @@ export function CommentDetailCard({ comment, currentUserId }: CommentDetailCardP
 
         {/* Comment Content */}
         <div className="px-6 pb-6">
-          <div className="prose prose-sm prose-gray max-w-none">
-            <p className="whitespace-pre-line text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-              {comment.content}
-            </p>
-          </div>
+          {isEditing ? (
+            // 편집 모드 - 클라이언트 컴포넌트
+            <Suspense fallback={<div className="h-24 w-full animate-pulse rounded-lg bg-muted" />}>
+              <CommentEditForm comment={comment} />
+            </Suspense>
+          ) : (
+            // 일반 모드 - 서버 컴포넌트 (SEO 친화적)
+            <div className="prose prose-sm prose-gray max-w-none">
+              <p className="whitespace-pre-line text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {comment.content}
+              </p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

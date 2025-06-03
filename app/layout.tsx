@@ -8,6 +8,7 @@ import ReactQueryProviders from '@/components/query-provider';
 import { SessionProvider } from '@/components/session-provider';
 import ScrollToTop from '@/components/ui/ScrollToTop';
 import { LoadingProvider } from '@/providers/LoadingProvider';
+import MouseFollower from '@/components/MouseFollower';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
         <title>약알고</title>
       </head>
       <body className={inter.className}>
+        <MouseFollower />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
