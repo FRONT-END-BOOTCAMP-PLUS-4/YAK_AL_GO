@@ -227,7 +227,7 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
       }
       setPdfParsingStatus('failed');
     } finally {
-      setPharmaciesLoading(false);
+      setReviewStatsLoading(false);
     }
   };
 
@@ -235,6 +235,7 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
   useEffect(() => {
     if (itemSeq) {
       fetchMedicineDetail(itemSeq);
+      fetchReviewStats(itemSeq);
     }
   }, [itemSeq]);
 
@@ -1225,11 +1226,34 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                   <p className="text-muted-foreground">리뷰 기능 준비중</p>
                 </div>
                 <div className="mt-4">
-                  <MedicineReviewDialog onSubmit={handleReviewSubmit}>
-                    <Button variant="outline" className="w-full">
-                      리뷰 작성하기
+                  {status === 'loading' ? (
+                    <Button variant="outline" className="w-full" disabled>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      로딩 중...
                     </Button>
-                  </MedicineReviewDialog>
+                  ) : session ? (
+                    <MedicineReviewDialog 
+                      userReviews={userReviews}
+                      onSubmit={handleReviewSubmit}
+                    >
+                      <Button variant="outline" className="w-full">
+                        {userReviews.length > 0 ? '리뷰 수정하기' : '리뷰 작성하기'}
+                      </Button>
+                    </MedicineReviewDialog>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="text-center p-4 bg-muted/30 rounded-lg">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          리뷰를 작성하려면 로그인이 필요합니다
+                        </p>
+                        <Button asChild variant="outline" className="w-full">
+                          <Link href="/auth">
+                            로그인하고 리뷰 작성하기
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
