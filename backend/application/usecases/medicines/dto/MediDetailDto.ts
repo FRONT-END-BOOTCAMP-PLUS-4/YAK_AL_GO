@@ -72,6 +72,12 @@ export interface MediDetailDto {
   chart: string | null; // 성상 (모양, 색깔 등)
   materialName: string | null; // 원료성분
 
+  // 프론트엔드 호환성을 위한 추가 필드들
+  etcOtcName?: string | null; // 전문/일반의약품 구분명
+  storageMethod?: string | null; // 저장방법 (직접 매핑)
+  validTerm?: string | null; // 유효기간 (직접 매핑)
+  typeName?: string | null; // 제형명/주의사항 (임부금기, 첨가제주의 등)
+
   // PDF 문서 정보 (참고용)
   documents: MediDocumentInfo;
 
