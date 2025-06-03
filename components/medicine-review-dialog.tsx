@@ -27,10 +27,11 @@ type ReviewTypeApiResponse = {
 
 interface MedicineReviewDialogProps {
   children: React.ReactNode
+  userReviews?: string[]
   onSubmit?: (selectedOptions: string[], comment: string) => void
 }
 
-export const MedicineReviewDialog = ({ children, onSubmit }: MedicineReviewDialogProps) => {
+export const MedicineReviewDialog = ({ children, userReviews = [], onSubmit }: MedicineReviewDialogProps) => {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [comment, setComment] = useState("")
   const [open, setOpen] = useState(false)
@@ -76,6 +77,12 @@ export const MedicineReviewDialog = ({ children, onSubmit }: MedicineReviewDialo
       fetchReviewTypes()
     }
   }, [open])
+
+  useEffect(() => {
+    if (open && userReviews.length > 0) {
+      setSelectedOptions([...userReviews])
+    }
+  }, [open, userReviews])
 
   const handleOptionToggle = (option: string) => {
     if (selectedOptions.includes(option)) {
@@ -136,27 +143,52 @@ export const MedicineReviewDialog = ({ children, onSubmit }: MedicineReviewDialo
               <p className="text-sm text-muted-foreground">사용 가능한 리뷰 옵션이 없습니다.</p>
             </div>
           ) : (
-            Object.entries(reviewOptions).map(([categoryName, options]) => (
-              <div key={categoryName} className="space-y-4">
-                <h3 className="font-medium text-base">{categoryName}</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {options.map((option) => (
-                    <button
-                      key={option.id}
-                      className={`flex items-center gap-2 p-3 rounded-md border text-left transition-colors ${
-                        selectedOptions.includes(option.text) 
-                          ? "border-primary bg-primary/10 text-primary" 
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => handleOptionToggle(option.text)}
-                    >
-                      <span className="text-lg">{option.emoji}</span>
-                      <span className="text-sm">{option.text}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))
+            (() => {
+              // 카테고리 순서 정의 - 부정적 리뷰를 맨 아래로
+              const categoryOrder = [
+                '효과',
+                '복용 편의성', 
+                '부작용',
+                '가격/접근성',
+                '기타 만족도',
+                '부정적 리뷰'
+              ];
+
+              return categoryOrder.map((categoryName) => {
+                const options = reviewOptions[categoryName];
+                if (!options || options.length === 0) return null;
+
+                return (
+                  <div key={categoryName} className="space-y-4">
+                    <h3 className={`font-medium text-base ${
+                      categoryName === '부정적 리뷰' ? 'text-red-600' : ''
+                    }`}>
+                      {categoryName}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {options.map((option) => (
+                        <button
+                          key={option.id}
+                          className={`flex items-center gap-2 p-3 rounded-md border text-left transition-colors ${
+                            selectedOptions.includes(option.text) 
+                              ? categoryName === '부정적 리뷰'
+                                ? "bg-red-100 border-red-500 ring-1 ring-red-300 text-red-700" 
+                                : "border-primary bg-primary/10 text-primary"
+                              : categoryName === '부정적 리뷰'
+                              ? "border-red-200 hover:border-red-400 text-red-600"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          onClick={() => handleOptionToggle(option.text)}
+                        >
+                          <span className="text-lg">{option.emoji}</span>
+                          <span className="text-sm">{option.text}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }).filter(Boolean);
+            })()
           )}
         </div>
         
