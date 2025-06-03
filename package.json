@@ -13,6 +13,10 @@
     "check": "biome check --apply ."
   },
   "dependencies": {
+    "@algolia/autocomplete-core": "^1.19.2",
+    "@algolia/autocomplete-preset-algolia": "^1.19.2",
+    "@algolia/autocomplete-theme-classic": "^1.19.2",
+    "@algolia/client-search": "^5.25.0",
     "@excalidraw/excalidraw": "^0.18.0",
     "@hookform/resolvers": "^3.9.1",
     "@lexical/code": "^0.31.2",
