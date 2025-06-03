@@ -13,6 +13,15 @@ import { useLoadingContext } from '@/providers/LoadingProvider';
 import { selectMedicineImage } from '@/utils/medicineFormatter';
 import { useSession } from 'next-auth/react';
 
+// 스크롤바 숨김 스타일
+const hideScrollbarStyle = {
+  scrollbarWidth: 'none',
+  msOverflowStyle: 'none',
+  '&::-webkit-scrollbar': {
+    display: 'none'
+  }
+};
+
 // API 응답 타입 정의
 interface MediDetailApiResponse {
   success: boolean;
