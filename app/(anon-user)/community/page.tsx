@@ -2,11 +2,8 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-import { Search, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useQuestions } from '@/lib/queries/useQuestions';
 import { usePosts } from '@/lib/queries/usePosts';
@@ -15,6 +12,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { QuestionCard } from '@/components/community/QuestionCard';
 import { PostCard } from '@/components/community/PostCard';
 import { QnaSkeleton } from '@/components/community/QnaSkeleton';
+import { SimpleSearch } from '@/components/search/SimpleSearch';
 
 export default function CommunityPage() {
   const searchParams = useSearchParams();
@@ -22,6 +20,7 @@ export default function CommunityPage() {
 
   // URL 파라미터에서 탭 값 가져오기 (기본값: 'qnas')
   const tabFromUrl = searchParams.get('tab') || 'qnas';
+
   const [activeTab, setActiveTab] = useState(tabFromUrl);
 
   // 전문가 Q&A 데이터 조회
@@ -54,6 +53,7 @@ export default function CommunityPage() {
 
   // 로딩 상태 계산
   const isInitialLoading = activeTab === 'qnas' ? isLoadingQnas || isPendingQnas : isLoadingPosts || isPendingPosts;
+
   const isFetchingNext = activeTab === 'qnas' ? isFetchingNextQnas : isFetchingNextPosts;
   const hasNext = activeTab === 'qnas' ? hasNextQnas : hasNextPosts;
   const fetchNext = activeTab === 'qnas' ? fetchNextQnas : fetchNextPosts;
@@ -114,28 +114,29 @@ export default function CommunityPage() {
           <p className="text-muted-foreground">약에 관한 정보를 공유하고 소통하는 공간입니다.</p>
         </div>
 
-        <div className=" flex  flex-col gap-4 sm:flex-row mx-1">
-          <div className="flex w-full items-center space-x-2">
-            <Input type="text" placeholder="검색어를 입력하세요" />
-            <Button type="submit" size="icon">
-              <Search className="h-4 w-4" />
-              <span className="sr-only">Search</span>
-            </Button>
-          </div>
-          <Button asChild>
-            {activeTab === 'qnas' ? (
-              <Link href="/member/qnas/write">질문하기</Link>
-            ) : (
-              <Link href="/member/posts/write">글쓰기</Link>
-            )}
-          </Button>
-        </div>
-
         <Tabs value={activeTab} className="w-full" onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="qnas">전문가 Q&A</TabsTrigger>
             <TabsTrigger value="posts">자유게시판</TabsTrigger>
           </TabsList>
+
+          {/* 간단한 자동완성 검색 바 */}
+          <div className="flex flex-col gap-4 sm:flex-row mx-1 mt-6">
+            <div className="flex-1">
+              <SimpleSearch
+                placeholder={activeTab === 'qnas' ? '질문을 검색하세요...' : '게시글을 검색하세요...'}
+                activeTab={activeTab as 'qnas' | 'posts'}
+              />
+            </div>
+            <Button asChild>
+              {activeTab === 'qnas' ? (
+                <Link href="/member/qnas/write">질문하기</Link>
+              ) : (
+                <Link href="/member/posts/write">글쓰기</Link>
+              )}
+            </Button>
+          </div>
+
           <TabsContent value="qnas" className="mt-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {isInitialLoading ? (
@@ -146,7 +147,7 @@ export default function CommunityPage() {
                   <QnaSkeleton />
                 </>
               ) : questions.length > 0 ? (
-                // 데이터가 있을 때 질문 카드 표시
+                // 일반 질문 목록 표시
                 questions.map((qna) => <QuestionCard key={qna.id} qna={qna} />)
               ) : (
                 // 로딩 완료 후 데이터가 없을 때 메시지 표시
@@ -162,6 +163,7 @@ export default function CommunityPage() {
               )}
             </div>
           </TabsContent>
+
           <TabsContent value="posts" className="mt-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {isInitialLoading ? (
@@ -172,7 +174,7 @@ export default function CommunityPage() {
                   <QnaSkeleton />
                 </>
               ) : posts.length > 0 ? (
-                // 데이터가 있을 때 포스트 카드 표시
+                // 일반 게시글 목록 표시
                 posts.map((post) => <PostCard key={post.id} post={post} />)
               ) : (
                 // 로딩 완료 후 데이터가 없을 때 메시지 표시
