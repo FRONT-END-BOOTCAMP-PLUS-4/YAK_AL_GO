@@ -1,7 +1,8 @@
 import { PostRepository } from '@/backend/domain/repositories/PostRepository';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
 
 export class DeletePostUseCase {
-  constructor(private postRepository: PostRepository) {}
+  constructor(private postRepository: PostRepository, private algoliaSyncUseCase?: AlgoliaSyncUseCase) {}
 
   async execute(postId: number, userId: string): Promise<void> {
     // 게시물 존재 여부 확인
@@ -17,5 +18,10 @@ export class DeletePostUseCase {
 
     // 게시물 삭제 (댓글이 있어도 삭제 가능)
     await this.postRepository.delete(postId);
+
+    // Remove from Algolia search index
+    if (this.algoliaSyncUseCase) {
+      await this.algoliaSyncUseCase.deletePost(postId);
+    }
   }
 }
