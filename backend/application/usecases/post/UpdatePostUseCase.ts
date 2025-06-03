@@ -1,6 +1,7 @@
 import { PostRepository } from '@/backend/domain/repositories/PostRepository';
 import { Post } from '@/backend/domain/entities/Post';
 import { Tag } from '@/backend/domain/entities/Tag';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
 
 export interface UpdatePostDto {
   title: string;
@@ -10,7 +11,7 @@ export interface UpdatePostDto {
 }
 
 export class UpdatePostUseCase {
-  constructor(private postRepository: PostRepository) {}
+  constructor(private postRepository: PostRepository, private algoliaSyncUseCase?: AlgoliaSyncUseCase) {}
 
   async execute(postId: number, userId: string, dto: UpdatePostDto): Promise<Post> {
     // 게시물 존재 여부 확인
@@ -41,6 +42,15 @@ export class UpdatePostUseCase {
 
     // 태그 업데이트 (기존 태그 삭제 후 새 태그 추가)
     await this.postRepository.updateTags(postId, dto.tags);
+
+    // Get the full updated post with tags and comments count for Algolia sync
+    if (this.algoliaSyncUseCase) {
+      const fullPost = await this.postRepository.findById(postId);
+      if (fullPost) {
+        const commentCount = fullPost.comments?.length || 0;
+        await this.algoliaSyncUseCase.updatePost(fullPost, commentCount);
+      }
+    }
 
     return result;
   }
