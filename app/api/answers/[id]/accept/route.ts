@@ -14,7 +14,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
-    const answerId = parseInt(params.id);
+    const { id } = await params;
+    const answerId = parseInt(id);
     if (isNaN(answerId)) {
       return NextResponse.json({ error: '유효하지 않은 답변 ID입니다.' }, { status: 400 });
     }
