@@ -11,6 +11,7 @@ import { MedicineReviewDialog } from "@/components/medicine-review-dialog"
 import { MedicineWarningDialog } from "@/components/medicine-warning-dialog"
 import { useLoadingContext } from '@/providers/LoadingProvider';
 import { selectMedicineImage } from '@/utils/medicineFormatter';
+import { useSession } from 'next-auth/react';
 
 // API 응답 타입 정의
 interface MediDetailApiResponse {
@@ -141,6 +142,28 @@ interface PharmacyData {
   distance?: number;
 }
 
+// 리뷰 통계 관련 타입 추가
+interface ReviewStatItem {
+  id: number;
+  emoji: string;
+  text: string;
+  count: number;
+}
+
+interface ReviewStatsApiResponse {
+  success: boolean;
+  data?: {
+    reviewStats: Record<string, ReviewStatItem[]>;
+    totalReviews: number;
+    totalParticipants: number;
+    userReviews: string[];
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
 export default function MedicineDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [medicineData, setMedicineData] = useState<MedicineData | null>(null);
@@ -150,7 +173,14 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
   const [userReviews, setUserReviews] = useState<string[]>([]);
   const [userComment, setUserComment] = useState("");
   
+  // 리뷰 통계 관련 상태 추가
+  const [reviewStats, setReviewStats] = useState<Record<string, ReviewStatItem[]>>({});
+  const [reviewStatsLoading, setReviewStatsLoading] = useState(false);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [totalParticipants, setTotalParticipants] = useState(0);
+  
   const { setLoading } = useLoadingContext();
+  const { data: session, status } = useSession();
 
   const itemSeq = resolvedParams.id;
 
@@ -277,16 +307,111 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
+  // 리뷰 통계를 가져오는 함수 수정
+  const fetchReviewStats = async (itemSeq: string) => {
+    try {
+      setReviewStatsLoading(true);
+
+      const response = await fetch(`/api/medicines/${itemSeq}/reviews`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: 리뷰 통계를 불러올 수 없습니다.`);
+      }
+
+      const result: ReviewStatsApiResponse = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error?.message || '리뷰 통계를 불러오는데 실패했습니다.');
+      }
+
+      if (result.data) {
+        setReviewStats(result.data.reviewStats);
+        setTotalReviews(result.data.totalReviews);
+        setTotalParticipants(result.data.totalParticipants);
+        setUserReviews(result.data.userReviews || []);
+      }
+    } catch (error: any) {
+      console.error('리뷰 통계 조회 오류:', error);
+      // 리뷰 통계 실패는 전체 페이지 오류로 처리하지 않음
+      setReviewStats({});
+      setTotalReviews(0);
+      setTotalParticipants(0);
+      setUserReviews([]);
+    } finally {
+      setReviewStatsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (itemSeq) {
       fetchMedicineDetail(itemSeq);
+      fetchReviewStats(itemSeq);
     }
   }, [itemSeq]);
 
-  const handleReviewSubmit = (selectedOptions: string[], comment: string) => {
-    setUserReviews(selectedOptions);
-    setUserComment(comment);
-    console.log("Review submitted:", { selectedOptions, comment });
+  const handleReviewSubmit = async (selectedOptions: string[], comment: string) => {
+    if (!session) {
+      console.error('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      setLoading(true, '리뷰를 등록하는 중...');
+
+      const response = await fetch(`/api/medicines/${itemSeq}/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedOptions
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || '리뷰 등록에 실패했습니다.');
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error?.message || '리뷰 등록에 실패했습니다.');
+      }
+
+      // 성공시 리뷰 통계 새로고침
+      await fetchReviewStats(itemSeq);
+      
+      // 사용자 상태 업데이트
+      setUserComment(comment);
+      
+      console.log("리뷰 업데이트 성공:", result.data);
+      
+      // 성공 메시지 표시 (선택 사항)
+      if (result.data?.addedCount > 0 || result.data?.removedCount > 0) {
+        const message = `리뷰가 성공적으로 업데이트되었습니다. (추가: ${result.data.addedCount}개, 제거: ${result.data.removedCount}개)`;
+        console.log(message);
+      }
+
+    } catch (error: any) {
+      console.error('리뷰 등록 오류:', error);
+      
+      // 특정 에러 타입에 따른 메시지 개선
+      let errorMessage = error.message || '리뷰 등록 중 오류가 발생했습니다.';
+      
+      if (error.message.includes('최대') && error.message.includes('개까지')) {
+        errorMessage = '선택할 수 있는 리뷰 개수를 초과했습니다. 최대 5개까지만 선택해주세요.';
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const generateCautions = (medicineData: MedicineData): CautionInfo[] => {
@@ -678,194 +803,145 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                 <CardTitle className="text-lg">리뷰</CardTitle>
               </CardHeader>
               <CardContent className="p-4">
-                {/* 효과 관련 리뷰 */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-base mb-3 flex items-center gap-2">
-                    효과
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>💊</span>
-                      <span className="text-sm">효과가 빨라요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">128</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>✨</span>
-                      <span className="text-sm">효과가 확실해요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">95</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>🎯</span>
-                      <span className="text-sm">증상이 많이 개선됐어요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">87</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>👍</span>
-                      <span className="text-sm">기대했던 효과가 있어요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">72</span>
+                {reviewStatsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-center space-y-2">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      <p className="text-sm text-muted-foreground">리뷰 통계를 불러오는 중...</p>
                     </div>
                   </div>
-                </div>
+                ) : Object.keys(reviewStats).length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-muted-foreground">아직 등록된 리뷰가 없습니다.</p>
+                    <p className="text-xs text-muted-foreground mt-1">첫 번째 리뷰를 작성해보세요!</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* 동적 리뷰 통계 표시 - 카테고리 순서 고정 */}
+                    {(() => {
+                      // 카테고리 순서 정의
+                      const categoryOrder = [
+                        '효과',
+                        '복용 편의성', 
+                        '부작용',
+                        '가격/접근성',
+                        '기타 만족도',
+                        '부정적 리뷰'
+                      ];
 
-                {/* 복용 편의성 관련 */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-base mb-3 flex items-center gap-2">
-                    복용 편의성
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>😋</span>
-                      <span className="text-sm">맛이 괜찮아요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">64</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>💧</span>
-                      <span className="text-sm">삼키기 쉬워요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">58</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>📏</span>
-                      <span className="text-sm">크기가 적당해요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">45</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>⏰</span>
-                      <span className="text-sm">복용법이 간단해요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">41</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>📦</span>
-                      <span className="text-sm">포장이 편리해요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">38</span>
-                    </div>
-                  </div>
-                </div>
+                      return categoryOrder.map((categoryName) => {
+                        const reviews = reviewStats[categoryName];
+                        if (!reviews || reviews.length === 0) return null;
 
-                {/* 부작용 관련 */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-base mb-3 flex items-center gap-2">
-                     부작용
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>😊</span>
-                      <span className="text-sm">부작용이 없어요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">89</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>🌱</span>
-                      <span className="text-sm">순하고 자극이 적어요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">67</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>😴</span>
-                      <span className="text-sm">졸음이 오지 않아요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">52</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>🤢</span>
-                      <span className="text-sm">속이 불편하지 않아요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">48</span>
-                    </div>
-                  </div>
-                </div>
+                        return (
+                          <div key={categoryName} className="mb-6">
+                            <h4 className={`font-semibold text-base mb-3 flex items-center gap-2 ${
+                              categoryName === '부정적 리뷰' ? 'text-red-600' : ''
+                            }`}>
+                              {categoryName}
+                            </h4>
+                            <div className="grid grid-cols-2 gap-2 mb-4">
+                              {reviews.map((review) => {
+                                // 사용자가 이 리뷰를 선택했는지 확인
+                                const isUserSelected = userReviews.includes(review.text);
+                                
+                                return (
+                                  <div 
+                                    key={review.id} 
+                                    className={`flex items-center gap-2 p-2 rounded-md border ${
+                                      isUserSelected
+                                        ? categoryName === '부정적 리뷰'
+                                          ? 'bg-red-100 border-red-500 ring-1 ring-red-300'
+                                          : 'bg-primary/10 border-primary ring-1 ring-primary/20'
+                                        : 'bg-muted/50 border-border'
+                                    }`}
+                                  >
+                                    <span>{review.emoji}</span>
+                                    <span className={`text-sm ${
+                                      isUserSelected 
+                                        ? categoryName === '부정적 리뷰'
+                                          ? 'font-medium text-red-700'
+                                          : 'font-medium text-primary'
+                                        : categoryName === '부정적 리뷰'
+                                        ? 'text-red-600'
+                                        : ''
+                                    }`}>
+                                      {review.text}
+                                    </span>
+                                    <span className={`text-xs ml-auto ${
+                                      isUserSelected 
+                                        ? categoryName === '부정적 리뷰'
+                                          ? 'text-red-600 font-medium'
+                                          : 'text-primary font-medium'
+                                        : 'text-muted-foreground'
+                                    }`}>
+                                      {review.count}
+                                    </span>
+                                    {isUserSelected && (
+                                      <span className={`text-xs font-bold ${
+                                        categoryName === '부정적 리뷰' ? 'text-red-600' : 'text-primary'
+                                      }`}>
+                                        ✓
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      }).filter(Boolean);
+                    })()}
 
-                {/* 가격/접근성 관련 */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-base mb-3 flex items-center gap-2">
-                     가격/접근성
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>💰</span>
-                      <span className="text-sm">가격이 합리적이에요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">76</span>
+                    {/* 리뷰 통계 요약 */}
+                    <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-medium">총 리뷰 수: {totalReviews.toLocaleString()}개</span>
+                        <span className="text-muted-foreground">참여자: {totalParticipants.toLocaleString()}명</span>
+                      </div>
+                      {userReviews.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-primary/20 border border-primary rounded"></div>
+                            <span className="text-xs text-muted-foreground">
+                              색칠된 항목은 내가 선택한 리뷰입니다
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>🏪</span>
-                      <span className="text-sm">구하기 쉬워요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">84</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>📋</span>
-                      <span className="text-sm">처방받기 편해요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">29</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 기타 만족도 */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-base mb-3 flex items-center gap-2">
-                     기타 만족도
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>❤️</span>
-                      <span className="text-sm">전반적으로 만족해요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">112</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>🔄</span>
-                      <span className="text-sm">재구매 의향이 있어요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">93</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>👨‍⚕️</span>
-                      <span className="text-sm">의사가 추천했어요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">56</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <span>📈</span>
-                      <span className="text-sm">꾸준히 복용하고 있어요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">43</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 부정적 리뷰 */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-base mb-3 flex items-center gap-2">
-                     부정적 리뷰
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-red-50 border border-red-200">
-                      <span>😵</span>
-                      <span className="text-sm">부작용이 있어요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">12</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-red-50 border border-red-200">
-                      <span>⏳</span>
-                      <span className="text-sm">효과가 늦어요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">8</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-red-50 border border-red-200">
-                      <span>💸</span>
-                      <span className="text-sm">가격이 비싸요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">15</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-red-50 border border-red-200">
-                      <span>😷</span>
-                      <span className="text-sm">맛이 쓰거나 냄새가 나요</span>
-                      <span className="text-xs text-muted-foreground ml-auto">6</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 리뷰 통계 요약 */}
-                <div className="mb-6 p-4 bg-muted/30 rounded-lg">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-medium">총 리뷰 수: 1,247개</span>
-                    <span className="text-muted-foreground">참여자: 892명</span>
-                  </div>
-                </div>
+                  </>
+                )}
 
                 <div className="mt-4">
-                  <MedicineReviewDialog onSubmit={handleReviewSubmit}>
-                    <Button variant="outline" className="w-full">
-                      리뷰 작성하기
+                  {status === 'loading' ? (
+                    <Button variant="outline" className="w-full" disabled>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      로딩 중...
                     </Button>
-                  </MedicineReviewDialog>
+                  ) : session ? (
+                    <MedicineReviewDialog 
+                      userReviews={userReviews}
+                      onSubmit={handleReviewSubmit}
+                    >
+                      <Button variant="outline" className="w-full">
+                        {userReviews.length > 0 ? '리뷰 수정하기' : '리뷰 작성하기'}
+                      </Button>
+                    </MedicineReviewDialog>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="text-center p-4 bg-muted/30 rounded-lg">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          리뷰를 작성하려면 로그인이 필요합니다
+                        </p>
+                        <Button asChild variant="outline" className="w-full">
+                          <Link href="/auth">
+                            로그인하고 리뷰 작성하기
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
