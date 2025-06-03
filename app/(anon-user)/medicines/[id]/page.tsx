@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect, use, useMemo } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,6 +24,7 @@ interface MediDetailApiResponse {
     materialName?: string;
     storageMethod?: string;
     validTerm?: string;
+    typeName?: string;
     documents: {
       effectDocId: string | null;
       usageDocId: string | null;
@@ -73,6 +74,7 @@ interface MedicineData {
   materialName?: string;
   storageMethod?: string;
   validTerm?: string;
+  typeName?: string;
   documents: {
     effectDocId: string | null;
     usageDocId: string | null;
@@ -446,51 +448,145 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  const generateCautions = (medicineData: MedicineData): CautionInfo[] => {
+  // type_name 파싱 및 경고 생성 함수들
+  const parseTypeNameWarnings = (typeName: string | undefined): CautionInfo[] => {
+    if (!typeName) return [];
+
+    const warnings: CautionInfo[] = [];
+    const typeList = typeName.split(',').map(type => type.trim());
+
+    const warningMap: Record<string, { type: string; description: string; severity: "high" | "medium" | "low" }> = {
+      '임부금기': {
+        type: '임신 중 복용 금지',
+        description: '임신 중이거나 임신 가능성이 있는 여성은 이 약을 복용하지 마세요. 태아에게 해를 끼칠 수 있습니다.',
+        severity: 'high'
+      },
+      '수유금기': {
+        type: '수유 중 복용 금지', 
+        description: '수유 중인 여성은 이 약을 복용하지 마세요. 모유를 통해 아기에게 전달될 수 있습니다.',
+        severity: 'high'
+      },
+      '소아금기': {
+        type: '소아 복용 금지',
+        description: '소아(만 18세 미만)는 이 약을 복용하지 마세요. 안전성이 확립되지 않았습니다.',
+        severity: 'high'
+      },
+      '고령금기': {
+        type: '고령자 복용 금지',
+        description: '65세 이상 고령자는 이 약 복용 시 특별한 주의가 필요합니다. 의사와 상의하세요.',
+        severity: 'high'
+      },
+      '용량주의': {
+        type: '용량 조절 필요',
+        description: '개인의 상태에 따라 용량 조절이 필요할 수 있습니다. 정확한 용량을 지켜 복용하세요.',
+        severity: 'medium'
+      },
+      '투여기간주의': {
+        type: '투여 기간 제한',
+        description: '장기간 복용 시 부작용 위험이 증가할 수 있습니다. 의사의 지시에 따라 복용 기간을 조절하세요.',
+        severity: 'medium'
+      },
+      '첨가제주의': {
+        type: '첨가제 알레르기 주의',
+        description: '이 약에 포함된 첨가제에 알레르기가 있는 경우 복용하지 마세요. 성분을 확인해주세요.',
+        severity: 'medium'
+      },
+      '신장애주의': {
+        type: '신장 질환자 주의',
+        description: '신장 질환이 있는 경우 용량 조절이나 복용 중단이 필요할 수 있습니다.',
+        severity: 'high'
+      },
+      '간장애주의': {
+        type: '간 질환자 주의', 
+        description: '간 질환이 있는 경우 용량 조절이나 복용 중단이 필요할 수 있습니다.',
+        severity: 'high'
+      },
+      '심장애주의': {
+        type: '심장 질환자 주의',
+        description: '심장 질환이 있는 경우 복용 전 의사와 상의하세요.',
+        severity: 'high'
+      },
+      '당뇨주의': {
+        type: '당뇨병 환자 주의',
+        description: '당뇨병이 있는 경우 혈당 수치 변화를 주의 깊게 관찰하세요.',
+        severity: 'medium'
+      },
+      '운전주의': {
+        type: '운전 및 기계 조작 주의',
+        description: '이 약 복용 후 졸음이나 어지러움이 올 수 있으니 운전이나 기계 조작을 피하세요.',
+        severity: 'medium'
+      },
+      '알코올주의': {
+        type: '음주 금지',
+        description: '이 약 복용 중에는 음주를 피하세요. 부작용이 증가할 수 있습니다.',
+        severity: 'medium'
+      }
+    };
+
+    typeList.forEach(type => {
+      if (warningMap[type]) {
+        warnings.push(warningMap[type]);
+      } else if (type) {
+        // 매핑되지 않은 경고도 처리
+        warnings.push({
+          type: '주의사항',
+          description: `${type} 관련 주의가 필요합니다. 복용 전 의사나 약사와 상의하세요.`,
+          severity: 'medium'
+        });
+      }
+    });
+
+    return warnings;
+  };
+
+  // 기존 generateCautions와 type_name 경고를 합치는 함수
+  const getAllCautions = (medicineData: MedicineData): CautionInfo[] => {
     const cautions: CautionInfo[] = [];
 
-    if (!medicineData.parsedContent?.caution) {
-      return cautions;
+    // type_name 기반 경고 추가
+    // 테스트용: typeName이 없으면 샘플 데이터 사용
+    const typeNameToUse = medicineData.typeName || "임부금기,용량주의,첨가제주의"; // 테스트용 임시 데이터
+    const typeNameWarnings = parseTypeNameWarnings(typeNameToUse);
+    cautions.push(...typeNameWarnings);
+
+    // 기존 parsedContent 기반 경고 추가
+    if (medicineData.parsedContent?.caution) {
+      const { contraindications, warnings, specialGroups } = medicineData.parsedContent.caution;
+
+      contraindications?.forEach((contraindication) => {
+        cautions.push({
+          type: "금기사항",
+          description: contraindication,
+          severity: "high"
+        });
+      });
+
+      warnings?.forEach((warning) => {
+        cautions.push({
+          type: "주의사항", 
+          description: warning,
+          severity: "medium"
+        });
+      });
+
+      specialGroups?.forEach((group) => {
+        let severity: "high" | "medium" | "low" = "medium";
+        
+        if (group.includes("임신") || group.includes("간") || group.includes("심장")) {
+          severity = "high";
+        } else if (group.includes("고령") || group.includes("소아")) {
+          severity = "medium";
+        } else {
+          severity = "low";
+        }
+
+        cautions.push({
+          type: "특수환자군",
+          description: group,
+          severity
+        });
+      });
     }
-
-    const { contraindications, warnings, specialGroups } = medicineData.parsedContent.caution;
-
-    // 금기사항 (높은 위험도)
-    contraindications?.forEach((contraindication) => {
-      cautions.push({
-        type: "금기사항",
-        description: contraindication,
-        severity: "high"
-      });
-    });
-
-    // 경고사항 (중간 위험도)
-    warnings?.forEach((warning) => {
-      cautions.push({
-        type: "주의사항",
-        description: warning,
-        severity: "medium"
-      });
-    });
-
-    // 특수환자군 (위험도 별도 판정)
-    specialGroups?.forEach((group) => {
-      let severity: "high" | "medium" | "low" = "medium";
-      
-      if (group.includes("임신") || group.includes("간") || group.includes("심장")) {
-        severity = "high";
-      } else if (group.includes("고령") || group.includes("소아")) {
-        severity = "medium";
-      } else {
-        severity = "low";
-      }
-
-      cautions.push({
-        type: "특수환자군",
-        description: group,
-        severity
-      });
-    });
 
     return cautions;
   };
@@ -590,7 +686,147 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
     window.location.href = `/map?${params.toString()}`;
   };
 
-  // 에러 상태
+  // 주요 성분 데이터 파싱 함수
+  const parseMaterialName = (materialName: string | undefined): string => {
+    if (!materialName) {
+      return "성분 정보를 불러오는 중...";
+    }
+
+    try {
+      // 쉼표와 슬래시로 구분된 성분들을 분리
+      const components = materialName.split('/').filter(component => component.trim());
+      
+      const parsedComponents = components.map(component => {
+        // 각 성분을 쉼표로 분리하여 파싱
+        const parts = component.split(',').map(part => part.trim()).filter(part => part);
+        
+        if (parts.length === 0) return null;
+        
+        const componentName = parts[0]; // 첫 번째는 성분명
+        let dosage = '';
+        let unit = '';
+        
+        // 용량과 단위 찾기
+        for (let i = 1; i < parts.length; i++) {
+          const part = parts[i];
+          
+          // 숫자가 포함된 부분을 용량으로 간주
+          if (/\d/.test(part) && !dosage) {
+            dosage = part;
+          }
+          
+          // 단위로 보이는 부분 (밀리그램, 그램, 마이크로그램 등)
+          if (['밀리그램', '그램', 'mg', 'g', 'μg', '마이크로그램', '밀리리터', 'ml'].some(u => part.includes(u))) {
+            unit = part;
+          }
+        }
+        
+        // 성분명만 있는 경우
+        if (!dosage || dosage === '') {
+          return componentName;
+        }
+        
+        // 용량과 단위가 있는 경우
+        if (unit) {
+          return `${componentName} ${dosage}${unit}`;
+        } else {
+          return `${componentName} ${dosage}`;
+        }
+      }).filter(component => component !== null);
+
+      return parsedComponents.length > 0 
+        ? parsedComponents.join(', ') 
+        : materialName; // 파싱 실패 시 원본 반환
+        
+    } catch (error) {
+      console.error('성분 파싱 오류:', error);
+      return materialName; // 오류 시 원본 반환
+    }
+  };
+
+  // 의약품 이름 포맷팅 함수 - 괄호 부분 줄바꿈 및 용량 작게 표시
+  const formatMedicineName = (itemName: string) => {
+    if (!itemName) return null;
+
+    // 괄호 분리: "타이레놀정 500mg (100정)" -> ["타이레놀정 500mg", "(100정)"]
+    const bracketMatch = itemName.match(/^(.+?)(\s*\([^)]+\))(.*)$/);
+    
+    // 약품명에서 용량 정보 추출을 위한 정규식
+    // 공백이 있는 경우 (타이레놀정 500mg)와 공백이 없는 경우 (자디스듀오서방정10/1000밀리그램) 모두 처리
+    const extractDosage = (name: string) => {
+      // 공백 없이 숫자가 바로 붙는 경우 (자디스듀오서방정10/1000밀리그램)
+      const noSpaceMatch = name.match(/^(.+?)((?:\d+)(?:\/\d+)?(?:\.\d+)?\s*(?:mg|g|밀리그램|그램|마이크로그램|μg|ml|밀리리터))(.*)$/i);
+      
+      // 공백이 있는 경우 (타이레놀정 500mg)
+      const withSpaceMatch = name.match(/^(.+?)\s+(\d+(?:\/\d+)?(?:\.\d+)?\s*(?:mg|g|밀리그램|그램|마이크로그램|μg|ml|밀리리터))(.*)$/i);
+      
+      return noSpaceMatch || withSpaceMatch;
+    };
+    
+    if (bracketMatch) {
+      const mainPart = bracketMatch[1].trim(); // "타이레놀정 500mg"
+      const bracketPart = bracketMatch[2].trim(); // "(100정)"
+      const afterBracket = bracketMatch[3] ? bracketMatch[3].trim() : ""; // 괄호 뒤 텍스트
+      
+      const dosageMatch = extractDosage(mainPart);
+      
+      return (
+        <div className="text-center">
+          {/* 메인 부분 - 약품명만 크게 표시 */}
+          <div className="text-xl font-bold">
+            {dosageMatch ? dosageMatch[1] : mainPart} {/* 약품명 */}
+          </div>
+          
+          {/* 용량 정보 - 작게 표시하고 줄바꿈 */}
+          {dosageMatch && (
+            <div className="text-base font-medium text-muted-foreground mt-1">
+              {dosageMatch[2]} {/* 용량 */}
+              {dosageMatch[3]} {/* 나머지 */}
+            </div>
+          )}
+          
+          {/* 괄호 뒤의 텍스트가 있으면 작게 표시 */}
+          {afterBracket && (
+            <div className="text-base font-medium text-muted-foreground mt-1">
+              {afterBracket}
+            </div>
+          )}
+          
+          {/* 괄호 내용 (예: 100정) - 작게 표시 */}
+          <div className="text-sm font-medium text-muted-foreground mt-1">
+            {bracketPart}
+          </div>
+        </div>
+      );
+    } else {
+      // 괄호가 없는 경우 - 용량만 작게 표시
+      const dosageMatch = extractDosage(itemName);
+      
+      return (
+        <div className="text-center">
+          {/* 약품명만 크게 표시 */}
+          <div className="text-xl font-bold">
+            {dosageMatch ? dosageMatch[1] : itemName}
+          </div>
+          
+          {/* 용량 정보 - 작게 표시하고 줄바꿈 */}
+          {dosageMatch && (
+            <div className="text-base font-medium text-muted-foreground mt-1">
+              {dosageMatch[2]} {/* 용량 */}
+              {dosageMatch[3]} {/* 나머지 */}
+            </div>
+          )}
+        </div>
+      );
+    }
+  };
+
+  // cautions를 useMemo로 메모이제이션하여 Hook 순서 안정화
+  const cautions = useMemo(() => {
+    return medicineData ? getAllCautions(medicineData) : [];
+  }, [medicineData]);
+
+  // 에러 상태 - Hook 순서 안정화를 위해 여기로 이동
   if (error && !medicineData) {
     return (
       <div className="container py-8">
@@ -620,8 +856,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
     return null; // LoadingProvider가 로딩 화면을 처리
   }
 
-  const cautions = generateCautions(medicineData);
-
   return (
     <div className="container py-8">
       <div className="flex flex-col gap-6">
@@ -635,13 +869,10 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
           <h1 className="text-2xl font-bold">약 상세 정보</h1>
         </div>
 
-        {/* Warning Dialog for high severity cautions */}
-        {cautions.length > 0 && (
-          <MedicineWarningDialog 
-            medicineName={medicineData.itemName} 
-            warnings={cautions} 
-          />
-        )}
+        <MedicineWarningDialog 
+          medicineName={medicineData.itemName} 
+          warnings={cautions} 
+        />
 
         <div className="grid gap-6 md:grid-cols-[300px_1fr]">
           <div className="flex flex-col gap-4">
@@ -655,8 +886,8 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                   className="rounded-md object-cover mb-4"
                 />
                 <div className="text-center">
-                  <h2 className="text-xl font-bold">{medicineData.itemName}</h2>
-                  <p className="text-sm text-muted-foreground">{medicineData.entpName}</p>
+                  {formatMedicineName(medicineData.itemName)}
+                  <p className="text-base font-medium text-black mt-2">{medicineData.entpName}</p>
                   <div className="flex justify-center mt-2">
                     <Badge variant="outline">
                       {medicineData.etcOtcName || "일반의약품"}
@@ -759,7 +990,11 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-bold text-lg">주요 성분</h3>
-                    <p>{medicineData.materialName || "성분 정보를 불러오는 중..."}</p>
+                    <div className="bg-muted/30 p-3 rounded-md">
+                      <p className="text-sm leading-relaxed">
+                        {parseMaterialName(medicineData.materialName)}
+                      </p>
+                    </div>
                   </div>
                   <div>
                     <h3 className="font-bold text-lg">효능 효과</h3>
@@ -814,19 +1049,102 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
             {cautions.length > 0 && (
               <div className="space-y-4">
-                <h3 className="font-bold text-lg">주의사항</h3>
-                {cautions.map((caution, index) => (
-                  <Alert
-                    key={index}
-                    variant={
-                      caution.severity === "high" ? "destructive" : caution.severity === "medium" ? "default" : null
-                    }
-                  >
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>{caution.type}</AlertTitle>
-                    <AlertDescription>{caution.description}</AlertDescription>
-                  </Alert>
-                ))}
+                <h3 className="font-bold text-lg flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-orange-500" />
+                  주의사항
+                </h3>
+                
+                {/* type_name 기반 중요 경고 먼저 표시 */}
+                {(() => {
+                  const typeNameWarnings = parseTypeNameWarnings(medicineData.typeName);
+                  const highSeverityCautions = cautions.filter(caution => caution.severity === "high");
+                  const mediumSeverityCautions = cautions.filter(caution => caution.severity === "medium");
+                  const lowSeverityCautions = cautions.filter(caution => caution.severity === "low");
+
+                  return (
+                    <>
+                      {/* 높은 위험도 경고 */}
+                      {highSeverityCautions.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-red-600 flex items-center gap-2 text-base">                          
+                            🚨 필수 확인 사항
+                          </h4>
+                          {highSeverityCautions.map((caution, index) => (
+                            <Alert key={`high-${index}`} variant="destructive" className="bg-red-50 border-red-200">
+                              <AlertTriangle className="h-4 w-4" />
+                              <div>
+                                <AlertTitle className="text-red-800 font-semibold">
+                                  {caution.type}
+                                </AlertTitle>
+                                <AlertDescription className="text-red-700 mt-1">
+                                  {caution.description}
+                                </AlertDescription>
+                              </div>
+                            </Alert>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 중간 위험도 경고 */}
+                      {mediumSeverityCautions.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-orange-600 flex items-center gap-2 text-base">
+                            ⚠️ 주의 필요 사항
+                          </h4>
+                          {mediumSeverityCautions.map((caution, index) => (
+                            <Alert key={`medium-${index}`} variant="default" className="bg-yellow-50 border-yellow-200">
+                              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                              <div>
+                                <AlertTitle className="text-yellow-800 font-semibold">
+                                  {caution.type}
+                                </AlertTitle>
+                                <AlertDescription className="text-yellow-700 mt-1">
+                                  {caution.description}
+                                </AlertDescription>
+                              </div>
+                            </Alert>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 낮은 위험도 경고 */}
+                      {lowSeverityCautions.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-blue-600 flex items-center gap-2 text-base">
+                            📋 일반 주의사항
+                          </h4>
+                          {lowSeverityCautions.map((caution, index) => (
+                            <Alert key={`low-${index}`} variant="default" className="bg-blue-50 border-blue-200">
+                              <AlertTriangle className="h-4 w-4 text-blue-600" />
+                              <div>
+                                <AlertTitle className="text-blue-800 font-semibold">
+                                  {caution.type}
+                                </AlertTitle>
+                                <AlertDescription className="text-blue-700 mt-1">
+                                  {caution.description}
+                                </AlertDescription>
+                              </div>
+                            </Alert>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 전문의 상담 권고 */}
+                      <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="h-5 w-5 text-primary mt-0.5" />
+                          <div>
+                            <h5 className="font-semibold text-primary">전문의 상담 권고</h5>
+                            <p className="text-sm text-primary/80 mt-1">
+                              위 주의사항에 해당하거나 복용 중 이상 반응이 나타날 경우, 
+                              즉시 복용을 중단하고 의사나 약사와 상의하세요.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
 
