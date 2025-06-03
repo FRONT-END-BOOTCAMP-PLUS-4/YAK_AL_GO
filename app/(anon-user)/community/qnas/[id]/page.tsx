@@ -4,6 +4,7 @@ import { QuestionDetailHeader } from '@/components/qna/QuestionDetailHeader';
 import { QuestionDetailCard } from '@/components/qna/QuestionDetailCard';
 import { AnswerDetailList } from '@/components/qna/AnswerDetailList';
 import { AnswerDetailCard } from '@/components/qna/AnswerDetailCard';
+import { AnswerAcceptButton } from '@/components/qna/AnswerAcceptButton';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { QuestionOptionDropdown } from '@/components/qna/QuestionOptionDropdown';
@@ -43,6 +44,12 @@ export default async function QuestionDetailPage({
   // 편집 중인 답변 ID
   const editingAnswerId = typeof edit === 'string' ? parseInt(edit) : null;
 
+  // 채택된 답변이 있는지 확인
+  const hasAcceptedAnswer = question.answers?.some((answer: Answer) => answer.isAccepted) || false;
+
+  // 질문 작성자인지 확인
+  const isQuestionAuthor = (question.user?.id || question.userId) === currentUserId;
+
   // 답변 등록 버튼을 누르면 AnswerSection 컴포넌트가 렌더링된다. 답변 등록 후 페이지 새로고침된다.
   return (
     <div className="min-h-screen bg-gray-50">
@@ -68,8 +75,16 @@ export default async function QuestionDetailPage({
                 key={answer.id ?? `answer-${index}`}
                 answer={answer}
                 currentUserId={currentUserId}
-                isEditing={editingAnswerId === answer.id}
-              />
+                isEditing={editingAnswerId === answer.id}>
+                {answer.id && (
+                  <AnswerAcceptButton
+                    answerId={answer.id}
+                    isAccepted={answer.isAccepted || false}
+                    isQuestionAuthor={isQuestionAuthor}
+                    hasAcceptedAnswer={hasAcceptedAnswer}
+                  />
+                )}
+              </AnswerDetailCard>
             ))}
           </AnswerDetailList>
         </div>

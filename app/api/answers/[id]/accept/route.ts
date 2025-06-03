@@ -4,9 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { AcceptAnswerUseCase } from '@/backend/application/usecases/answer/AcceptAnswerUseCase';
 import { PrismaAnswerRepository } from '@/backend/infra/repositories/prisma/PrismaAnswerRepository';
 import { PrismaQuestionRepository } from '@/backend/infra/repositories/prisma/PrismaQuestionRepository';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
