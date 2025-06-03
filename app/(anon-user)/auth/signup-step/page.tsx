@@ -86,6 +86,8 @@ export default function SignupStepPage() {
       return
     }
 
+
+
     try {
       // 완료 시 db에 회원가입 요청
       const response = await fetch('/api/auth/update-user-db', {
@@ -149,6 +151,7 @@ export default function SignupStepPage() {
                 ...prev,
                 member_type: value === "general" ? 0 : 1,
               }))
+              setError("")
             }}
           >
             <TabsList className="grid w-full grid-cols-2">
