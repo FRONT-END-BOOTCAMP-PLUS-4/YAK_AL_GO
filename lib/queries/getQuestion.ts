@@ -5,7 +5,20 @@ import { QuestionResponseDto } from '@/backend/application/usecases/question/dto
 // answers, question, user 등을 포함하여 조회한다.
 export async function getQuestion(id: string): Promise<QuestionResponseDto> {
   try {
-    const response = await fetch(`http://localhost:3000/api/questions/${id}`, {
+    // For server-side rendering, construct the proper URL
+    let baseUrl = '';
+
+    if (typeof window === 'undefined') {
+      // Server-side: use environment variables or default to localhost
+      baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    } else {
+      // Client-side: use relative URL
+      baseUrl = '';
+    }
+
+    const url = `${baseUrl}/api/questions/${id}`;
+
+    const response = await fetch(url, {
       cache: 'no-store', // Disable caching, or use revalidate
     });
 
