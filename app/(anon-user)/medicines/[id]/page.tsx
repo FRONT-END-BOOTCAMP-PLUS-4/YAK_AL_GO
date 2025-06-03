@@ -777,7 +777,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
     // 괄호 분리: "타이레놀정 500mg (100정)" -> ["타이레놀정 500mg", "(100정)"]
     const bracketMatch = itemName.match(/^(.+?)(\s*\([^)]+\))(.*)$/);
-
     // 약품명에서 용량 정보 추출을 위한 정규식
     // 공백이 있는 경우 (타이레놀정 500mg)와 공백이 없는 경우 (자디스듀오서방정10/1000밀리그램) 모두 처리
     const extractDosage = (name: string) => {
@@ -807,7 +806,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
           <div className="text-xl font-bold">
             {dosageMatch ? dosageMatch[1] : mainPart} {/* 약품명 */}
           </div>
-
           {/* 용량 정보 - 작게 표시하고 줄바꿈 */}
           {dosageMatch && (
             <div className="text-base font-medium text-muted-foreground mt-1">
