@@ -21,7 +21,11 @@ export class CreateQuestionUseCase {
       // Get the full question with tags for Algolia sync
       const fullQuestion = await this.questionRepository.findById(created.id);
       if (fullQuestion && this.algoliaSyncUseCase) {
+<<<<<<< HEAD
         await this.algoliaSyncUseCase.syncQuestion(fullQuestion, []);
+=======
+        await this.algoliaSyncUseCase.syncQuestion(fullQuestion, 0);
+>>>>>>> 2ae9005 ([feat/#102] feat: Algolia 검색 백엔드 구현)
       }
     }
 

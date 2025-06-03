@@ -1,7 +1,11 @@
 import { AlgoliaService } from '@/backend/infra/services/AlgoliaService';
 
 export interface SearchFilters {
+<<<<<<< HEAD
   type?: 'post' | 'question';
+=======
+  type?: 'post' | 'question' | 'answer' | 'comment';
+>>>>>>> 2ae9005 ([feat/#102] feat: Algolia 검색 백엔드 구현)
   userId?: string;
   tags?: string[];
   isAccepted?: boolean;
@@ -40,7 +44,11 @@ export class SearchUseCase {
       }
 
       if (filters.isAccepted !== undefined) {
+<<<<<<< HEAD
         filterParts.push(`answers.isAccepted:${filters.isAccepted}`);
+=======
+        filterParts.push(`isAccepted:${filters.isAccepted}`);
+>>>>>>> 2ae9005 ([feat/#102] feat: Algolia 검색 백엔드 구현)
       }
 
       filterString = filterParts.join(' AND ');
@@ -67,8 +75,13 @@ export class SearchUseCase {
     return this.search(query, { type: 'question' }, page, hitsPerPage);
   }
 
+<<<<<<< HEAD
   async searchQuestionsWithAcceptedAnswers(query: string, page = 0, hitsPerPage = 20): Promise<SearchResult> {
     return this.search(query, { type: 'question', isAccepted: true }, page, hitsPerPage);
+=======
+  async searchAnswers(query: string, page = 0, hitsPerPage = 20): Promise<SearchResult> {
+    return this.search(query, { type: 'answer' }, page, hitsPerPage);
+>>>>>>> 2ae9005 ([feat/#102] feat: Algolia 검색 백엔드 구현)
   }
 
   async searchByUser(query: string, userId: string, page = 0, hitsPerPage = 20): Promise<SearchResult> {

@@ -5,6 +5,7 @@ import { Comment } from '@/backend/domain/entities/Comment';
 import { AlgoliaDocument } from './AlgoliaService';
 
 export class AlgoliaDocumentTransformer {
+<<<<<<< HEAD
   static transformPost(post: Post, comments?: Comment[]): AlgoliaDocument {
     // 댓글 내용을 모두 합쳐서 검색 가능한 content에 포함
     let fullContent = this.extractTextFromContent(post.content);
@@ -24,11 +25,18 @@ export class AlgoliaDocumentTransformer {
       fullContent += ' ' + commentsText;
     }
 
+=======
+  static transformPost(post: Post, commentCount?: number): AlgoliaDocument {
+>>>>>>> 2ae9005 ([feat/#102] feat: Algolia 검색 백엔드 구현)
     return {
       objectID: `post_${post.id}`,
       type: 'post',
       title: post.title,
+<<<<<<< HEAD
       content: fullContent,
+=======
+      content: this.extractTextFromContent(post.content),
+>>>>>>> 2ae9005 ([feat/#102] feat: Algolia 검색 백엔드 구현)
       contentHTML: post.contentHTML,
       createdAt: post.createdAt ? Math.floor(post.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
       updatedAt: post.updatedAt ? Math.floor(post.updatedAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
@@ -36,6 +44,7 @@ export class AlgoliaDocumentTransformer {
       userName: post.user?.name,
       userProfileImage: post.user?.image,
       tags: post.tags?.map((tag) => tag.name) || [],
+<<<<<<< HEAD
       commentCount: commentsData.length,
       comments: commentsData,
     };
@@ -61,11 +70,22 @@ export class AlgoliaDocumentTransformer {
       fullContent += ' ' + answersText;
     }
 
+=======
+      commentCount: commentCount || 0,
+    };
+  }
+
+  static transformQuestion(question: Question, answerCount?: number): AlgoliaDocument {
+>>>>>>> 2ae9005 ([feat/#102] feat: Algolia 검색 백엔드 구현)
     return {
       objectID: `question_${question.id}`,
       type: 'question',
       title: question.title,
+<<<<<<< HEAD
       content: fullContent,
+=======
+      content: this.extractTextFromContent(question.content),
+>>>>>>> 2ae9005 ([feat/#102] feat: Algolia 검색 백엔드 구현)
       contentHTML: question.contentHTML,
       createdAt: question.createdAt ? Math.floor(question.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
       updatedAt: question.updatedAt ? Math.floor(question.updatedAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
@@ -73,8 +93,44 @@ export class AlgoliaDocumentTransformer {
       userName: question.user?.name,
       userProfileImage: question.user?.image,
       tags: question.tags?.map((tag) => tag.name) || [],
+<<<<<<< HEAD
       answerCount: answersData.length,
       answers: answersData,
+=======
+      answerCount: answerCount || 0,
+    };
+  }
+
+  static transformAnswer(answer: Answer, question?: Question): AlgoliaDocument {
+    return {
+      objectID: `answer_${answer.id}`,
+      type: 'answer',
+      content: this.extractTextFromContent(answer.content),
+      contentHTML: answer.contentHTML,
+      createdAt: answer.createdAt ? Math.floor(answer.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
+      updatedAt: answer.updatedAt ? Math.floor(answer.updatedAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
+      userId: answer.userId,
+      userName: answer.user?.name,
+      userProfileImage: answer.user?.image,
+      isAccepted: answer.isAccepted,
+      questionId: answer.qnaId,
+      questionTitle: question?.title,
+    };
+  }
+
+  static transformComment(comment: Comment, post?: Post): AlgoliaDocument {
+    return {
+      objectID: `comment_${comment.id}`,
+      type: 'comment',
+      content: comment.content,
+      createdAt: comment.createdAt ? Math.floor(comment.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
+      updatedAt: comment.updatedAt ? Math.floor(comment.updatedAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
+      userId: comment.userId,
+      userName: comment.user?.name,
+      userProfileImage: comment.user?.image,
+      postId: comment.postId,
+      postTitle: post?.title,
+>>>>>>> 2ae9005 ([feat/#102] feat: Algolia 검색 백엔드 구현)
     };
   }
 
