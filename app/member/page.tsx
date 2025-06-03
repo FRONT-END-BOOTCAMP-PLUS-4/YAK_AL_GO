@@ -97,7 +97,6 @@ export default function ProfilePage() {
   const email = session?.user?.email ?? '';
   const hpid = session?.user?.hpid ?? '';
   const id = session?.user?.id ?? '';
-  const image = session?.user?.image ?? '';
   const member_type = session?.user?.member_type ?? '';
   const photo = session?.user?.photo ?? '';
 
@@ -309,7 +308,7 @@ export default function ProfilePage() {
             <CardContent className="p-6">
               <div className="flex flex-col items-center gap-4">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={image} alt={name} />
+                  <AvatarImage src={photo} alt={name} />
                 </Avatar>
                 <div className="text-center">
                   <h2 className="text-xl font-bold">{name}</h2>
