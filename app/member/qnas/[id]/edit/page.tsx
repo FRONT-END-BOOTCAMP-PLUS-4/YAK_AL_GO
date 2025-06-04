@@ -71,6 +71,8 @@ export default function EditPage() {
           setTags(question.tags);
         }
 
+        if (title.current && question.title) title.current.value = question.title;
+
         setIsLoading(false);
       } catch (error) {
         console.error('Error loading question:', error);
@@ -102,7 +104,6 @@ export default function EditPage() {
         contentHTML: htmlContent,
         tags,
       });
-
 
       // 무한 쿼리 완전히 리셋하고 새로고침
       await queryClient.resetQueries({ queryKey: QUESTIONS_QUERY_KEY });
