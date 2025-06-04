@@ -12,11 +12,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { QuestionCard } from '@/components/community/QuestionCard';
 import { PostCard } from '@/components/community/PostCard';
 import { QnaSkeleton } from '@/components/community/QnaSkeleton';
-<<<<<<< HEAD
 import { SearchAutocomplete } from '@/components/search/SearchAutocomplete';
-=======
-import { SimpleSearch } from '@/components/search/SimpleSearch';
->>>>>>> 7b31cd9 ([feat/#102] refactor: simple algolia search)
 
 export default function CommunityPage() {
   const searchParams = useSearchParams();
@@ -127,14 +123,7 @@ export default function CommunityPage() {
           {/* 간단한 자동완성 검색 바 */}
           <div className="flex flex-col gap-4 sm:flex-row mx-1 mt-6">
             <div className="flex-1">
-<<<<<<< HEAD
               <SearchAutocomplete />
-=======
-              <SimpleSearch
-                placeholder={activeTab === 'qnas' ? '질문을 검색하세요...' : '게시글을 검색하세요...'}
-                activeTab={activeTab as 'qnas' | 'posts'}
-              />
->>>>>>> 7b31cd9 ([feat/#102] refactor: simple algolia search)
             </div>
             <Button asChild>
               {activeTab === 'qnas' ? (
