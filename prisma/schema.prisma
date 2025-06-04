@@ -87,7 +87,6 @@ model medicines {
   inventories      inventories[]
   medi_reviews     medi_reviews[]
   user_medis       user_medis[]
-  medicine_reviews medicine_reviews[]
 
   @@index([item_name])
   @@index([entp_name])
@@ -199,26 +198,9 @@ model review_types {
   is_active        Boolean?
   created_at       DateTime?
   
-  medicine_reviews medicine_reviews[]
+  medi_reviews     medi_reviews[]
   
   @@map("review_types")
-}
-
-model medicine_reviews {
-  id               Int          @id @default(autoincrement())
-  medi_id          String       @map("medi_id")
-  review_type_id   Int          @map("review_type_id")
-  user_id          String       @map("user_id") @db.Uuid
-  
-  medicines        medicines    @relation(fields: [medi_id], references: [item_seq])
-  review_types     review_types @relation(fields: [review_type_id], references: [id])
-  users            users        @relation(fields: [user_id], references: [id])
-  
-  @@unique([medi_id, review_type_id, user_id])
-  @@index([medi_id])
-  @@index([user_id])
-  @@index([review_type_id])
-  @@map("medi_reviews")
 }
 
 model users {
@@ -238,7 +220,7 @@ model users {
   qnas             qnas[]
   user_healths     user_healths[]
   user_medis       user_medis[]
-  medicine_reviews medicine_reviews[]
+  medi_reviews     medi_reviews[]
   pharmacies       pharmacies?        @relation(fields: [hpid], references: [hpid])
 }
 
