@@ -1,7 +1,14 @@
 import { AnswerRepository } from '@/backend/domain/repositories/AnswerRepository';
+import { QuestionRepository } from '@/backend/domain/repositories/QuestionRepository';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
+import { Answer } from '@/backend/domain/entities/Answer';
 
 export class DeleteAnswerUseCase {
-  constructor(private answerRepository: AnswerRepository) {}
+  constructor(
+    private answerRepository: AnswerRepository,
+    private questionRepository?: QuestionRepository,
+    private algoliaSyncUseCase?: AlgoliaSyncUseCase
+  ) {}
 
   async execute(answerId: number, userId: string): Promise<void> {
     // 답변 존재 여부 확인
@@ -20,7 +27,19 @@ export class DeleteAnswerUseCase {
       throw new Error('채택된 답변은 삭제할 수 없습니다.');
     }
 
+    const questionId = existingAnswer.qnaId;
+
     // 답변 삭제 (소프트 삭제)
     await this.answerRepository.delete(answerId);
+
+    // Update question in Algolia with the new list of answers
+    if (this.algoliaSyncUseCase && this.questionRepository && questionId) {
+      const question = await this.questionRepository.findById(questionId);
+      if (question) {
+        // Fetch all remaining answers for the question
+        const remainingAnswers = await this.answerRepository.findByQuestionId(questionId);
+        await this.algoliaSyncUseCase.updateQuestion(question, remainingAnswers);
+      }
+    }
   }
 }

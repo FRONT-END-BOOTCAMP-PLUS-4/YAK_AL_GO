@@ -9,9 +9,9 @@ export class AlgoliaSyncUseCase {
   constructor(private algoliaService: AlgoliaService) {}
 
   // Post sync methods
-  async syncPost(post: Post, commentCount?: number): Promise<void> {
+  async syncPost(post: Post, comments?: Comment[]): Promise<void> {
     try {
-      const document = AlgoliaDocumentTransformer.transformPost(post, commentCount);
+      const document = AlgoliaDocumentTransformer.transformPost(post, comments);
       await this.algoliaService.indexDocument(document);
     } catch (error) {
       console.error('Error syncing post to Algolia:', error);
@@ -19,9 +19,9 @@ export class AlgoliaSyncUseCase {
     }
   }
 
-  async updatePost(post: Post, commentCount?: number): Promise<void> {
+  async updatePost(post: Post, comments?: Comment[]): Promise<void> {
     try {
-      const document = AlgoliaDocumentTransformer.transformPost(post, commentCount);
+      const document = AlgoliaDocumentTransformer.transformPost(post, comments);
       await this.algoliaService.updateDocument(document);
     } catch (error) {
       console.error('Error updating post in Algolia:', error);
@@ -37,18 +37,18 @@ export class AlgoliaSyncUseCase {
   }
 
   // Question sync methods
-  async syncQuestion(question: Question, answerCount?: number): Promise<void> {
+  async syncQuestion(question: Question, answers?: Answer[]): Promise<void> {
     try {
-      const document = AlgoliaDocumentTransformer.transformQuestion(question, answerCount);
+      const document = AlgoliaDocumentTransformer.transformQuestion(question, answers);
       await this.algoliaService.indexDocument(document);
     } catch (error) {
       console.error('Error syncing question to Algolia:', error);
     }
   }
 
-  async updateQuestion(question: Question, answerCount?: number): Promise<void> {
+  async updateQuestion(question: Question, answers?: Answer[]): Promise<void> {
     try {
-      const document = AlgoliaDocumentTransformer.transformQuestion(question, answerCount);
+      const document = AlgoliaDocumentTransformer.transformQuestion(question, answers);
       await this.algoliaService.updateDocument(document);
     } catch (error) {
       console.error('Error updating question in Algolia:', error);
@@ -63,66 +63,10 @@ export class AlgoliaSyncUseCase {
     }
   }
 
-  // Answer sync methods
-  async syncAnswer(answer: Answer, question?: Question): Promise<void> {
-    try {
-      const document = AlgoliaDocumentTransformer.transformAnswer(answer, question);
-      await this.algoliaService.indexDocument(document);
-    } catch (error) {
-      console.error('Error syncing answer to Algolia:', error);
-    }
-  }
-
-  async updateAnswer(answer: Answer, question?: Question): Promise<void> {
-    try {
-      const document = AlgoliaDocumentTransformer.transformAnswer(answer, question);
-      await this.algoliaService.updateDocument(document);
-    } catch (error) {
-      console.error('Error updating answer in Algolia:', error);
-    }
-  }
-
-  async deleteAnswer(answerId: number): Promise<void> {
-    try {
-      await this.algoliaService.deleteDocument(`answer_${answerId}`);
-    } catch (error) {
-      console.error('Error deleting answer from Algolia:', error);
-    }
-  }
-
-  // Comment sync methods
-  async syncComment(comment: Comment, post?: Post): Promise<void> {
-    try {
-      const document = AlgoliaDocumentTransformer.transformComment(comment, post);
-      await this.algoliaService.indexDocument(document);
-    } catch (error) {
-      console.error('Error syncing comment to Algolia:', error);
-    }
-  }
-
-  async updateComment(comment: Comment, post?: Post): Promise<void> {
-    try {
-      const document = AlgoliaDocumentTransformer.transformComment(comment, post);
-      await this.algoliaService.updateDocument(document);
-    } catch (error) {
-      console.error('Error updating comment in Algolia:', error);
-    }
-  }
-
-  async deleteComment(commentId: number): Promise<void> {
-    try {
-      await this.algoliaService.deleteDocument(`comment_${commentId}`);
-    } catch (error) {
-      console.error('Error deleting comment from Algolia:', error);
-    }
-  }
-
   // Bulk sync methods for initial data seeding
-  async bulkSyncPosts(posts: { post: Post; commentCount: number }[]): Promise<void> {
+  async bulkSyncPosts(posts: { post: Post; comments: Comment[] }[]): Promise<void> {
     try {
-      const documents = posts.map(({ post, commentCount }) =>
-        AlgoliaDocumentTransformer.transformPost(post, commentCount)
-      );
+      const documents = posts.map(({ post, comments }) => AlgoliaDocumentTransformer.transformPost(post, comments));
       await this.algoliaService.bulkIndex(documents);
     } catch (error) {
       console.error('Error bulk syncing posts to Algolia:', error);
@@ -130,36 +74,14 @@ export class AlgoliaSyncUseCase {
     }
   }
 
-  async bulkSyncQuestions(questions: { question: Question; answerCount: number }[]): Promise<void> {
+  async bulkSyncQuestions(questions: { question: Question; answers: Answer[] }[]): Promise<void> {
     try {
-      const documents = questions.map(({ question, answerCount }) =>
-        AlgoliaDocumentTransformer.transformQuestion(question, answerCount)
+      const documents = questions.map(({ question, answers }) =>
+        AlgoliaDocumentTransformer.transformQuestion(question, answers)
       );
       await this.algoliaService.bulkIndex(documents);
     } catch (error) {
       console.error('Error bulk syncing questions to Algolia:', error);
-      throw error;
-    }
-  }
-
-  async bulkSyncAnswers(answers: { answer: Answer; question?: Question }[]): Promise<void> {
-    try {
-      const documents = answers.map(({ answer, question }) =>
-        AlgoliaDocumentTransformer.transformAnswer(answer, question)
-      );
-      await this.algoliaService.bulkIndex(documents);
-    } catch (error) {
-      console.error('Error bulk syncing answers to Algolia:', error);
-      throw error;
-    }
-  }
-
-  async bulkSyncComments(comments: { comment: Comment; post?: Post }[]): Promise<void> {
-    try {
-      const documents = comments.map(({ comment, post }) => AlgoliaDocumentTransformer.transformComment(comment, post));
-      await this.algoliaService.bulkIndex(documents);
-    } catch (error) {
-      console.error('Error bulk syncing comments to Algolia:', error);
       throw error;
     }
   }
