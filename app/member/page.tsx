@@ -239,7 +239,16 @@ export default function ProfilePage() {
   };
 
   const handleAddMedicine = async () => {
-    if (!selectedItemSeq || !startDate) return;
+    if (!selectedItemSeq || !startDate) {
+      alert('약품과 시작 날짜를 선택해주세요.');
+      return;
+    }
+
+    // 종료 날짜가 있는 경우 시작 날짜와 비교
+    if (endDate && new Date(endDate) < new Date(startDate)) {
+      alert('종료 날짜는 시작 날짜 이후여야 합니다.');
+      return;
+    }
 
     try {
       const res = await fetch('/api/mypage/medicine', {
@@ -346,11 +355,19 @@ export default function ProfilePage() {
                     {member_type === 1 && (
                       <>
                         <div className="h-px bg-border my-2"></div>
-                        <Button variant="default" className="justify-start mt-2" asChild>
-                          <Link href="/member/inventory" target="_blank" rel="noopener noreferrer">
-                            <Store className="mr-2 h-4 w-4" />
-                            약국 재고 관리
-                          </Link>
+                        <Button
+                          variant="default"
+                          className="justify-start mt-2"
+                          onClick={() => {
+                            if (!hpid || hpid.trim() === '') {
+                              alert('약국 정보가 없습니다.');
+                              return;
+                            }
+                            window.open('/member/inventory', '_blank', 'noopener,noreferrer');
+                          }}
+                        >
+                          <Store className="mr-2 h-4 w-4" />
+                          약국 재고 관리
                         </Button>
                       </>
                     )}
@@ -526,16 +543,31 @@ export default function ProfilePage() {
                                   id="start-date"
                                   type="date"
                                   value={startDate}
-                                  onChange={(e) => setStartDate(e.target.value)}
+                                  onChange={(e) => {
+                                    setStartDate(e.target.value);
+                                    // 종료 날짜가 시작 날짜보다 이전인 경우 종료 날짜 초기화
+                                    if (endDate && new Date(endDate) < new Date(e.target.value)) {
+                                      setEndDate('');
+                                    }
+                                  }}
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label htmlFor="end-date">종료 날짜 (선택사항)</Label>
+                                <Label htmlFor="end-date">종료 날짜</Label>
                                 <Input
                                   id="end-date"
                                   type="date"
                                   value={endDate}
                                   onChange={(e) => setEndDate(e.target.value)}
+                                  min={
+                                    startDate
+                                      ? (() => {
+                                          const nextDay = new Date(startDate);
+                                          nextDay.setDate(nextDay.getDate() + 1);
+                                          return nextDay.toISOString().split('T')[0];
+                                        })()
+                                      : undefined
+                                  }
                                 />
                               </div>
                             </div>
