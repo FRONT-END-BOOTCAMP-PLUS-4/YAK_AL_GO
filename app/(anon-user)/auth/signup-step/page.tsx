@@ -1,47 +1,59 @@
-"use client"
+'use client';
 
-import type React from "react"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import type React from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft } from "lucide-react"
-import ProgressIndicator from "@/components/auth/ProgressIndicator"
-import GeneralForm from "@/components/auth/GeneralForm"
-import PharmacistForm from "@/components/auth/PharmacistForm"
-import ErrorMessage from "@/components/auth/ErrorMessage"
-import SignupMedicationStep from "@/components/auth/SignupMedicationStep"
-
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ArrowLeft } from 'lucide-react';
+import ProgressIndicator from '@/components/auth/ProgressIndicator';
+import GeneralForm from '@/components/auth/GeneralForm';
+import PharmacistForm from '@/components/auth/PharmacistForm';
+import ErrorMessage from '@/components/auth/ErrorMessage';
+import SignupMedicationStep from '@/components/auth/SignupMedicationStep';
 
 export default function SignupStepPage() {
-  const { data: session, update } = useSession()
+  const { data: session, update } = useSession();
   // status로 로딩 상태 확인해서 컴포넌트 렌더링 제어 가능
-  const router = useRouter()
+  const router = useRouter();
 
-  const [userType, setUserType] = useState<"general" | "pharmacist">("general")
-  const [error, setError] = useState("")
+  const [userType, setUserType] = useState<'general' | 'pharmacist'>('general');
+  const [error, setError] = useState('');
 
   // 콘솔 로그
-  console.log("Session data:", session)
+  console.log('Session data:', session);
 
   // 폼 상태 관리
   const [formData, setFormData] = useState({
     // kakao_account
-    email: "",
-    photo: "",
-    name: "",
+    email: '',
+    photo: '',
+    name: '',
     // 약사
-    hpid: "",
+    hpid: '',
     // 일반 회원
-    birthyear: "",
+    birthyear: '',
     member_type: 0, // general : 0, pharmacist : 1
     pregnent: 0, // 0없음 1임산부
     allergy: 0, // 0없음 2알레르기
@@ -51,42 +63,61 @@ export default function SignupStepPage() {
     liverDisease: 0, // 0없음 6간질환
     kidneyDisease: 0, // 0없음 7신장질환
     itemSeq: [], // 복용약품 item_seq
-    startDate: "", // 복용약품 시작일
-    endDate: "", // 복용약품 종료일
-  })
+    startDate: '', // 복용약품 시작일
+    endDate: '', // 복용약품 종료일
+  });
 
-  const [step, setStep] = useState(1)
-
+  const [step, setStep] = useState(1);
 
   // <핸들러>
 
   // 입력 필드 변경 핸들러
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   // 일반 회원일 경우에 다음 컴포넌트 로드
   const handleNextButton = () => {
-    if (!formData.birthyear) {
-      setError("필수항목 : 나이를 입력해주세요.")
-      return
-    }
-    setStep(2);
-  }
+    // 초기에 에러 메시지 초기화
+    setError('');
 
+    // 일반 회원인 경우 나이 확인
+    if (formData.member_type === 0 && !formData.birthyear) {
+      setError('필수항목 : 나이를 입력해주세요.');
+      return;
+    }
+
+    // 약사인 경우 면허번호 확인
+    if (formData.member_type === 1) {
+      if (!formData.hpid) {
+        setError('필수항목 : 약사 면허번호를 입력해주세요.');
+        return;
+      }
+
+      if (!formData.birthyear) {
+        setError('필수항목 : 나이를 입력해주세요.');
+        return;
+      }
+    }
+
+    // 입력값이 유효하면 다음 단계로 이동
+    setStep(2);
+  };
 
   // 약사일경우 hpid검증증
   const handleSubmit = async () => {
     console.log(formData);
-    if (formData.member_type === 1 && !formData.hpid) {
-      setError("약사 회원가입을 위해 약사 면허번호를 입력해주세요.");
-      return
+    // 초기에 에러 메시지 초기화
+    setError('');
+
+    // 약사 회원인 경우 면허번호 필수 확인
+    if (formData.member_type === 1) {
+      if (!formData.hpid) {
+        setError('필수항목 : 약사 면허번호를 입력해주세요.');
+        return;
+      }
     }
-
-
 
     try {
       // 완료 시 db에 회원가입 요청
@@ -100,24 +131,24 @@ export default function SignupStepPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("회원가입 성공:", data);
+        console.log('회원가입 성공:', data);
 
         // 세션 업데이트하여 needsSignup을 false로 변경
         await update();
-        
+
         router.push('/auth/complete'); // 회원가입 완료 페이지로 이동
       } else {
-        const errorData = await response.json().catch(() => ({ 
-          message: `HTTP ${response.status} 오류` 
+        const errorData = await response.json().catch(() => ({
+          message: `HTTP ${response.status} 오류`,
         }));
-        console.error("회원가입 실패:", errorData);
+        console.error('회원가입 실패:', errorData);
         setError(errorData.message || `회원가입에 실패했습니다. (상태 코드: ${response.status})`);
       }
     } catch (error) {
-      console.error("네트워크 오류:", error);
-      setError("네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.");
+      console.error('네트워크 오류:', error);
+      setError('네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.');
     }
-  }
+  };
 
   // if (status === "loading") {
   //   return <div>Loading...</div>
@@ -137,7 +168,7 @@ export default function SignupStepPage() {
               </Link>
             </Button>
             <CardTitle className="text-2xl font-bold">
-              {userType === "general" ? (step === 1 ? "회원가입 (1/2)" : "회원가입 (2/2)") : "회원가입 (1/1)"}
+              {step === 1 ? '회원가입 (1/2)' : '회원가입 (2/2)'}
             </CardTitle>
           </div>
         </CardHeader>
@@ -146,12 +177,41 @@ export default function SignupStepPage() {
           <Tabs
             defaultValue={userType}
             onValueChange={(value) => {
-              setUserType(value as "general" | "pharmacist")
-              setFormData((prev) => ({
-                ...prev,
-                member_type: value === "general" ? 0 : 1,
-              }))
-              setError("")
+              setUserType(value as 'general' | 'pharmacist');
+
+              // 기본 폼 데이터 (유지할 값들)
+              const baseFormData = {
+                // kakao_account 정보는 유지 (session에서 가져오는 값들)
+                email: formData.email,
+                photo: formData.photo,
+                name: formData.name,
+              };
+
+              // 탭 전환 시 폼 데이터 초기화
+              setFormData({
+                ...baseFormData,
+                // 약사
+                hpid: '',
+                // 일반 회원
+                birthyear: '',
+                member_type: value === 'general' ? 0 : 1,
+                pregnent: 0,
+                allergy: 0,
+                hypertension: 0,
+                diabetes: 0,
+                heartDisease: 0,
+                liverDisease: 0,
+                kidneyDisease: 0,
+                itemSeq: [],
+                startDate: '',
+                endDate: '',
+              });
+
+              // 에러 메시지 초기화
+              setError('');
+
+              // 스텝도 1로 초기화
+              setStep(1);
             }}
           >
             <TabsList className="grid w-full grid-cols-2">
@@ -161,22 +221,33 @@ export default function SignupStepPage() {
             {/* 일반회원 경우 컴포넌트 */}
             <TabsContent value="general">
               {/* step state에 따라 두개의 컴포넌트로 분리됨 */}
-              {step === 1 ? <GeneralForm formData={formData} setFormData={setFormData} />
-                : <SignupMedicationStep formData={formData} setFormData={setFormData} />}
+              {step === 1 ? (
+                <GeneralForm formData={formData} setFormData={setFormData} />
+              ) : (
+                <SignupMedicationStep formData={formData} setFormData={setFormData} />
+              )}
             </TabsContent>
             {/* 약사인 경우 컴포넌트*/}
             <TabsContent value="pharmacist">
-              <PharmacistForm formData={formData} handleInputChange={handleInputChange} />
+              {step === 1 ? (
+                <PharmacistForm
+                  formData={formData}
+                  setFormData={setFormData}
+                  handleInputChange={handleInputChange}
+                />
+              ) : (
+                <SignupMedicationStep formData={formData} setFormData={setFormData} />
+              )}
             </TabsContent>
           </Tabs>
           <ErrorMessage error={error} />
         </CardContent>
         <CardFooter>
-          <Button onClick={(userType === 'general' && step === 1) ? handleNextButton : handleSubmit} className="w-full">
-            {(userType === 'general' && step === 1) ? "다음" : "완료"}
+          <Button onClick={step === 1 ? handleNextButton : handleSubmit} className="w-full">
+            {step === 1 ? '다음' : '완료'}
           </Button>
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }
