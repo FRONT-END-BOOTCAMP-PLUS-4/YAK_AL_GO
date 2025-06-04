@@ -2,14 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CreateAnswerDto } from '@/backend/application/usecases/question/dto/AnswerDto';
 import { CreateAnswerUsecase } from '@/backend/application/usecases/question/CreateAnswerUsecase';
 import { PrismaAnswerRepository } from '@/backend/infra/repositories/prisma/PrismaAnswerRepository';
+import { PrismaQuestionRepository } from '@/backend/infra/repositories/prisma/PrismaQuestionRepository';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
+import { AlgoliaService } from '@/backend/infra/services/AlgoliaService';
 import prisma from '@/lib/prisma';
 
 // 답변을 작성할 경우에 해당 함수를 호출한다.
 export async function POST(request: NextRequest) {
   try {
     // 답변 생성에 필요한 레포지토리 및 유스케이스 생성
+    const algoliaService = new AlgoliaService();
+    const algoliaSyncUseCase = new AlgoliaSyncUseCase(algoliaService);
+
     const answerRepository = new PrismaAnswerRepository(prisma);
-    const createAnswerUsecase = new CreateAnswerUsecase(answerRepository);
+    const questionRepository = new PrismaQuestionRepository(prisma);
+    const createAnswerUsecase = new CreateAnswerUsecase(answerRepository, questionRepository, algoliaSyncUseCase);
     const body = await request.json();
 
     const dto: CreateAnswerDto = {

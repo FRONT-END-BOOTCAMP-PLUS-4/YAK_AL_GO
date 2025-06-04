@@ -1,6 +1,8 @@
 import { QuestionRepository } from '@/backend/domain/repositories/QuestionRepository';
+import { AnswerRepository } from '@/backend/domain/repositories/AnswerRepository';
 import { Question } from '@/backend/domain/entities/Question';
 import { Tag } from '@/backend/domain/entities/Tag';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
 
 export interface UpdateQuestionDto {
   title: string;
@@ -10,7 +12,11 @@ export interface UpdateQuestionDto {
 }
 
 export class UpdateQuestionUseCase {
-  constructor(private questionRepository: QuestionRepository) {}
+  constructor(
+    private questionRepository: QuestionRepository,
+    private algoliaSyncUseCase: AlgoliaSyncUseCase,
+    private answerRepository: AnswerRepository
+  ) {}
 
   async execute(questionId: number, userId: string, dto: UpdateQuestionDto): Promise<Question> {
     // 질문 존재 여부 확인
@@ -31,7 +37,7 @@ export class UpdateQuestionUseCase {
     }
 
     // 질문 수정
-    const updatedQuestion = new Question({
+    const updatedQuestionEntity = new Question({
       id: questionId,
       title: dto.title,
       content: dto.content,
@@ -41,10 +47,20 @@ export class UpdateQuestionUseCase {
       updatedAt: new Date(),
     });
 
-    const result = await this.questionRepository.update(questionId, updatedQuestion);
+    const result = await this.questionRepository.update(questionId, updatedQuestionEntity);
 
     // 태그 업데이트 (기존 태그 삭제 후 새 태그 추가)
     await this.questionRepository.updateTags(questionId, dto.tags);
+
+    // Sync with Algolia, including answers
+    if (this.algoliaSyncUseCase) {
+      const answers = await this.answerRepository.findByQuestionId(questionId);
+      // Fetch the full question again to get all updated relations for Algolia
+      const fullQuestionForAlgolia = await this.questionRepository.findById(questionId);
+      if (fullQuestionForAlgolia) {
+        await this.algoliaSyncUseCase.updateQuestion(fullQuestionForAlgolia, answers);
+      }
+    }
 
     return result;
   }

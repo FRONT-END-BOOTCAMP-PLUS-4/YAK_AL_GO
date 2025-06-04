@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaCommentRepository } from '@/backend/infra/repositories/prisma/PrismaCommentRepository';
+import { PrismaPostRepository } from '@/backend/infra/repositories/prisma/PrismaPostRepository';
 import { DeleteCommentUseCase } from '@/backend/application/usecases/comment/DeleteCommentUseCase';
 import { UpdateCommentUseCase, UpdateCommentDto } from '@/backend/application/usecases/comment/UpdateCommentUseCase';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
+import { AlgoliaService } from '@/backend/infra/services/AlgoliaService';
 import prisma from '@/lib/prisma';
 
+const algoliaService = new AlgoliaService();
+const algoliaSyncUseCase = new AlgoliaSyncUseCase(algoliaService);
+
 const commentRepository = new PrismaCommentRepository(prisma);
-const deleteCommentUseCase = new DeleteCommentUseCase(commentRepository);
-const updateCommentUseCase = new UpdateCommentUseCase(commentRepository);
+const postRepository = new PrismaPostRepository(prisma);
+const deleteCommentUseCase = new DeleteCommentUseCase(commentRepository, postRepository, algoliaSyncUseCase);
+const updateCommentUseCase = new UpdateCommentUseCase(commentRepository, postRepository, algoliaSyncUseCase);
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {

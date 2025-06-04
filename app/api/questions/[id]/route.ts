@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaQuestionRepository } from '@/backend/infra/repositories/prisma/PrismaQuestionRepository';
+import { PrismaAnswerRepository } from '@/backend/infra/repositories/prisma/PrismaAnswerRepository';
 import { GetQuestionByIdUseCase } from '@/backend/application/usecases/question/GetQuestionByIdUseCase';
 import { DeleteQuestionUseCase } from '@/backend/application/usecases/question/DeleteQuestionUseCase';
 import {
@@ -9,11 +10,17 @@ import {
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
+import { AlgoliaService } from '@/backend/infra/services/AlgoliaService';
+
+const algoliaService = new AlgoliaService();
+const algoliaSyncUseCase = new AlgoliaSyncUseCase(algoliaService);
 
 const questionRepository = new PrismaQuestionRepository(prisma);
+const answerRepository = new PrismaAnswerRepository(prisma);
 const getQuestionByIdUseCase = new GetQuestionByIdUseCase(questionRepository);
-const deleteQuestionUseCase = new DeleteQuestionUseCase(questionRepository);
-const updateQuestionUseCase = new UpdateQuestionUseCase(questionRepository);
+const deleteQuestionUseCase = new DeleteQuestionUseCase(questionRepository, algoliaSyncUseCase);
+const updateQuestionUseCase = new UpdateQuestionUseCase(questionRepository, algoliaSyncUseCase, answerRepository);
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {

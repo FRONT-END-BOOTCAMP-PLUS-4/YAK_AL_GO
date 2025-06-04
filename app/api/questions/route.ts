@@ -3,12 +3,20 @@ import { PrismaQuestionRepository } from '@/backend/infra/repositories/prisma/Pr
 import { CreateQuestionDto } from '@/backend/application/usecases/question/dto/QuestionDto';
 import { CreateQuestionUseCase } from '@/backend/application/usecases/question/CreateQuestionUseCase';
 import { GetAllQuestionsUseCase } from '@/backend/application/usecases/question/GetAllQuestionsUseCase';
+<<<<<<< HEAD
+=======
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
+import { AlgoliaService } from '@/backend/infra/services/AlgoliaService';
+>>>>>>> 764cedf ([feat/#102] feat: 알골리아 유즈케이스 및 벌크업 싱크 생성, 백엔드 api 연동)
 import prisma from '@/lib/prisma';
 
 import { getToken } from 'next-auth/jwt';
 
+const algoliaService = new AlgoliaService();
+const algoliaSyncUseCase = new AlgoliaSyncUseCase(algoliaService);
+
 const questionRepository = new PrismaQuestionRepository(prisma);
-const createQuestionUseCase = new CreateQuestionUseCase(questionRepository);
+const createQuestionUseCase = new CreateQuestionUseCase(questionRepository, algoliaSyncUseCase);
 const getAllQuestionsUseCase = new GetAllQuestionsUseCase(questionRepository);
 
 export async function POST(request: NextRequest) {

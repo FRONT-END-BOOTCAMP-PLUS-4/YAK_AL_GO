@@ -106,6 +106,68 @@ export class PrismaAnswerRepository implements AnswerRepository {
     return prismaAnswer ? this.mapToEntity(prismaAnswer) : null;
   }
 
+  async findByQuestionId(questionId: number): Promise<Answer[]> {
+    const answers = await this.prisma.answers.findMany({
+      where: {
+        qnaId: questionId,
+        deletedAt: null,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            photo: true,
+            member_type: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return answers.map(this.mapToEntity);
+  }
+
+  async findAll(options: { page: number; limit: number }): Promise<{ answers: Answer[]; hasMore: boolean }> {
+    const { page, limit } = options;
+    const skip = (page - 1) * limit;
+
+    const [answers, total] = await Promise.all([
+      this.prisma.answers.findMany({
+        where: {
+          deletedAt: null,
+        },
+        include: {
+          users: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              photo: true,
+              member_type: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.answers.count({
+        where: {
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    const hasMore = skip + limit < total;
+
+    return {
+      answers: answers.map(this.mapToEntity),
+      hasMore,
+    };
+  }
+
   async acceptAnswer(id: number): Promise<Answer> {
     const updated = await this.prisma.answers.update({
       where: { id },

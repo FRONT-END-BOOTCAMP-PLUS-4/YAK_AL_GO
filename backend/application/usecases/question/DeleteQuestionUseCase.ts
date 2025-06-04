@@ -1,7 +1,8 @@
 import { QuestionRepository } from '@/backend/domain/repositories/QuestionRepository';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
 
 export class DeleteQuestionUseCase {
-  constructor(private questionRepository: QuestionRepository) {}
+  constructor(private questionRepository: QuestionRepository, private algoliaSyncUseCase: AlgoliaSyncUseCase) {}
 
   async execute(questionId: number, userId: string): Promise<void> {
     // 질문 존재 여부 확인
@@ -23,5 +24,9 @@ export class DeleteQuestionUseCase {
 
     // 질문 삭제 (userId도 함께 전달)
     await this.questionRepository.delete(questionId, userId);
+
+    if (this.algoliaSyncUseCase) {
+      await this.algoliaSyncUseCase.deleteQuestion(questionId);
+    }
   }
 }

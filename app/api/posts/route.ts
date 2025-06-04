@@ -5,9 +5,16 @@ import { CreatePostUseCase } from '@/backend/application/usecases/post/CreatePos
 import { GetAllPostsUseCase } from '@/backend/application/usecases/post/GetAllPostsUsecase';
 import prisma from '@/lib/prisma';
 import { getToken } from 'next-auth/jwt';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
+import { AlgoliaService } from '@/backend/infra/services/AlgoliaService';
 
+// Algolia 서비스 생성
+const algoliaService = new AlgoliaService();
+const algoliaSyncUseCase = new AlgoliaSyncUseCase(algoliaService);
+
+// 레포지토리 생성
 const postRepository = new PrismaPostRepository(prisma);
-const createPostUseCase = new CreatePostUseCase(postRepository);
+const createPostUseCase = new CreatePostUseCase(postRepository, algoliaSyncUseCase);
 const getAllPostsUseCase = new GetAllPostsUseCase(postRepository);
 
 export async function POST(request: NextRequest) {

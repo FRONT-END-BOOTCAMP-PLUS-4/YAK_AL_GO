@@ -5,12 +5,30 @@ import { Comment } from '@/backend/domain/entities/Comment';
 import { AlgoliaDocument } from './AlgoliaService';
 
 export class AlgoliaDocumentTransformer {
-  static transformPost(post: Post, commentCount?: number): AlgoliaDocument {
+  static transformPost(post: Post, comments?: Comment[]): AlgoliaDocument {
+    // 댓글 내용을 모두 합쳐서 검색 가능한 content에 포함
+    let fullContent = this.extractTextFromContent(post.content);
+    const commentsData =
+      comments?.map((comment) => ({
+        id: comment.id!,
+        content: comment.content,
+        createdAt: comment.createdAt ? Math.floor(comment.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
+        userId: comment.userId,
+        userName: comment.user?.name,
+        userProfileImage: comment.user?.image,
+      })) || [];
+
+    // 댓글 내용도 검색 가능하도록 content에 추가
+    if (commentsData.length > 0) {
+      const commentsText = commentsData.map((c) => c.content).join(' ');
+      fullContent += ' ' + commentsText;
+    }
+
     return {
       objectID: `post_${post.id}`,
       type: 'post',
       title: post.title,
-      content: this.extractTextFromContent(post.content),
+      content: fullContent,
       contentHTML: post.contentHTML,
       createdAt: post.createdAt ? Math.floor(post.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
       updatedAt: post.updatedAt ? Math.floor(post.updatedAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
@@ -18,16 +36,36 @@ export class AlgoliaDocumentTransformer {
       userName: post.user?.name,
       userProfileImage: post.user?.image,
       tags: post.tags?.map((tag) => tag.name) || [],
-      commentCount: commentCount || 0,
+      commentCount: commentsData.length,
+      comments: commentsData,
     };
   }
 
-  static transformQuestion(question: Question, answerCount?: number): AlgoliaDocument {
+  static transformQuestion(question: Question, answers?: Answer[]): AlgoliaDocument {
+    // 답변 내용을 모두 합쳐서 검색 가능한 content에 포함
+    let fullContent = this.extractTextFromContent(question.content);
+    const answersData =
+      answers?.map((answer) => ({
+        id: answer.id!,
+        content: this.extractTextFromContent(answer.content),
+        createdAt: answer.createdAt ? Math.floor(answer.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
+        userId: answer.userId,
+        userName: answer.user?.name,
+        userProfileImage: answer.user?.image,
+        isAccepted: answer.isAccepted,
+      })) || [];
+
+    // 답변 내용도 검색 가능하도록 content에 추가
+    if (answersData.length > 0) {
+      const answersText = answersData.map((a) => a.content).join(' ');
+      fullContent += ' ' + answersText;
+    }
+
     return {
       objectID: `question_${question.id}`,
       type: 'question',
       title: question.title,
-      content: this.extractTextFromContent(question.content),
+      content: fullContent,
       contentHTML: question.contentHTML,
       createdAt: question.createdAt ? Math.floor(question.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
       updatedAt: question.updatedAt ? Math.floor(question.updatedAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
@@ -35,39 +73,8 @@ export class AlgoliaDocumentTransformer {
       userName: question.user?.name,
       userProfileImage: question.user?.image,
       tags: question.tags?.map((tag) => tag.name) || [],
-      answerCount: answerCount || 0,
-    };
-  }
-
-  static transformAnswer(answer: Answer, question?: Question): AlgoliaDocument {
-    return {
-      objectID: `answer_${answer.id}`,
-      type: 'answer',
-      content: this.extractTextFromContent(answer.content),
-      contentHTML: answer.contentHTML,
-      createdAt: answer.createdAt ? Math.floor(answer.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
-      updatedAt: answer.updatedAt ? Math.floor(answer.updatedAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
-      userId: answer.userId,
-      userName: answer.user?.name,
-      userProfileImage: answer.user?.image,
-      isAccepted: answer.isAccepted,
-      questionId: answer.qnaId,
-      questionTitle: question?.title,
-    };
-  }
-
-  static transformComment(comment: Comment, post?: Post): AlgoliaDocument {
-    return {
-      objectID: `comment_${comment.id}`,
-      type: 'comment',
-      content: comment.content,
-      createdAt: comment.createdAt ? Math.floor(comment.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
-      updatedAt: comment.updatedAt ? Math.floor(comment.updatedAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
-      userId: comment.userId,
-      userName: comment.user?.name,
-      userProfileImage: comment.user?.image,
-      postId: comment.postId,
-      postTitle: post?.title,
+      answerCount: answersData.length,
+      answers: answersData,
     };
   }
 

@@ -21,7 +21,7 @@ export class CreatePostUseCase {
       // Get the full post with tags for Algolia sync
       const fullPost = await this.postRepository.findById(created.id);
       if (fullPost && this.algoliaSyncUseCase) {
-        await this.algoliaSyncUseCase.syncPost(fullPost, 0);
+        await this.algoliaSyncUseCase.syncPost(fullPost, []);
       }
     }
 

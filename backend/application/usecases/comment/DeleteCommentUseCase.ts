@@ -1,7 +1,13 @@
 import { CommentRepository } from '@/backend/domain/repositories/CommentRepository';
+import { PostRepository } from '@/backend/domain/repositories/PostRepository';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
 
 export class DeleteCommentUseCase {
-  constructor(private commentRepository: CommentRepository) {}
+  constructor(
+    private commentRepository: CommentRepository,
+    private postRepository?: PostRepository,
+    private algoliaSyncUseCase?: AlgoliaSyncUseCase
+  ) {}
 
   async execute(commentId: number, userId: string): Promise<void> {
     // 댓글 존재 여부 확인
@@ -17,5 +23,15 @@ export class DeleteCommentUseCase {
 
     // 댓글 삭제 (소프트 삭제)
     await this.commentRepository.delete(commentId);
+
+    // Update post with updated comments in Algolia
+    if (this.algoliaSyncUseCase && this.postRepository) {
+      const post = await this.postRepository.findById(existingComment.postId);
+      if (post) {
+        // 해당 게시물의 모든 댓글을 다시 가져와서 Algolia에 동기화
+        const comments = await this.commentRepository.findByPostId(existingComment.postId);
+        await this.algoliaSyncUseCase.updatePost(post, comments);
+      }
+    }
   }
 }

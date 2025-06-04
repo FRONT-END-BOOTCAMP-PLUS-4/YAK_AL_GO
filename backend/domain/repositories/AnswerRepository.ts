@@ -6,5 +6,7 @@ export interface AnswerRepository {
   update(id: number, answer: Answer): Promise<Answer>;
   delete(id: number): Promise<void>;
   findAcceptedByQuestionId(questionId: number): Promise<Answer | null>;
+  findByQuestionId(questionId: number): Promise<Answer[]>;
+  findAll(options: { page: number; limit: number }): Promise<{ answers: Answer[]; hasMore: boolean }>;
   acceptAnswer(id: number): Promise<Answer>;
 }
