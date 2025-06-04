@@ -1,4 +1,5 @@
 import { PostRepository } from '@/backend/domain/repositories/PostRepository';
+import { CommentRepository } from '@/backend/domain/repositories/CommentRepository';
 import { Post } from '@/backend/domain/entities/Post';
 import { Tag } from '@/backend/domain/entities/Tag';
 import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
@@ -11,7 +12,11 @@ export interface UpdatePostDto {
 }
 
 export class UpdatePostUseCase {
-  constructor(private postRepository: PostRepository, private algoliaSyncUseCase?: AlgoliaSyncUseCase) {}
+  constructor(
+    private postRepository: PostRepository,
+    private algoliaSyncUseCase?: AlgoliaSyncUseCase,
+    private commentRepository?: CommentRepository
+  ) {}
 
   async execute(postId: number, userId: string, dto: UpdatePostDto): Promise<Post> {
     // 게시물 존재 여부 확인
@@ -43,12 +48,13 @@ export class UpdatePostUseCase {
     // 태그 업데이트 (기존 태그 삭제 후 새 태그 추가)
     await this.postRepository.updateTags(postId, dto.tags);
 
-    // Get the full updated post with tags and comments count for Algolia sync
+    // Get the full updated post with tags and comments for Algolia sync
     if (this.algoliaSyncUseCase) {
       const fullPost = await this.postRepository.findById(postId);
       if (fullPost) {
-        const commentCount = fullPost.comments?.length || 0;
-        await this.algoliaSyncUseCase.updatePost(fullPost, commentCount);
+        // 실제 댓글들을 가져와서 Algolia에 동기화
+        const comments = this.commentRepository ? await this.commentRepository.findByPostId(postId) : [];
+        await this.algoliaSyncUseCase.updatePost(fullPost, comments);
       }
     }
 

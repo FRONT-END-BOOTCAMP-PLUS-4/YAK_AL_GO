@@ -2,13 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaQuestionRepository } from '@/backend/infra/repositories/prisma/PrismaQuestionRepository';
 import { CreateQuestionDto } from '@/backend/application/usecases/question/dto/QuestionDto';
 import { CreateQuestionUseCase } from '@/backend/application/usecases/question/CreateQuestionUseCase';
-import { GetAllQuestionsUseCase } from '@/backend/application/usecases/question/GetAllQuestionsUsecase';
+import { GetAllQuestionsUseCase } from '@/backend/application/usecases/question/GetAllQuestionsUseCase';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
+import { AlgoliaService } from '@/backend/infra/services/AlgoliaService';
 import prisma from '@/lib/prisma';
 
 import { getToken } from 'next-auth/jwt';
 
+const algoliaService = new AlgoliaService();
+const algoliaSyncUseCase = new AlgoliaSyncUseCase(algoliaService);
+
 const questionRepository = new PrismaQuestionRepository(prisma);
-const createQuestionUseCase = new CreateQuestionUseCase(questionRepository);
+const createQuestionUseCase = new CreateQuestionUseCase(questionRepository, algoliaSyncUseCase);
 const getAllQuestionsUseCase = new GetAllQuestionsUseCase(questionRepository);
 
 export async function POST(request: NextRequest) {

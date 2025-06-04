@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';
-    const type = searchParams.get('type') as 'post' | 'question' | 'answer' | 'comment' | null;
+    const type = searchParams.get('type') as 'post' | 'question' | null;
     const userId = searchParams.get('userId');
     const tags =
       searchParams
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Build filters
     const filters: any = {};
-    if (type) filters.type = type;
+    if (type && (type === 'post' || type === 'question')) filters.type = type;
     if (userId) filters.userId = userId;
     if (tags && tags.length > 0) filters.tags = tags;
     if (isAccepted !== undefined) filters.isAccepted = isAccepted;

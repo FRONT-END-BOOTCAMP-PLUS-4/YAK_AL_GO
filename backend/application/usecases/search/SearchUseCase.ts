@@ -1,7 +1,7 @@
 import { AlgoliaService } from '@/backend/infra/services/AlgoliaService';
 
 export interface SearchFilters {
-  type?: 'post' | 'question' | 'answer' | 'comment';
+  type?: 'post' | 'question';
   userId?: string;
   tags?: string[];
   isAccepted?: boolean;
@@ -40,7 +40,7 @@ export class SearchUseCase {
       }
 
       if (filters.isAccepted !== undefined) {
-        filterParts.push(`isAccepted:${filters.isAccepted}`);
+        filterParts.push(`answers.isAccepted:${filters.isAccepted}`);
       }
 
       filterString = filterParts.join(' AND ');
@@ -67,8 +67,8 @@ export class SearchUseCase {
     return this.search(query, { type: 'question' }, page, hitsPerPage);
   }
 
-  async searchAnswers(query: string, page = 0, hitsPerPage = 20): Promise<SearchResult> {
-    return this.search(query, { type: 'answer' }, page, hitsPerPage);
+  async searchQuestionsWithAcceptedAnswers(query: string, page = 0, hitsPerPage = 20): Promise<SearchResult> {
+    return this.search(query, { type: 'question', isAccepted: true }, page, hitsPerPage);
   }
 
   async searchByUser(query: string, userId: string, page = 0, hitsPerPage = 20): Promise<SearchResult> {
