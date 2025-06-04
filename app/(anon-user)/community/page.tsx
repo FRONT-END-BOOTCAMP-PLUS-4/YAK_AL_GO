@@ -107,8 +107,8 @@ export default function CommunityPage() {
   }, [isFetchingNext, fetchNext, hasNext]);
 
   return (
-    <div className="container py-8">
-      <div className="flex flex-col gap-6 overflow-auto">
+    <div className="container py-8 ">
+      <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">커뮤니티</h1>
           <p className="text-muted-foreground">약에 관한 정보를 공유하고 소통하는 공간입니다.</p>
