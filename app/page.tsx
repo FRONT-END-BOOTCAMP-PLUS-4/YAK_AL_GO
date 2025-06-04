@@ -5,15 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, MapPin, MessageSquare, Pill, ArrowRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLoadingContext } from '@/providers/LoadingProvider';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   const [currentFeature, setCurrentFeature] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const { navigate } = useLoadingContext();
+  const [isStatsVisible, setIsStatsVisible] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
+  const statsRef = useRef<HTMLElement>(null);
 
   const features = [
     {
@@ -47,6 +51,32 @@ export default function Home() {
       setCurrentFeature((prev) => (prev + 1) % features.length);
     }, 4000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Stats 섹션 Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsStatsVisible(true);
+          // 애니메이션 키를 증가시켜 새로운 애니메이션 실행
+          setAnimationKey(prev => prev + 1);
+        } else {
+          // 섹션이 화면에서 벗어나면 상태 리셋
+          setIsStatsVisible(false);
+        }
+      },
+      {
+        threshold: 0.3, // 30% 보일 때 트리거
+        rootMargin: '0px 0px -100px 0px'
+      }
+    );
+
+    if (statsRef.current) {
+      observer.observe(statsRef.current);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   const handleSearch = () => {
@@ -286,33 +316,148 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="w-full py-16 md:py-24 bg-white">
+      <section ref={statsRef} className="w-full py-16 md:py-24 bg-white">
         <div className="container px-4 md:px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold mb-2" style={{ color: '#4FC4B8' }}>
+            <motion.div 
+              key={`stat-1-${animationKey}`}
+              className="text-center"
+              initial={{ opacity: 0, y: 50 }}
+              animate={isStatsVisible ? { 
+                opacity: 1, 
+                y: 0,
+                transition: {
+                  duration: 0.6,
+                  delay: 0.1,
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 10
+                }
+              } : { opacity: 0, y: 50 }}
+            >
+              <motion.div 
+                key={`stat-number-1-${animationKey}`}
+                className="text-3xl md:text-4xl font-bold mb-2" 
+                style={{ color: '#4FC4B8' }}
+                initial={{ scale: 1 }}
+                animate={isStatsVisible ? {
+                  scale: [1, 1.2, 1],
+                  transition: {
+                    delay: 0.3,
+                    duration: 0.5,
+                    ease: "easeOut"
+                  }
+                } : { scale: 1 }}
+              >
                 2만+
-              </div>
+              </motion.div>
               <div className="text-gray-600">등록된 약품 정보</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold mb-2" style={{ color: '#4FC4B8' }}>
+            </motion.div>
+            
+            <motion.div 
+              key={`stat-2-${animationKey}`}
+              className="text-center"
+              initial={{ opacity: 0, y: 50 }}
+              animate={isStatsVisible ? { 
+                opacity: 1, 
+                y: 0,
+                transition: {
+                  duration: 0.6,
+                  delay: 0.2,
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 10
+                }
+              } : { opacity: 0, y: 50 }}
+            >
+              <motion.div 
+                key={`stat-number-2-${animationKey}`}
+                className="text-3xl md:text-4xl font-bold mb-2" 
+                style={{ color: '#4FC4B8' }}
+                initial={{ scale: 1 }}
+                animate={isStatsVisible ? {
+                  scale: [1, 1.2, 1],
+                  transition: {
+                    delay: 0.4,
+                    duration: 0.5,
+                    ease: "easeOut"
+                  }
+                } : { scale: 1 }}
+              >
                 5천+
-              </div>
+              </motion.div>
               <div className="text-gray-600">전국 약국 정보</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold mb-2" style={{ color: '#4FC4B8' }}>
+            </motion.div>
+            
+            <motion.div 
+              key={`stat-3-${animationKey}`}
+              className="text-center"
+              initial={{ opacity: 0, y: 50 }}
+              animate={isStatsVisible ? { 
+                opacity: 1, 
+                y: 0,
+                transition: {
+                  duration: 0.6,
+                  delay: 0.3,
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 10
+                }
+              } : { opacity: 0, y: 50 }}
+            >
+              <motion.div 
+                key={`stat-number-3-${animationKey}`}
+                className="text-3xl md:text-4xl font-bold mb-2" 
+                style={{ color: '#4FC4B8' }}
+                initial={{ scale: 1 }}
+                animate={isStatsVisible ? {
+                  scale: [1, 1.2, 1],
+                  transition: {
+                    delay: 0.5,
+                    duration: 0.5,
+                    ease: "easeOut"
+                  }
+                } : { scale: 1 }}
+              >
                 24시간
-              </div>
+              </motion.div>
               <div className="text-gray-600">전문가 상담</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold mb-2" style={{ color: '#4FC4B8' }}>
+            </motion.div>
+            
+            <motion.div 
+              key={`stat-4-${animationKey}`}
+              className="text-center"
+              initial={{ opacity: 0, y: 50 }}
+              animate={isStatsVisible ? { 
+                opacity: 1, 
+                y: 0,
+                transition: {
+                  duration: 0.6,
+                  delay: 0.4,
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 10
+                }
+              } : { opacity: 0, y: 50 }}
+            >
+              <motion.div 
+                key={`stat-number-4-${animationKey}`}
+                className="text-3xl md:text-4xl font-bold mb-2" 
+                style={{ color: '#4FC4B8' }}
+                initial={{ scale: 1 }}
+                animate={isStatsVisible ? {
+                  scale: [1, 1.2, 1],
+                  transition: {
+                    delay: 0.6,
+                    duration: 0.5,
+                    ease: "easeOut"
+                  }
+                } : { scale: 1 }}
+              >
                 5
-              </div>
+              </motion.div>
               <div className="text-gray-600">누적 사용자</div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
