@@ -1,5 +1,6 @@
 export async function getPost(id: string) {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/posts/${id}`, {
+  const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const response = await fetch(`${baseUrl}/api/posts/${id}`, {
     cache: 'no-store',
   });
 
