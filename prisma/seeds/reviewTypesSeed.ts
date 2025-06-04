@@ -161,20 +161,16 @@ const reviewTypesData = [
 ];
 
 async function seedReviewTypes() {
-  console.log('🌱 Starting review types seeding...');
 
   try {
     // 기존 데이터 확인
     const existingReviewTypes = await prisma.review_types.count();
-    console.log(`📊 Existing review types: ${existingReviewTypes}`);
 
     if (existingReviewTypes > 0) {
-      console.log('⚠️  Review types already exist. Skipping seed...');
       return;
     }
 
     // 데이터 삽입
-    console.log('📝 Inserting review types data...');
     
     const result = await prisma.review_types.createMany({
       data: reviewTypesData.map(item => ({
@@ -184,13 +180,11 @@ async function seedReviewTypes() {
       skipDuplicates: true,
     });
 
-    console.log(`✅ Successfully seeded ${result.count} review types`);
 
     // 카테고리별 통계 출력
     const categories = [...new Set(reviewTypesData.map(item => item.category))];
     for (const category of categories) {
       const count = reviewTypesData.filter(item => item.category === category).length;
-      console.log(`   📂 ${category}: ${count}개`);
     }
 
   } catch (error) {

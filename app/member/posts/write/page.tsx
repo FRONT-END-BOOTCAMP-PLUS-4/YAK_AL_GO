@@ -59,7 +59,6 @@ export default function WritePage() {
         tags,
       });
 
-      console.log('Post created:', result);
 
       // 무한 쿼리 완전히 리셋하고 새로고침
       await queryClient.resetQueries({ queryKey: POSTS_QUERY_KEY });

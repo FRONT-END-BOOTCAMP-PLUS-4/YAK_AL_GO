@@ -172,7 +172,6 @@ export async function POST(
     const body = await request.json();
     const { selectedOptions } = body;
 
-    console.log('리뷰 업데이트 요청:', { itemSeq, selectedOptions, userId: session.user.id });
 
     if (!itemSeq || itemSeq.trim() === '') {
       return NextResponse.json({
@@ -217,7 +216,6 @@ export async function POST(
         }
       });
 
-      console.log('기존 리뷰 삭제:', deleteResult.count);
 
       let addedCount = 0;
 
@@ -237,7 +235,6 @@ export async function POST(
           }
         });
 
-        console.log('찾은 리뷰 타입들:', reviewTypes);
 
         const reviewTypeMap = new Map(reviewTypes.map(rt => [rt.review_text, rt.id]));
 
@@ -252,7 +249,6 @@ export async function POST(
           })
           .filter((item): item is { user_id: string; medi_id: string; review_type_id: number } => item !== null);
 
-        console.log('추가할 데이터:', addData);
 
         if (addData.length > 0) {
           await tx.medi_reviews.createMany({
@@ -269,7 +265,6 @@ export async function POST(
       };
     });
 
-    console.log('리뷰 업데이트 완료:', result);
 
     return NextResponse.json({
       success: true,
