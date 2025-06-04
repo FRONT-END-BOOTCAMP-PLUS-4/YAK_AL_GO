@@ -47,6 +47,45 @@ export class PrismaCommentRepository implements CommentRepository {
     return comments.map(this.mapToEntity);
   }
 
+  async findAll(options: { page: number; limit: number }): Promise<{ comments: Comment[]; hasMore: boolean }> {
+    const { page, limit } = options;
+    const skip = (page - 1) * limit;
+
+    const [comments, total] = await Promise.all([
+      this.prisma.comments.findMany({
+        where: {
+          deletedAt: null,
+        },
+        include: {
+          users: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              photo: true,
+              member_type: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.comments.count({
+        where: {
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    const hasMore = skip + limit < total;
+
+    return {
+      comments: comments.map(this.mapToEntity),
+      hasMore,
+    };
+  }
+
   async findById(id: number): Promise<Comment | null> {
     const prismaComment = await this.prisma.comments.findFirst({
       where: {

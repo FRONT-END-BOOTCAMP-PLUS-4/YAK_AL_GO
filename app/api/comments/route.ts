@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaCommentRepository } from '@/backend/infra/repositories/prisma/PrismaCommentRepository';
+import { PrismaPostRepository } from '@/backend/infra/repositories/prisma/PrismaPostRepository';
 import { CreateCommentDto } from '@/backend/application/usecases/post/dto/CommentDto';
 import { CreateCommentUsecase } from '@/backend/application/usecases/post/CreateCommentUsecase';
+import { AlgoliaSyncUseCase } from '@/backend/application/usecases/search/AlgoliaSyncUseCase';
+import { AlgoliaService } from '@/backend/infra/services/AlgoliaService';
 import prisma from '@/lib/prisma';
 
+const algoliaService = new AlgoliaService();
+const algoliaSyncUseCase = new AlgoliaSyncUseCase(algoliaService);
+
 const commentRepository = new PrismaCommentRepository(prisma);
-const createCommentUseCase = new CreateCommentUsecase(commentRepository);
+const postRepository = new PrismaPostRepository(prisma);
+const createCommentUseCase = new CreateCommentUsecase(commentRepository, postRepository, algoliaSyncUseCase);
 
 export async function POST(request: NextRequest) {
   try {
