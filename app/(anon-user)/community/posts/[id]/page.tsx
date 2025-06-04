@@ -8,11 +8,6 @@ import { getPost } from '@/lib/queries/getPost';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
-interface Tag {
-  id: number;
-  name: string;
-}
-
 interface Comment {
   id: number;
   content: string;
