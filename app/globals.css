@@ -117,3 +117,58 @@
     font-family: Arial, Helvetica, sans-serif;
   }
 }
+
+/* 404 페이지 애니메이션 */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+}
+
+.character-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.pulse-ring {
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+/* 호버 효과 개선 */
+.character-container:hover .character-float {
+  animation-duration: 1.5s;
+}
+
+/* 404 배지 애니메이션 */
+@keyframes badge-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-5px) scale(1.1);
+  }
+  60% {
+    transform: translateY(-3px) scale(1.05);
+  }
+}
+
+.badge-404 {
+  animation: badge-bounce 2s infinite;
+}
