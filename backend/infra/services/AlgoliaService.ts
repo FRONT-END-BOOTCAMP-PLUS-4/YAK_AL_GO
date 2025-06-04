@@ -40,12 +40,15 @@ export class AlgoliaService {
   private indexName: string;
 
   constructor() {
-    if (!process.env.ALGOLIA_APPLICATION_ID || !process.env.ALGOLIA_ADMIN_API_KEY) {
+    if (!process.env.NEXT_PUBLIC_ALGOLIA_APPLICATION_ID || !process.env.NEXT_PUBLIC_ALGOLIA_ADMIN_API_KEY) {
       throw new Error('Algolia credentials are not properly configured');
     }
 
-    this.client = algoliasearch(process.env.ALGOLIA_APPLICATION_ID, process.env.ALGOLIA_ADMIN_API_KEY);
-    this.indexName = process.env.ALGOLIA_INDEX_NAME || 'yak_al_go_search';
+    this.client = algoliasearch(
+      process.env.NEXT_PUBLIC_ALGOLIA_APPLICATION_ID,
+      process.env.NEXT_PUBLIC_ALGOLIA_ADMIN_API_KEY
+    );
+    this.indexName = process.env.NEXT_PUBLIC_ALGOLIA_INDEX_NAME || 'yak_al_go_search';
   }
 
   async indexDocument(document: AlgoliaDocument): Promise<void> {
