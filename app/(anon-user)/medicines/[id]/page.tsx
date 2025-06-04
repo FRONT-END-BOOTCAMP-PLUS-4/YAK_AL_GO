@@ -334,7 +334,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
       }
 
       if (result.data) {
-        console.log('API 응답 userReviews:', result.data.userReviews);
         setReviewStats(result.data.reviewStats);
         setTotalReviews(result.data.totalReviews);
         setTotalParticipants(result.data.totalParticipants);
@@ -367,7 +366,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
     try {
       setLoading(true, '리뷰를 등록하는 중...');
-      console.log('리뷰 제출 시작:', { selectedOptions, comment, itemSeq });
 
       const response = await fetch(`/api/medicines/${itemSeq}/reviews`, {
         method: 'POST',
