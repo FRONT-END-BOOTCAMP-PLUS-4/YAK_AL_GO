@@ -73,6 +73,8 @@ export default function EditPage() {
           setTags(question.tags);
         }
 
+        if (title.current && question.title) title.current.value = question.title;
+
         setIsLoading(false);
       } catch (error) {
         console.error('Error loading question:', error);
