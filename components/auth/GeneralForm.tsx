@@ -36,22 +36,6 @@ export default function GeneralForm({ formData, setFormData }: any) {
             />
             <Label htmlFor="pregnant">임산부</Label>
           </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="smoking"
-              checked={formData.smoking === 2}
-              onCheckedChange={(checked) => handleCheckboxChange("smoking", checked ? 2 : 0)}
-            />
-            <Label htmlFor="smoking">흡연</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="drinking"
-              checked={formData.drinking === 3}
-              onCheckedChange={(checked) => handleCheckboxChange("drinking", checked ? 3 : 0)}
-            />
-            <Label htmlFor="drinking">음주</Label>
-          </div>
         </div>
       </div>
       {/* 질병 정보 */}
