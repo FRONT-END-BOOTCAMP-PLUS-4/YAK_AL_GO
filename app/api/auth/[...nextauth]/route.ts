@@ -27,6 +27,10 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (dbUser) {
+          // + deletedAt이 null이 아닌 경우 로그인 막기
+          if (dbUser.deleted_at !== null) {
+            return {}; // 빈 객체를 반환하여 로그인 실패 처리
+          }
           // 회원가입이 되어있는 사용자
           token.id = dbUser.id;
           token.birthyear = dbUser.birthyear;
