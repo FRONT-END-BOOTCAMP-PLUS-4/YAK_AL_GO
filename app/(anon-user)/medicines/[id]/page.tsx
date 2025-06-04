@@ -263,7 +263,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
         }
       } catch (geoError) {
         // 위치 권한이 없어도 기본 위치로 진행
-        console.log('위치 권한이 없습니다. 기본 위치를 사용합니다.');
       }
 
       const params = new URLSearchParams({
@@ -335,7 +334,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
       }
 
       if (result.data) {
-        console.log('API 응답 userReviews:', result.data.userReviews);
         setReviewStats(result.data.reviewStats);
         setTotalReviews(result.data.totalReviews);
         setTotalParticipants(result.data.totalParticipants);
@@ -368,7 +366,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
     try {
       setLoading(true, '리뷰를 등록하는 중...');
-      console.log('리뷰 제출 시작:', { selectedOptions, comment, itemSeq });
 
       const response = await fetch(`/api/medicines/${itemSeq}/reviews`, {
         method: 'POST',
@@ -381,7 +378,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
         }),
       });
 
-      console.log('API 응답 상태:', response.status);
 
       // 응답 상태 확인
       if (!response.ok) {
@@ -426,12 +422,9 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
         throw new Error(result.error?.message || '리뷰 등록에 실패했습니다.');
       }
 
-      console.log('리뷰 업데이트 성공:', result.data);
-
       // 성공 메시지 표시
       if (result.data?.addedCount >= 0 || result.data?.removedCount >= 0) {
         const message = `리뷰가 성공적으로 업데이트되었습니다. (추가: ${result.data.addedCount}개, 제거: ${result.data.removedCount}개)`;
-        console.log(message);
       }
 
       // 사용자 상태 미리 업데이트 (즉시 반영)
@@ -443,7 +436,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
         try {
           setLoading(true, '최신 리뷰 정보를 불러오는 중...');
           await fetchReviewStats(itemSeq);
-          console.log('리뷰 통계 업데이트 완료');
         } catch (error) {
           console.error('리뷰 통계 업데이트 실패:', error);
           // 통계 업데이트 실패해도 사용자가 설정한 리뷰는 유지

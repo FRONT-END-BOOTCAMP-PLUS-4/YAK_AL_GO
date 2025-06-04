@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
         
         
         if (!session) {
-            console.log("세션이 없음");
             return NextResponse.json({ message: 'missing session : 인증이 필요합니다.' }, { status: 401 });
         }
         
@@ -51,9 +50,7 @@ export async function POST(req: NextRequest) {
         // 주입
         const joinUsecase = new JoinUsecase(usersRepository, userHealthRepository, userMedisRepository);
         
-        console.log("UseCase 실행 시작");
         const createdUser = await joinUsecase.execute(dto);
-        console.log("UseCase 실행 완료:", createdUser);
 
         return NextResponse.json({ 
             message: "회원가입 성공",

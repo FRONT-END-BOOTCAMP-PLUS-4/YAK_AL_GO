@@ -103,7 +103,6 @@ export default function EditPage() {
         tags,
       });
 
-      console.log('Question updated:', result);
 
       // 무한 쿼리 완전히 리셋하고 새로고침
       await queryClient.resetQueries({ queryKey: QUESTIONS_QUERY_KEY });

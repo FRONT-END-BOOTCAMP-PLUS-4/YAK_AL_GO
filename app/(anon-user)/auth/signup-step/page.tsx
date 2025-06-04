@@ -41,9 +41,6 @@ export default function SignupStepPage() {
   const [userType, setUserType] = useState<'general' | 'pharmacist'>('general');
   const [error, setError] = useState('');
 
-  // 콘솔 로그
-  console.log('Session data:', session);
-
   // 폼 상태 관리
   const [formData, setFormData] = useState({
     // kakao_account
@@ -107,7 +104,6 @@ export default function SignupStepPage() {
 
   // 약사일경우 hpid검증증
   const handleSubmit = async () => {
-    console.log(formData);
     // 초기에 에러 메시지 초기화
     setError('');
 
@@ -131,7 +127,6 @@ export default function SignupStepPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('회원가입 성공:', data);
 
         // 세션 업데이트하여 needsSignup을 false로 변경
         await update();
