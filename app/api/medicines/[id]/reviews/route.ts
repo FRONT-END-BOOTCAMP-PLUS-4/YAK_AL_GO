@@ -120,11 +120,6 @@ export async function GET(
     const totalReviews = reviewStats.length;
     const uniqueUsers = new Set(reviewStats.map(review => review.user_id)).size;
 
-    // 개발 환경에서는 캐시 비활성화, 프로덕션에서는 짧은 캐시
-    const cacheControl = process.env.NODE_ENV === 'development' 
-      ? 'no-cache, no-store, must-revalidate' 
-      : 'public, max-age=60'; // 1분 캐시
-
     return NextResponse.json({
       success: true,
       data: {
@@ -136,7 +131,9 @@ export async function GET(
     }, {
       status: 200,
       headers: {
-        'Cache-Control': cacheControl
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       }
     });
 
@@ -175,6 +172,8 @@ export async function POST(
     const body = await request.json();
     const { selectedOptions } = body;
 
+    console.log('리뷰 업데이트 요청:', { itemSeq, selectedOptions, userId: session.user.id });
+
     if (!itemSeq || itemSeq.trim() === '') {
       return NextResponse.json({
         success: false,
@@ -208,68 +207,41 @@ export async function POST(
 
     const userId = session.user.id;
 
-    // 현재 사용자의 기존 리뷰 조회
-    const existingReviews = await prisma.medi_reviews.findMany({
-      where: {
-        user_id: userId,
-        medi_id: itemSeq
-      },
-      include: {
-        review_types: {
+    // 트랜잭션으로 처리
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. 현재 사용자의 모든 기존 리뷰 삭제
+      const deleteResult = await tx.medi_reviews.deleteMany({
+        where: {
+          user_id: userId,
+          medi_id: itemSeq
+        }
+      });
+
+      console.log('기존 리뷰 삭제:', deleteResult.count);
+
+      let addedCount = 0;
+
+      // 2. 새로운 리뷰 추가 (선택된 옵션이 있는 경우)
+      if (selectedOptions.length > 0) {
+        // 선택된 옵션에 해당하는 리뷰 타입 ID 조회
+        const reviewTypes = await tx.review_types.findMany({
+          where: {
+            review_text: {
+              in: selectedOptions
+            },
+            is_active: true
+          },
           select: {
+            id: true,
             review_text: true
           }
-        }
-      }
-    });
+        });
 
-    const existingOptions = existingReviews.map(review => review.review_types?.review_text).filter(Boolean);
+        console.log('찾은 리뷰 타입들:', reviewTypes);
 
-    // 선택된 옵션에 해당하는 리뷰 타입 ID 조회
-    const reviewTypes = await prisma.review_types.findMany({
-      where: {
-        review_text: {
-          in: selectedOptions
-        },
-        is_active: true
-      },
-      select: {
-        id: true,
-        review_text: true
-      }
-    });
+        const reviewTypeMap = new Map(reviewTypes.map(rt => [rt.review_text, rt.id]));
 
-    const reviewTypeMap = new Map(reviewTypes.map(rt => [rt.review_text, rt.id]));
-
-    // 추가할 옵션과 제거할 옵션 구분
-    const toAdd = selectedOptions.filter(option => !existingOptions.includes(option));
-    const toRemove = existingOptions.filter(option => !selectedOptions.includes(option));
-
-    let addedCount = 0;
-    let removedCount = 0;
-
-    // 트랜잭션으로 처리
-    await prisma.$transaction(async (tx) => {
-      // 제거할 리뷰들
-      if (toRemove.length > 0) {
-        const removeTypeIds = toRemove.map(option => reviewTypeMap.get(option)).filter((id): id is number => id !== undefined);
-        if (removeTypeIds.length > 0) {
-          const deleteResult = await tx.medi_reviews.deleteMany({
-            where: {
-              user_id: userId,
-              medi_id: itemSeq,
-              review_type_id: {
-                in: removeTypeIds
-              }
-            }
-          });
-          removedCount = deleteResult.count;
-        }
-      }
-
-      // 추가할 리뷰들
-      if (toAdd.length > 0) {
-        const addData = toAdd
+        const addData = selectedOptions
           .map(option => {
             const typeId = reviewTypeMap.get(option);
             return typeId ? {
@@ -280,6 +252,8 @@ export async function POST(
           })
           .filter((item): item is { user_id: string; medi_id: string; review_type_id: number } => item !== null);
 
+        console.log('추가할 데이터:', addData);
+
         if (addData.length > 0) {
           await tx.medi_reviews.createMany({
             data: addData
@@ -287,17 +261,32 @@ export async function POST(
           addedCount = addData.length;
         }
       }
+
+      return {
+        removedCount: deleteResult.count,
+        addedCount,
+        totalSelected: selectedOptions.length
+      };
     });
+
+    console.log('리뷰 업데이트 완료:', result);
 
     return NextResponse.json({
       success: true,
       data: {
         message: '리뷰가 성공적으로 업데이트되었습니다.',
-        addedCount,
-        removedCount,
-        totalSelected: selectedOptions.length
+        addedCount: result.addedCount,
+        removedCount: result.removedCount,
+        totalSelected: result.totalSelected
       }
-    }, { status: 200 });
+    }, { 
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
 
   } catch (error: any) {
     console.error('리뷰 등록 오류:', error);
