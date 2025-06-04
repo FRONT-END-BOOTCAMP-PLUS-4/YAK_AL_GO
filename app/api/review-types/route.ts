@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/prisma/generated';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,18 +45,15 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    // 개발 환경에서는 캐시 비활성화
-    const cacheControl = process.env.NODE_ENV === 'development' 
-      ? 'no-cache, no-store, must-revalidate' 
-      : 'public, max-age=3600'; // 1시간 캐시
-
     return NextResponse.json({
       success: true,
       data: groupedReviewTypes
     }, {
       status: 200,
       headers: {
-        'Cache-Control': cacheControl
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       }
     });
 
@@ -74,7 +69,5 @@ export async function GET(request: NextRequest) {
     }, {
       status: 500
     });
-  } finally {
-    await prisma.$disconnect();
   }
 } 

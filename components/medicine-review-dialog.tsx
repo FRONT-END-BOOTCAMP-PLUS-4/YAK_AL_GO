@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -28,26 +28,36 @@ type ReviewTypeApiResponse = {
 interface MedicineReviewDialogProps {
   children: React.ReactNode
   userReviews?: string[]
+  isEditing?: boolean
   onSubmit?: (selectedOptions: string[], comment: string) => void
 }
 
-export const MedicineReviewDialog = ({ children, userReviews = [], onSubmit }: MedicineReviewDialogProps) => {
+export const MedicineReviewDialog = ({ 
+  children, 
+  userReviews = [], 
+  isEditing = false, 
+  onSubmit 
+}: MedicineReviewDialogProps) => {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [comment, setComment] = useState("")
   const [open, setOpen] = useState(false)
   const [reviewOptions, setReviewOptions] = useState<Record<string, ReviewOption[]>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectionError, setSelectionError] = useState<string | null>(null)
 
   const fetchReviewTypes = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const response = await fetch('/api/review-types', {
+      const response = await fetch(`/api/review-types?t=${Date.now()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         },
       })
 
@@ -62,6 +72,7 @@ export const MedicineReviewDialog = ({ children, userReviews = [], onSubmit }: M
       }
 
       if (result.data) {
+        console.log('리뷰 타입 로드 완료:', result.data)
         setReviewOptions(result.data)
       }
     } catch (error: any) {
@@ -78,46 +89,90 @@ export const MedicineReviewDialog = ({ children, userReviews = [], onSubmit }: M
     }
   }, [open])
 
+  // userReviews가 변경될 때마다 selectedOptions 업데이트
   useEffect(() => {
-    if (open && userReviews.length > 0) {
+    if (open) {
       setSelectedOptions([...userReviews])
     }
   }, [open, userReviews])
 
   const handleOptionToggle = (option: string) => {
+    // 선택 해제하는 경우 에러 메시지 초기화
     if (selectedOptions.includes(option)) {
       setSelectedOptions(selectedOptions.filter((item) => item !== option))
-    } else {
-      setSelectedOptions([...selectedOptions, option])
+      setSelectionError(null)
+      return
     }
+    
+    // 최대 5개까지만 선택 가능하도록 제한
+    if (selectedOptions.length >= 5) {
+      setSelectionError("최대 5개까지만 선택할 수 있습니다.")
+      return
+    }
+    
+    setSelectedOptions([...selectedOptions, option])
+    setSelectionError(null)
   }
 
-  const handleSubmit = () => {
-    if (onSubmit) {
-      onSubmit(selectedOptions, comment)
+  const handleSubmit = async () => {
+    if (selectedOptions.length > 5) {
+      setSelectionError("최대 5개까지만 선택할 수 있습니다.")
+      return
     }
+    
+    if (onSubmit) {
+      await onSubmit(selectedOptions, comment)
+    }
+    
     setOpen(false)
-    setSelectedOptions([])
     setComment("")
+    setSelectionError(null)
   }
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen)
     if (!newOpen) {
       // 다이얼로그가 닫힐 때 상태 초기화
-      setSelectedOptions([])
       setComment("")
       setError(null)
+      setSelectionError(null)
+    } else {
+      // 다이얼로그가 열릴 때 최신 userReviews로 초기화
+      setSelectedOptions([...userReviews])
     }
   }
+
+  // 리뷰 작성/수정 모드에 따른 다이얼로그 제목
+  const dialogTitle = isEditing ? "약품 리뷰 수정" : "약품 리뷰 작성"
+  
+  // 리뷰 작성/수정 모드에 따른 버튼 텍스트
+  const buttonText = isEditing ? "리뷰 수정" : "리뷰 등록"
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>약품 리뷰 작성</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
         </DialogHeader>
+        
+        <div className="flex justify-between items-center mt-2 mb-2">
+          {selectionError ? (
+            <p className="text-sm text-red-600 font-medium">
+              {selectionError}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {isEditing 
+                ? "리뷰를 수정하거나 모두 해제할 수 있습니다." 
+                : "의약품에 대한 느낌을 선택해주세요."
+              }
+            </p>
+          )}
+          <p className="text-sm font-medium">
+            {selectedOptions.length}/5 선택됨
+          </p>
+        </div>
         
         <div className="py-4 space-y-6">
           {loading ? (
@@ -195,9 +250,9 @@ export const MedicineReviewDialog = ({ children, userReviews = [], onSubmit }: M
         <DialogFooter>
           <Button 
             onClick={handleSubmit} 
-            disabled={selectedOptions.length === 0 || loading}
+            disabled={!isEditing && selectedOptions.length === 0 || loading}
           >
-            리뷰 등록
+            {buttonText}
           </Button>
         </DialogFooter>
       </DialogContent>

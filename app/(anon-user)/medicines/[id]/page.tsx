@@ -314,10 +314,13 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
     try {
       setReviewStatsLoading(true);
 
-      const response = await fetch(`/api/medicines/${itemSeq}/reviews`, {
+      const response = await fetch(`/api/medicines/${itemSeq}/reviews?t=${Date.now()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         },
       });
 
@@ -332,6 +335,7 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
       }
 
       if (result.data) {
+        console.log('API 응답 userReviews:', result.data.userReviews);
         setReviewStats(result.data.reviewStats);
         setTotalReviews(result.data.totalReviews);
         setTotalParticipants(result.data.totalParticipants);
@@ -364,16 +368,20 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
     try {
       setLoading(true, '리뷰를 등록하는 중...');
+      console.log('리뷰 제출 시작:', { selectedOptions, comment, itemSeq });
 
       const response = await fetch(`/api/medicines/${itemSeq}/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
         },
         body: JSON.stringify({
           selectedOptions,
         }),
       });
+
+      console.log('API 응답 상태:', response.status);
 
       // 응답 상태 확인
       if (!response.ok) {
@@ -418,19 +426,32 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
         throw new Error(result.error?.message || '리뷰 등록에 실패했습니다.');
       }
 
-      // 성공시 리뷰 통계 새로고침
-      await fetchReviewStats(itemSeq);
-
-      // 사용자 상태 업데이트
-      setUserComment(comment);
-
       console.log('리뷰 업데이트 성공:', result.data);
 
-      // 성공 메시지 표시 (선택 사항)
-      if (result.data?.addedCount > 0 || result.data?.removedCount > 0) {
+      // 성공 메시지 표시
+      if (result.data?.addedCount >= 0 || result.data?.removedCount >= 0) {
         const message = `리뷰가 성공적으로 업데이트되었습니다. (추가: ${result.data.addedCount}개, 제거: ${result.data.removedCount}개)`;
         console.log(message);
       }
+
+      // 사용자 상태 미리 업데이트 (즉시 반영)
+      setUserReviews([...selectedOptions]);
+      setUserComment(comment);
+
+      // 1초 지연 후 서버에서 최신 데이터 가져오기
+      setTimeout(async () => {
+        try {
+          setLoading(true, '최신 리뷰 정보를 불러오는 중...');
+          await fetchReviewStats(itemSeq);
+          console.log('리뷰 통계 업데이트 완료');
+        } catch (error) {
+          console.error('리뷰 통계 업데이트 실패:', error);
+          // 통계 업데이트 실패해도 사용자가 설정한 리뷰는 유지
+        } finally {
+          setLoading(false);
+        }
+      }, 1000);
+
     } catch (error: any) {
       console.error('리뷰 등록 오류:', error);
 
@@ -444,7 +465,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
       }
 
       alert(errorMessage);
-    } finally {
       setLoading(false);
     }
   };
@@ -1282,6 +1302,9 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
 
                           // 리뷰 개수(count)가 많은 순으로 정렬
                           const sortedReviews = [...reviews].sort((a, b) => b.count - a.count);
+                          
+                          // 각 카테고리당 최대 5개의 리뷰만 표시
+                          const limitedReviews = sortedReviews.slice(0, 5);
 
                           return (
                             <div key={categoryName} className="mb-6">
@@ -1293,7 +1316,7 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                                 {categoryName}
                               </h4>
                               <div className="grid grid-cols-2 gap-2 mb-4">
-                                {sortedReviews.map((review) => {
+                                {limitedReviews.map((review) => {
                                   // 사용자가 이 리뷰를 선택했는지 확인
                                   const isUserSelected = userReviews.includes(review.text);
 
@@ -1385,7 +1408,7 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
                       로딩 중...
                     </Button>
                   ) : session ? (
-                    <MedicineReviewDialog userReviews={userReviews} onSubmit={handleReviewSubmit}>
+                    <MedicineReviewDialog userReviews={userReviews} isEditing={userReviews.length > 0} onSubmit={handleReviewSubmit}>
                       <Button variant="outline" className="w-full">
                         {userReviews.length > 0 ? '리뷰 수정하기' : '리뷰 작성하기'}
                       </Button>
