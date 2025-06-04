@@ -72,6 +72,7 @@ export const MedicineReviewDialog = ({
       }
 
       if (result.data) {
+        console.log('리뷰 타입 로드 완료:', result.data)
         setReviewOptions(result.data)
       }
     } catch (error: any) {
