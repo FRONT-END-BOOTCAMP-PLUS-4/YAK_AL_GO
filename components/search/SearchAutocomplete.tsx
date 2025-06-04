@@ -10,6 +10,7 @@ import {
   Snippet,
 } from 'react-instantsearch';
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 
 const searchClient = algoliasearch(
   process.env.NEXT_PUBLIC_ALGOLIA_APPLICATION_ID!,
@@ -17,57 +18,68 @@ const searchClient = algoliasearch(
 );
 
 function AutocompleteHit({ hit }: { hit: any }) {
-  return (
-    <div className="group w-full hover:bg-gray-50 transition cursor-pointer flex items-start gap-3 border-b border-gray-100 px-4 py-3">
-      {/* 프로필 이미지 */}
-      <div className="flex-shrink-0">
-        {hit.userProfileImage ? (
-          <img
-            src={hit.userProfileImage}
-            alt="User profile"
-            className="w-11 h-11 rounded-full object-cover border border-gray-200"
-          />
-        ) : (
-          <div className="w-11 h-11 rounded-full bg-gray-200 flex items-center justify-center border border-gray-300">
-            <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-            </svg>
-          </div>
-        )}
-      </div>
+  const getLinkHref = () => {
+    if (hit.type === 'question' && hit.objectID) {
+      return `/community/qnas/${hit.objectID.replace('question_', '')}`;
+    } else if (hit.type === 'post' && hit.objectID) {
+      return `/community/posts/${hit.objectID.replace('post_', '')}`;
+    }
+    return '#';
+  };
 
-      {/* 텍스트 콘텐츠 */}
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-gray-800 truncate">
-          <Highlight hit={hit} attribute="title" />
+  return (
+    <Link href={getLinkHref()} passHref legacyBehavior>
+      <a className="group w-full hover:bg-gray-50 transition cursor-pointer flex items-start gap-3 border-b border-gray-100 px-4 py-3">
+        {/* 프로필 이미지 */}
+        <div className="flex-shrink-0">
+          {hit.userProfileImage ? (
+            <img
+              src={hit.userProfileImage}
+              alt="User profile"
+              className="w-11 h-11 rounded-full object-cover border border-gray-200"
+            />
+          ) : (
+            <div className="w-11 h-11 rounded-full bg-gray-200 flex items-center justify-center border border-gray-300">
+              <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+              </svg>
+            </div>
+          )}
         </div>
-        {hit.content && (
-          <div className="text-xs text-gray-500 leading-snug mt-1 line-clamp-2">
-            <Snippet hit={hit} attribute="content" />
+
+        {/* 텍스트 콘텐츠 */}
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-gray-800 truncate">
+            <Highlight hit={hit} attribute="title" />
           </div>
-        )}
-        {hit.tags?.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {hit.tags.slice(0, 3).map((tag: string, idx: number) => (
-              <div
-                key={idx}
-                className="flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">
-                <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
-                  />
-                </svg>
-                {tag}
-              </div>
-            ))}
-            {hit.tags.length > 3 && <span className="text-xs text-gray-400">+{hit.tags.length - 3}</span>}
-          </div>
-        )}
-      </div>
-    </div>
+          {hit.content && (
+            <div className="text-xs text-gray-500 leading-snug mt-1 line-clamp-2">
+              <Snippet hit={hit} attribute="content" />
+            </div>
+          )}
+          {hit.tags?.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {hit.tags.slice(0, 3).map((tag: string, idx: number) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">
+                  <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+                    />
+                  </svg>
+                  {tag}
+                </div>
+              ))}
+              {hit.tags.length > 3 && <span className="text-xs text-gray-400">+{hit.tags.length - 3}</span>}
+            </div>
+          )}
+        </div>
+      </a>
+    </Link>
   );
 }
 
