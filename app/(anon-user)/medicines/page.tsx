@@ -448,14 +448,14 @@ export default function MedicinesPage() {
             ))}
           </TabsList>
 
-          <div className="flex justify-between items-center mt-4">
-            <Button onClick={openSearchModal} className="flex items-center gap-2">
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mt-4">
+            <Button onClick={openSearchModal} className="flex items-center gap-2 justify-center sm:justify-start">
               <Search className="h-4 w-4" />
               {searchQuery ? `"${searchQuery}"로 검색됨` : '약 검색하기'}
             </Button>
 
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex gap-2" onClick={handleSort}>
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+              <Button variant="outline" className="flex gap-2 justify-center" onClick={handleSort}>
                 <ArrowUpDown className="h-4 w-4" />
                 {sortOrder === 'asc'
                   ? '가나다순 ↓'
@@ -465,7 +465,7 @@ export default function MedicinesPage() {
               </Button>
               <Button
                 variant="outline"
-                className={`flex gap-2 ${!hasActiveFilters() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`flex gap-2 justify-center ${!hasActiveFilters() ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={handleResetFilters}
                 disabled={!hasActiveFilters()}
               >

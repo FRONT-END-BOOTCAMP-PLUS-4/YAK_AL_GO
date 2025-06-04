@@ -51,9 +51,9 @@ export function MedicineWarningDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden border-2 border-red-200">
+      <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden border-2 border-red-200 rounded-lg sm:rounded-lg">
         {/* Colored header bar */}
-        <div className="bg-gradient-to-r from-red-500 to-orange-500 py-4 px-6">
+        <div className="bg-gradient-to-r from-red-500 to-orange-500 py-4 px-6 rounded-t-lg">
           <DialogHeader className="pb-0">
             <DialogTitle className="flex items-center gap-2 text-white text-xl">
               <AlertTriangle className="h-6 w-6" />
@@ -111,7 +111,7 @@ export function MedicineWarningDialog({
           </div>
         </div>
 
-        <DialogFooter className="px-5 py-4 bg-gray-50 border-t flex flex-row justify-between">
+        <DialogFooter className="px-5 py-4 bg-gray-50 border-t flex flex-row justify-between rounded-b-lg">
           <Badge variant="outline" className="bg-white">
             안전한 복용을 위해 확인해주세요
           </Badge>
