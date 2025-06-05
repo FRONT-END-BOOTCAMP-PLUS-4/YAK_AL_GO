@@ -37,7 +37,9 @@ export default function EditPage() {
   // 태그 선택 상태
   const [tags, setTags] = useState<Tag[]>([]);
   // 제목 입력 상태
-  const title = useRef<HTMLInputElement>(null);
+  // const title = useRef<HTMLInputElement>(null);
+  const [title, setTitle] = useState<string | null>(null);
+
   // editor 상태
   const editorState = useRef<SerializedEditorState>(initialValue);
   // 로딩 상태
@@ -57,8 +59,8 @@ export default function EditPage() {
         const question = await getQuestion(questionId);
 
         // 폼에 기존 데이터 설정
-        if (title.current) {
-          title.current.value = question.title;
+        if (question.title) {
+          setTitle(question.title);
         }
 
         // 에디터 상태 설정
@@ -70,8 +72,6 @@ export default function EditPage() {
         if (question.tags) {
           setTags(question.tags);
         }
-
-        if (title.current && question.title) title.current.value = question.title;
 
         setIsLoading(false);
       } catch (error) {
@@ -99,7 +99,7 @@ export default function EditPage() {
     try {
       // 질문 수정 요청
       const result = await updateQuestion(parseInt(questionId), {
-        title: title.current?.value || '',
+        title: title || '',
         content: editorState.current,
         contentHTML: htmlContent,
         tags,
@@ -146,7 +146,13 @@ export default function EditPage() {
                   <label htmlFor="title" className="text-sm font-medium">
                     제목
                   </label>
-                  <Input id="title" ref={title} placeholder="제목을 입력하세요" required />
+                  <Input
+                    id="title"
+                    value={title || ''}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="제목을 입력하세요"
+                    required
+                  />
                 </div>
 
                 <div className="flex flex-col gap-2">
