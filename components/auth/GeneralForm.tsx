@@ -43,12 +43,12 @@ export default function GeneralForm({ formData, setFormData }: any) {
         <Label htmlFor="disease">질병 정보</Label>
         <div className="space-y-2">
           {[
-            { id: "hypertension", label: "고혈압", value: 4 },
-            { id: "diabetes", label: "당뇨", value: 5 },
-            { id: "heartDisease", label: "심장질환", value: 6 },
-            { id: "liverDisease", label: "간질환", value: 7 },
-            { id: "kidneyDisease", label: "신장질환", value: 8 },
-            { id: "allergy", label: "알레르기", value: 9 },
+            { id: "hypertension", label: "고혈압", value: 3 },
+            { id: "diabetes", label: "당뇨", value: 4 },
+            { id: "heartDisease", label: "심장질환", value: 5 },
+            { id: "liverDisease", label: "간질환", value: 6 },
+            { id: "kidneyDisease", label: "신장질환", value: 7 },
+            { id: "allergy", label: "알레르기", value: 2 },
           ].map((disease) => (
             <div key={disease.id} className="flex items-center space-x-2">
               <Checkbox
