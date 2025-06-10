@@ -9,7 +9,7 @@ import { SessionProvider } from '@/components/session-provider';
 import ScrollToTop from '@/components/ui/ScrollToTop';
 import { LoadingProvider } from '@/providers/LoadingProvider';
 import MouseFollower from '@/components/MouseFollower';
-
+import Script from 'next/script';
 const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({
@@ -23,13 +23,21 @@ export default function RootLayout({
         <title>약알고 - 당신의 약, 한눈에</title>
       </head>
       <body className={inter.className}>
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=AW-17177794901" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-17177794901');
+          `}
+        </Script>
+        <Script
+          src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+          strategy="beforeInteractive"
+        />
         <MouseFollower />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <SessionProvider>
             <ReactQueryProviders>
               <LoadingProvider>
