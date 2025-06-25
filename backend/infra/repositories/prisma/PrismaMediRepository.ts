@@ -5,7 +5,7 @@ import type {
   MediListResult,
 } from '@/backend/domain/repositories/MediRepository';
 import type { CategoryType } from '@/backend/application/usecases/medicines/dto/MediListDto';
-import { CATEGORY_KEYWORDS } from '@/backend/application/usecases/medicines/dto/MediListDto';
+import { CATEGORY_KEYWORDS, DISEASE_CLASS_NO_MAP } from '@/backend/application/usecases/medicines/dto/MediListDto';
 import { Medicine } from '@/backend/domain/entities/Medicine';
 
 // Prisma 쿼리 조건 타입 정의
@@ -15,6 +15,7 @@ interface WhereCondition {
     item_name?: { contains: string; mode: 'insensitive' };
     material_name?: { contains: string; mode: 'insensitive' };
     entp_name?: { contains: string; mode: 'insensitive' };
+    class_no?: { contains: string; mode: 'insensitive' };
   }>;
   class_no?: { contains: string; mode: 'insensitive' };
   item_seq?: { gt: string };
@@ -152,13 +153,31 @@ export class PrismaMediRepository implements MediRepository {
       cancel_date: null,
     };
 
-    // 검색 조건 추가 (의약품명, 성분, 제조사)
+    // 검색 조건 추가 (의약품명, 성분, 제조사, 병명)
     if (search) {
-      whereCondition.OR = [
-        { item_name: { contains: search, mode: 'insensitive' } },
-        { material_name: { contains: search, mode: 'insensitive' } },
-        { entp_name: { contains: search, mode: 'insensitive' } },
-      ];
+      // 병명 검색 처리
+      const normalizedSearch = search.toLowerCase().trim();
+      const diseaseKeywords = DISEASE_CLASS_NO_MAP[normalizedSearch];
+      
+      if (diseaseKeywords && diseaseKeywords.length > 0) {
+        // 병명 검색: CLASS_NO에서 해당 키워드들로 검색
+        whereCondition.OR = [
+          { item_name: { contains: search, mode: 'insensitive' } },
+          { material_name: { contains: search, mode: 'insensitive' } },
+          { entp_name: { contains: search, mode: 'insensitive' } },
+          // 병명에 해당하는 CLASS_NO 키워드들로 검색
+          ...diseaseKeywords.map(keyword => ({
+            class_no: { contains: keyword, mode: 'insensitive' as const }
+          }))
+        ];
+      } else {
+        // 일반 검색: 의약품명, 성분, 제조사만 검색
+        whereCondition.OR = [
+          { item_name: { contains: search, mode: 'insensitive' } },
+          { material_name: { contains: search, mode: 'insensitive' } },
+          { entp_name: { contains: search, mode: 'insensitive' } },
+        ];
+      }
     }
 
     // 카테고리 필터링 (키워드 기반)

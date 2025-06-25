@@ -25,6 +25,8 @@ import {
   selectMedicineImage,
   MAIN_CATEGORIES,
   CATEGORY_KEY_MAP,
+  isDiseaseSearch,
+  getMedicineKeywordsForDisease,
   type SimplifiedMedicine,
 } from '@/utils/medicineFormatter';
 import { useSearchParams } from 'next/navigation';
@@ -228,21 +230,33 @@ export default function MedicinesPage() {
    * 검색 실행 함수
    */
   const executeSearch = useCallback(
-    (query?: string) => {
+    (query?: string, category?: string) => {
       const searchTerm = query !== undefined ? query : searchQuery;
+      const searchCategory = category !== undefined ? category : activeTab;
 
       // 매개변수로 받은 검색어가 있으면 상태 업데이트
       if (query !== undefined) {
         setSearchQuery(query);
       }
 
+      // 매개변수로 받은 카테고리가 있으면 상태 업데이트
+      if (category !== undefined) {
+        setActiveTab(category);
+      }
+
       setCurrentPage(1);
 
-      // 🔍 검색 시에는 카테고리 필터를 적용하지 않고 전체 범위에서 검색
-      const category = searchTerm.trim() ? '전체' : CATEGORY_KEY_MAP[activeTab];
+      // 🔍 검색 시 카테고리 필터 적용
+      const categoryToUse = searchCategory === 'all' ? '전체' : CATEGORY_KEY_MAP[searchCategory];
 
-      fetchMedicinesFromApi(1, searchTerm.trim(), category);
+      // 백엔드에서 병명 검색을 처리하므로 단순히 검색어 전달
+      fetchMedicinesFromApi(1, searchTerm.trim(), categoryToUse);
       setIsSearchModalOpen(false);
+
+      // 병명 검색 모드인 경우 콘솔에 로그 출력 (디버깅용)
+      if (searchTerm.trim() && isDiseaseSearch(searchTerm.trim())) {
+        console.log(`🔍 병명 검색: "${searchTerm}"`);
+      }
     },
     [searchQuery, activeTab, fetchMedicinesFromApi]
   );
@@ -412,7 +426,7 @@ export default function MedicinesPage() {
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">약 검색</h1>
           <p className="text-muted-foreground">
-            약 이름, 성분, 제조사 등으로 검색하여 원하는 약을 찾아보세요.
+            약 이름, 성분, 제조사, 병명 등으로 검색하여 원하는 약을 찾아보세요.
           </p>
         </div>
 
@@ -451,7 +465,15 @@ export default function MedicinesPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mt-4">
             <Button onClick={openSearchModal} className="flex items-center gap-2 justify-center sm:justify-start">
               <Search className="h-4 w-4" />
-              {searchQuery ? `"${searchQuery}"로 검색됨` : '약 검색하기'}
+              {searchQuery 
+                ? (() => {
+                    const isDisease = isDiseaseSearch(searchQuery);
+                    const categoryText = activeTab !== 'all' ? ` (${MAIN_CATEGORIES.find(c => c.key === activeTab)?.label})` : '';
+                    return `"${searchQuery}"${categoryText}${isDisease ? ' (병명검색)' : ''}로 검색됨`;
+                  })()
+                : activeTab !== 'all'
+                  ? `${MAIN_CATEGORIES.find(c => c.key === activeTab)?.label} 카테고리`
+                  : '약 검색하기'}
             </Button>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
@@ -482,6 +504,7 @@ export default function MedicinesPage() {
             searchQuery={searchQuery}
             onSearchQueryChange={handleSearchQueryChange}
             onSearch={executeSearch}
+            currentCategory={activeTab}
           />
 
           {MAIN_CATEGORIES.map((category) => (
@@ -509,7 +532,14 @@ export default function MedicinesPage() {
                         )
                       : !isLoading && (
                           <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                            <p className="text-muted-foreground">검색 결과가 없습니다.</p>
+                            <p className="text-muted-foreground">
+                              {searchQuery 
+                                ? `"${searchQuery}"${activeTab !== 'all' ? ` (${MAIN_CATEGORIES.find(c => c.key === activeTab)?.label})` : ''}에 대한 검색 결과가 없습니다.`
+                                : '해당 카테고리에 의약품이 없습니다.'}
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-2">
+                              다른 검색어, 카테고리, 또는 병명을 시도해보세요.
+                            </p>
                           </div>
                         )}
                   </div>
