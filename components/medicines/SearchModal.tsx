@@ -60,7 +60,12 @@ const SearchModal = ({
   };
 
   const handleCategorySelect = (categoryKey: string) => {
-    setSelectedCategory(categoryKey);
+    // 같은 카테고리를 다시 클릭하면 선택 해제 (빈 상태로 변경)
+    if (selectedCategory === categoryKey) {
+      setSelectedCategory('all');
+    } else {
+      setSelectedCategory(categoryKey);
+    }
   };
 
   return (
@@ -118,14 +123,6 @@ const SearchModal = ({
                 </Button>
               ))}
             </div>
-            <Button
-              variant={selectedCategory === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleCategorySelect('all')}
-              className="w-full"
-            >
-              전체 카테고리
-            </Button>
           </div>
 
           {/* 선택된 카테고리 표시 */}
@@ -157,10 +154,8 @@ const SearchModal = ({
           </div>
 
           {/* 검색 팁 */}
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p>💡 팁 : 의약품명의 일부만 입력해도 검색됩니다</p>
-            <p>💡 팁 : 카테고리를 선택하면 해당 분야의 약만 검색됩니다</p>
-            <p>💡 팁 : 병명으로도 검색할 수 있습니다</p>
+          <div className="text-sm text-muted-foreground">
+            <p>💡 팁 : 의약품명, 성분, 제조사, 병명, 카테고리명으로 검색할 수 있습니다</p>
           </div>
         </div>
       </DialogContent>
