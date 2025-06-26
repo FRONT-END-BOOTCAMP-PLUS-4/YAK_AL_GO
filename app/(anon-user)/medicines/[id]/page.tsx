@@ -794,49 +794,45 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
     };
 
     if (bracketMatch) {
-      const mainPart = bracketMatch[1].trim(); // "타이레놀정 500mg"
-      const bracketPart = bracketMatch[2].trim(); // "(100정)"
-      const afterBracket = bracketMatch[3] ? bracketMatch[3].trim() : ''; // 괄호 뒤 텍스트
-
+      const mainPart = bracketMatch[1].trim();
+      const bracketPart = bracketMatch[2].trim();
+      const afterBracket = bracketMatch[3] ? bracketMatch[3].trim() : '';
       const dosageMatch = extractDosage(mainPart);
 
       return (
         <div className="text-center">
-          {/* 메인 부분 - 약품명만 크게 표시 */}
           <div className="text-xl font-bold">
-            {dosageMatch ? dosageMatch[1] : mainPart} {/* 약품명 */}
+            {dosageMatch ? dosageMatch[1] : mainPart}
           </div>
           {/* 용량 정보 - 작게 표시하고 줄바꿈 */}
           {dosageMatch && (
             <div className="text-base font-medium text-muted-foreground mt-1">
-              {dosageMatch[2]} {/* 용량 */}
-              {dosageMatch[3]} {/* 나머지 */}
+              {dosageMatch[2]}
+              {dosageMatch[3]}
             </div>
           )}
-
-          {/* 괄호 뒤의 텍스트가 있으면 작게 표시 */}
           {afterBracket && (
-            <div className="text-base font-medium text-muted-foreground mt-1">{afterBracket}</div>
+            <div className="text-base font-medium text-muted-foreground mt-1">
+              {afterBracket}
+            </div>
           )}
-
-          {/* 괄호 내용 (예: 100정) - 작게 표시 */}
-          <div className="text-sm font-medium text-muted-foreground mt-1">{bracketPart}</div>
+          <div className="text-sm font-medium text-muted-foreground mt-1">
+            {bracketPart}
+          </div>
         </div>
       );
     } else {
-      // 괄호가 없는 경우 - 용량만 작게 표시
-      const dosageMatch = extractDosage(itemName);
-
+      // 괄호가 없는 경우 처리
+      const dosageMatch = extractDosage(cleanedItemName);
       return (
         <div className="text-center">
-          {/* 약품명만 크게 표시 */}
-          <div className="text-xl font-bold">{dosageMatch ? dosageMatch[1] : itemName}</div>
-
-          {/* 용량 정보 - 작게 표시하고 줄바꿈 */}
+          <div className="text-xl font-bold">
+            {dosageMatch ? dosageMatch[1] : cleanedItemName}
+          </div>
           {dosageMatch && (
             <div className="text-base font-medium text-muted-foreground mt-1">
-              {dosageMatch[2]} {/* 용량 */}
-              {dosageMatch[3]} {/* 나머지 */}
+              {dosageMatch[2]}
+              {dosageMatch[3]}
             </div>
           )}
         </div>
