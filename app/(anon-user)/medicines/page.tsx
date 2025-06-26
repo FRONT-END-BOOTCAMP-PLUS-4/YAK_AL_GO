@@ -54,6 +54,31 @@ interface ApiResponse {
   };
 }
 
+const MedicineNameWithTooltip = ({ shortName, medicineName, manufacturer }: { shortName: string; medicineName: string; manufacturer: string }) => {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div
+      className="relative inline-block"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+      tabIndex={0}
+      onFocus={() => setShow(true)}
+      onBlur={() => setShow(false)}
+    >
+      {show && (
+        <div className="absolute z-50 left-0 bottom-full mb-2 min-w-[300px] max-w-[600px] bg-white border border-gray-200 shadow-lg rounded-xl px-3 py-2 text-xs text-gray-800 animate-fade-in pointer-events-none">
+          <div className="font-semibold whitespace-normal break-all">{medicineName}</div>
+          <div className="text-gray-500 whitespace-normal break-all">{manufacturer}</div>
+        </div>
+      )}
+      <span className="font-bold text-sm truncate max-w-[120px] block cursor-pointer">
+        {shortName}
+      </span>
+    </div>
+  );
+};
+
 export default function MedicinesPage() {
   const searchParams = useSearchParams();
   
@@ -406,56 +431,66 @@ export default function MedicinesPage() {
   /**
    * 의약품 카드 렌더링 함수
    */
-  const renderMedicineCard = (medicine: SimplifiedMedicine, index: number) => (
-    <Link href={`/medicines/${medicine.itemSeq}`} key={`${medicine.itemSeq}-${index}`}>
-      <Card className="hover:shadow-md transition-shadow cursor-pointer">
-        <CardContent className="p-4">
-          <div className="flex gap-4">
-            <div className="flex-shrink-0 w-20 h-20 min-w-[80px] min-h-[80px] max-w-[80px] max-h-[80px]">
-              <img
-                src={selectMedicineImage(
-                  medicine.itemSeq,
-                  medicines.find((m) => m.itemSeq === medicine.itemSeq)?.chart
-                )}
-                alt={medicine.originalName}
-                className="w-full h-full rounded-md object-cover aspect-square block"
-                style={{ width: '80px', height: '80px' }}
-              />
-            </div>
-            <div className="flex flex-col gap-2 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <h3
-                  className="font-bold text-sm truncate flex-1 min-w-0 max-w-[80px] sm:max-w-[90px] md:max-w-[100px] lg:max-w-[110px] xl:max-w-[120px]"
-                  title={medicine.originalName}
-                >
-                  {formatMedicineNameSmart(
-                    medicine.displayName,
-                    formattedMedicines.map((m) => m.displayName)
+  const renderMedicineCard = (medicine: SimplifiedMedicine, index: number) => {
+    const originalMedicine = medicines.find((m) => m.itemSeq === medicine.itemSeq);
+    return (
+      <Link href={`/medicines/${medicine.itemSeq}`} key={`${medicine.itemSeq}-${index}`}>
+        <Card className="hover:shadow-md transition-shadow cursor-pointer group">
+          <CardContent className="p-4">
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-20 h-20 min-w-[80px] min-h-[80px] max-w-[80px] max-h-[80px]">
+                <img
+                  src={selectMedicineImage(
+                    medicine.itemSeq,
+                    originalMedicine?.chart
                   )}
-                </h3>
-                <Badge variant="outline" className="text-xs shrink-0">
-                  {medicine.category.display}
-                </Badge>
+                  alt={medicine.originalName}
+                  className="w-full h-full rounded-md object-cover aspect-square block"
+                  style={{ width: '80px', height: '80px' }}
+                />
               </div>
-              <p className="text-sm text-muted-foreground" title={medicine.originalManufacturer}>
-                {medicine.shortManufacturer}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {medicines.find((m) => m.itemSeq === medicine.itemSeq)?.etcOtcCode || '의약품'}
-              </p>
-              {medicines.find((m) => m.itemSeq === medicine.itemSeq)?.chart && (
-                <p className="text-xs text-gray-600 line-clamp-1 overflow-hidden text-ellipsis">
-                  {formatChartText(
-                    medicines.find((m) => m.itemSeq === medicine.itemSeq)?.chart || ''
-                  )}
+              <div className="flex flex-col gap-2 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <MedicineNameWithTooltip
+                    shortName={formatMedicineNameSmart(
+                      medicine.displayName,
+                      formattedMedicines.map((m) => m.displayName)
+                    )}
+                    medicineName={medicine.originalName}
+                    manufacturer={medicine.originalManufacturer}
+                  />
+                  <Badge 
+                    variant="outline" 
+                    className="text-xs shrink-0"
+                    title={`카테고리: ${medicine.category.display}`}
+                  >
+                    {medicine.category.display}
+                  </Badge>
+                </div>
+                <p 
+                  className="text-sm text-muted-foreground truncate px-1 py-0.5 rounded transition-colors" 
+                  title={medicine.originalManufacturer}
+                >
+                  {medicine.shortManufacturer}
                 </p>
-              )}
+                <p className="text-xs text-muted-foreground">
+                  {originalMedicine?.etcOtcCode || '의약품'}
+                </p>
+                {originalMedicine?.chart && (
+                  <p 
+                    className="text-xs text-gray-600 line-clamp-1 overflow-hidden text-ellipsis px-1 py-0.5 rounded transition-colors"
+                    title={originalMedicine.chart}
+                  >
+                    {formatChartText(originalMedicine.chart)}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
+          </CardContent>
+        </Card>
+      </Link>
+    );
+  };
 
   return (
     <div className="container py-8">
