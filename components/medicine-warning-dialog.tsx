@@ -112,9 +112,10 @@ export function MedicineWarningDialog({
         </div>
 
         <DialogFooter className="px-5 py-4 bg-gray-50 border-t flex flex-row justify-between rounded-b-lg">
-          <Badge variant="outline" className="bg-white">
-            안전한 복용을 위해 확인해주세요
-          </Badge>
+          <span className="text-sm text-gray-600 font-medium flex items-center gap-1 flex-grow">
+            <Info className="h-4 w-4 text-blue-400" />
+            안전한 복용을 위해 꼭 확인해주세요
+          </span>
           <Button onClick={handleConfirm} className="bg-red-600 hover:bg-red-700">
             확인했습니다
           </Button>
