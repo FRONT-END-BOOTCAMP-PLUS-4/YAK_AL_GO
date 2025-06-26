@@ -775,8 +775,46 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
   const formatMedicineName = (itemName: string) => {
     if (!itemName) return null;
 
-    // 괄호 분리: "타이레놀정 500mg (100정)" -> ["타이레놀정 500mg", "(100정)"]
-    const bracketMatch = itemName.match(/^(.+?)(\s*\([^)]+\))(.*)$/);
+    // 0단계: 맨 앞의 여는 괄호 제거
+    let processedName = itemName.replace(/^\s*\(/, '').trim();
+
+    // 1단계: 괄호 균형 자동 수정
+    const checkAndFixBrackets = (text: string) => {
+      if (!text) return text;
+
+      let openCount = 0;
+      let closeCount = 0;
+      let result = text;
+
+      // 괄호 개수 세기
+      for (let char of text) {
+        if (char === '(') openCount++;
+        if (char === ')') closeCount++;
+      }
+
+      // 여는 괄호가 더 많은 경우 - 닫는 괄호 추가
+      if (openCount > closeCount) {
+        const missingClose = openCount - closeCount;
+        result = text + ')'.repeat(missingClose);
+      }
+      // 닫는 괄호가 더 많은 경우 - 끝에서부터 불필요한 닫는 괄호 제거
+      else if (closeCount > openCount) {
+        const extraClose = closeCount - openCount;
+        result = text.replace(new RegExp('\\)' + '{' + extraClose + '}$'), '');
+      }
+
+      return result.trim();
+    };
+
+    // 괄호 균형 자동 수정 적용
+    const balancedName = checkAndFixBrackets(processedName);
+
+    // 2단계: 끝에 단독으로 남은 닫는 괄호와 공백 제거
+    let cleanedItemName = balancedName.replace(/\s*\)\s*$/, '').trim();
+
+    // 3단계: 완전한 괄호 쌍 분리 (기존 로직)
+    const bracketMatch = cleanedItemName.match(/^(.+?)(\s*\([^)]+\))(.*)$/);
+
     // 약품명에서 용량 정보 추출을 위한 정규식
     // 공백이 있는 경우 (타이레놀정 500mg)와 공백이 없는 경우 (자디스듀오서방정10/1000밀리그램) 모두 처리
     const extractDosage = (name: string) => {
@@ -804,7 +842,6 @@ export default function MedicineDetailPage({ params }: { params: Promise<{ id: s
           <div className="text-xl font-bold">
             {dosageMatch ? dosageMatch[1] : mainPart}
           </div>
-          {/* 용량 정보 - 작게 표시하고 줄바꿈 */}
           {dosageMatch && (
             <div className="text-base font-medium text-muted-foreground mt-1">
               {dosageMatch[2]}
