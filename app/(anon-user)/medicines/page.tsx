@@ -55,12 +55,18 @@ interface ApiResponse {
 }
 
 export default function MedicinesPage() {
+  const searchParams = useSearchParams();
+  
+  // URL 파라미터에서 초기 상태 읽어오기
+  const initialSearch = searchParams.get('search') || '';
+  const initialCategory = searchParams.get('category') || 'all';
+  
   // 상태 관리
   const [medicines, setMedicines] = useState<MediBasicDto[]>([]); // 현재 페이지 데이터
   const [formattedMedicines, setFormattedMedicines] = useState<SimplifiedMedicine[]>([]); // 포맷된 데이터
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [activeTab, setActiveTab] = useState(initialCategory);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
@@ -227,6 +233,28 @@ export default function MedicinesPage() {
   }, [sortOrder, activeTab, currentPage, searchQuery, fetchMedicinesFromApi]);
 
   /**
+   * URL 업데이트 함수
+   */
+  const updateURL = useCallback((search: string, category: string) => {
+    const url = new URL(window.location.href);
+    
+    if (search.trim()) {
+      url.searchParams.set('search', search.trim());
+    } else {
+      url.searchParams.delete('search');
+    }
+    
+    if (category && category !== 'all') {
+      url.searchParams.set('category', category);
+    } else {
+      url.searchParams.delete('category');
+    }
+    
+    // 브라우저 히스토리에 추가 (뒤로가기 지원)
+    window.history.pushState({}, '', url.toString());
+  }, []);
+
+  /**
    * 검색 실행 함수
    */
   const executeSearch = useCallback(
@@ -246,6 +274,9 @@ export default function MedicinesPage() {
 
       setCurrentPage(1);
 
+      // URL 업데이트
+      updateURL(searchTerm, searchCategory);
+
       // 🔍 검색 시 카테고리 필터 적용
       const categoryToUse = searchCategory === 'all' ? '전체' : CATEGORY_KEY_MAP[searchCategory];
 
@@ -258,7 +289,7 @@ export default function MedicinesPage() {
         console.log(`🔍 병명 검색: "${searchTerm}"`);
       }
     },
-    [searchQuery, activeTab, fetchMedicinesFromApi]
+    [searchQuery, activeTab, fetchMedicinesFromApi, updateURL]
   );
 
   /**
@@ -286,6 +317,9 @@ export default function MedicinesPage() {
       // 카테고리 변경 시 검색어 초기화
       setSearchQuery('');
 
+      // URL 업데이트
+      updateURL('', newTab);
+
       const category = CATEGORY_KEY_MAP[newTab];
       const sortBy =
         sortOrder === 'asc' ? 'name_asc' : sortOrder === 'desc' ? 'name_desc' : undefined;
@@ -293,7 +327,7 @@ export default function MedicinesPage() {
       // 검색어 없이 해당 카테고리의 전체 데이터 로드
       fetchMedicinesFromApi(1, '', category, sortBy);
     },
-    [sortOrder, fetchMedicinesFromApi]
+    [sortOrder, fetchMedicinesFromApi, updateURL]
   );
 
   /**
@@ -305,6 +339,9 @@ export default function MedicinesPage() {
     setSortOrder(null);
     setActiveTab('all');
     setCurrentPage(1);
+
+    // URL 초기화
+    updateURL('', 'all');
 
     // 초기 상태로 데이터 다시 로드
     fetchMedicinesFromApi(1, '', '전체', undefined);
@@ -329,19 +366,19 @@ export default function MedicinesPage() {
    * 초기 데이터 로드 및 URL 파라미터 처리
    */
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const urlSearchQuery = searchParams.get('search');
+    // URL 파라미터에서 검색어와 카테고리 확인
+    const urlSearchQuery = searchParams.get('search') || '';
+    const urlCategory = searchParams.get('category') || 'all';
     
-    if (urlSearchQuery) {
-      // URL에서 검색어가 있으면 해당 검색어로 검색 실행
-      setSearchQuery(urlSearchQuery);
-      setActiveTab('all'); // 검색 시에는 전체 카테고리로 설정
-      fetchMedicinesFromApi(1, urlSearchQuery, '전체');
+    if (urlSearchQuery || urlCategory !== 'all') {
+      // URL에서 검색 조건이 있으면 해당 조건으로 검색 실행
+      const categoryToUse = urlCategory === 'all' ? '전체' : CATEGORY_KEY_MAP[urlCategory];
+      fetchMedicinesFromApi(1, urlSearchQuery, categoryToUse);
     } else {
-      // 검색어가 없으면 기본 데이터 로드
+      // 검색 조건이 없으면 기본 데이터 로드
       fetchMedicinesFromApi(1);
     }
-  }, [fetchMedicinesFromApi]);
+  }, [fetchMedicinesFromApi, searchParams]);
 
   /**
    * 페이지네이션 버튼 생성
